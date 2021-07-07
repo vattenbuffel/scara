@@ -1,11 +1,9 @@
-
-import cmd, sys
+import cmd
 from serial_data_communicator.serial_communicator import serial_com
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
 import os
-
 
 class CLI(cmd.Cmd):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -13,6 +11,9 @@ class CLI(cmd.Cmd):
     file = None
 
     def __init__(self):
+        # Init super class
+        super(CLI, self).__init__()
+
         self.config = None # dict
         self.config_base = None # dict
         self.name = None # str
@@ -61,4 +62,5 @@ def kill():
     
 cli = CLI()
 
-cli.cmdloop()
+# cli.cmdloop()
+CLI().cmdloop()

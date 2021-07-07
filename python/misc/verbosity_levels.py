@@ -1,5 +1,4 @@
 from enum import Enum
-import traceback
 
 class VerboseLevel(Enum):
     ALL = 0

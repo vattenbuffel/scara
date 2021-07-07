@@ -1,0 +1,3 @@
+name: "Serial_data_sender"
+baud_rate: 115200
+port: "COM6" #"dev/ttyUSB0"

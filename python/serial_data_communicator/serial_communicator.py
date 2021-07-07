@@ -44,7 +44,9 @@ class Communicator:
             if self.verbose_level <= VerboseLevel.ERROR:
                 traceback.print_exc()
                 print(e)
-                print(f"Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are: {serial.tools.list_ports.comports()}")
+                print(f"Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are:")
+                for port in  list(serial.tools.list_ports.comports()):
+                    print(f"{port}\n")
             exit()
         except Exception as e:
             if self.verbose_level <= VerboseLevel.ERROR:
