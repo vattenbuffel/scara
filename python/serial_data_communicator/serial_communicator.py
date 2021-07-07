@@ -52,13 +52,20 @@ class Communicator:
                 print(e)
             exit()
             
-    def send_pos(self, x, y, z):
+    def send_pos(self, x, y, z, add_ending=False):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Going to send pos x: {x}, y: {y}, z: {z}")
+            print(f"Going to send pos x: {x}, y: {y}, z: {z}\nNOT IMPLEMENTED YET")
+        
+        data = f"xyz:{x},{y},{z}"
+
+        self.send_data(data)
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"Sent pos x: {x}, y: {y}, z: {z}")
+        
 
     def add_ending(self, string):
         string += "\r\n"
-
 
     def send_data(self, data, add_ending=False):
         if self.verbose_level <= VerboseLevel.DEBUG:

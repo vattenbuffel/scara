@@ -1,3 +1,0 @@
-name: "Serial_data_sender"
-baud_rate: 115200
-port: "dev/ttyUSB0"
