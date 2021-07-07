@@ -1,1 +1,2 @@
 name: "cli"
+read_hz: 100

@@ -28,5 +28,5 @@ class VerboseLevel(Enum):
         return self.value <= other.value
 
     def __eq__(self, other):
-        self.value == other.value
+        return self.value == other.value
         

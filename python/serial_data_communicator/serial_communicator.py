@@ -1,11 +1,15 @@
 import serial
 import serial.tools.list_ports
-from serial.serialutil import SerialException
+from serial.serialutil import SerialException, Timeout
 import yaml
 from pathlib import Path
 import os
 from misc.verbosity_levels import VerboseLevel
 import traceback
+from misc.message_receieved import MessageReceived
+from misc.message_types import MessageTypes
+import threading
+import time
 
 class Communicator:
     def __init__(self):
@@ -20,10 +24,16 @@ class Communicator:
         self.serial = None # serial.Serial
         self.open_serial()
 
+        # Create a dictionary of received messages where the key is the string associated in messages types
+        self.received_messages = {type_.name:None for type_ in MessageTypes}
 
+        
+        # This thread reads messages via the serial port
+        self.read_thread = threading.Thread(target=self.receive_message)
+        self.read_thread.start()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited serial data sender.\nConfig: {self.config},\nand base config: {self.config_base}")
+            print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
         fp = Path(__file__)
@@ -39,12 +49,12 @@ class Communicator:
 
     def open_serial(self):
         try:
-            self.serial = serial.Serial(self.config['port'], self.config['baud_rate'])
+            self.serial = serial.Serial(self.config['port'], self.config['baud_rate'], timeout=self.config['timeout_s'])
         except SerialException as e:
             if self.verbose_level <= VerboseLevel.ERROR:
                 traceback.print_exc()
                 print(e)
-                print(f"Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are:")
+                print(f"{self.name}: Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are:")
                 for port in  list(serial.tools.list_ports.comports()):
                     print(f"{port}\n")
             exit()
@@ -54,25 +64,13 @@ class Communicator:
                 print(e)
             exit()
             
-    def send_pos(self, x, y, z, add_ending=False):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Going to send pos x: {x}, y: {y}, z: {z}\nNOT IMPLEMENTED YET")
-        
-        data = f"xyz:{x},{y},{z}"
-
-        self.send_data(data)
-
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Sent pos x: {x}, y: {y}, z: {z}")
-        
-
     def add_ending(self, string):
         string += "\r\n"
 
     def send_data(self, data, add_ending=False):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Going to send data: {data}")
-            print(f"Add ending: {add_ending}")
+            print(f"{self.name}: Going to send data: {data}")
+            print(f"{self.name}: Add ending: {add_ending}")
 
         # Add \r\n to end of data
         if add_ending:
@@ -83,10 +81,41 @@ class Communicator:
 
         
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Sent data: {data}")
+            print(f"{self.name}: Sent data: {data}")
 
+    def kill(self):
+        if self.verbose_level <= VerboseLevel.WARNING:
+            print(f"Going to kill {self.name}")
+        
+        self.serial.close()
+        if self.verbose_level <= VerboseLevel.ERROR:
+            print(f"Good bye from {self.name}")
+        
+    def receive_message(self):
+        while True:
+            # Check if new data
+            if self.serial.in_waiting:
+                if self.verbose_level <= VerboseLevel.DEBUG:
+                    print(f"{self.name}: Data waiting to be read")
 
+                # Read new data
+                msg = self.serial.readline()
+                msg_split = msg.split()
 
+                # See if it is a valid message. A valid message should start with pos or done for example
+                try:
+                    type_ = MessageTypes.str_to_type(msg_split[0])
+                    self.received_messages[msg_split[0].upper()] = MessageReceived(type_, msg_split[1:])
+                except KeyError as e:
+                    if self.verbose_level <= VerboseLevel.WARNING:
+                        print(e)
+                        traceback.print_exc()
+                        print(f"{self.name}: Invalid message type: {msg_split[0]}")
+
+            else:
+                if self.verbose_level <= VerboseLevel.ALL:
+                    print(f"{self.name}: No data to read")
+            time.sleep(1/self.config['read_hz'])
 
 
 serial_com = Communicator()
