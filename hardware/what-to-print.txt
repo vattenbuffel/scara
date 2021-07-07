@@ -1,0 +1,56 @@
+Printing:
+	Todo:
+		Nothing
+	
+	Converted to gcode:
+		Gripper cover
+		
+	Done printing:
+		base2
+		base1
+		arm 1
+		arm 2
+		arduino uno case 1
+		base cover
+		z axis top plate
+		Smooth rod clamp 
+		top cover
+		z axis bottom
+		z axis mount platform
+		J1
+		J2
+		J3
+		pulley 90
+		pulley 92
+		pulley 110
+		pulley 23-80
+		pulley 22-80
+		arm 2 cover
+		arm 1 cover
+		circular wire holder in arm 1/2 joint
+		gripper end
+		gripper hand left
+		gripper hand right
+		gripper link 1
+		gripper link 2
+		gripper mechanism slider
+		gripper j3 connector
+		gripper wide end
+		gripper wide gripper end left side
+		gripper servo holder
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

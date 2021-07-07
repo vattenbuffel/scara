@@ -1,0 +1,132 @@
+To buy:
+	4x Smooth rod shaft – 10mm 400mm: https://www.amazon.de/-/en/gp/product/B07MV7ZVZC/ref=ox_sc_act_title_4?smid=A377Z8NE9XHCBB&psc=1
+	1x Lead screw – 8mm 400mm: https://www.amazon.de/-/en/gp/product/B07RV5K3XR/ref=ox_sc_act_title_19?smid=AGVUZOAVTU1UA&psc=1
+	4x Linear bearings 10mm: https://www.amazon.de/-/en/gp/product/B08JB5RGQB/ref=ox_sc_act_title_20?smid=A2QDVE2OGM9E0I&psc=1
+	1x Thrust ball bearing 40x60x13mm: https://www.amazon.de/-/en/gp/product/B08NNMSQCC/ref=ox_sc_act_title_2?smid=A35RQ4ANGSMBHR&psc=1
+	2x Thrust ball bearing 35x52x12mm: https://www.amazon.de/-/en/gp/product/B08BWV1WJF/ref=ox_sc_act_title_1?smid=A2L2JEC189DJB3&psc=1
+	5x Radial ball bearing 8x22x7mm: https://www.amazon.de/-/en/gp/product/B07HGXXX37/ref=ox_sc_act_title_18?smid=A123MB50KEUYZY&psc=1
+	4x Stepper Motor – NEMA 17: https://www.amazon.de/-/en/gp/product/B06XVM38YW/ref=ox_sc_act_title_4?smid=ABVRCUH7Y5NVN&psc=1 & https://www.amazon.de/-/en/gp/product/B07CQF1Q4Z/ref=ox_sc_act_title_6?smid=ABVRCUH7Y5NVN&psc=1
+	A4988 Stepper Driver: https://www.amazon.de/-/en/gp/product/B07NP1DC65/ref=ox_sc_act_title_1?smid=A3HWK0EOY0E024&psc=1
+	Arduino CNC Shield: https://www.amazon.de/-/en/gp/product/B07NP1DC65/ref=ox_sc_act_title_1?smid=A3HWK0EOY0E024&psc=1
+	Arduino Uno: har
+	MG996R Servo Motor: har
+	Limit Switch: https://www.amazon.de/-/en/gp/product/B08734MSDD/ref=ox_sc_act_title_2?smid=A389LDN5B54OS6&psc=1
+	DC Power Supply: https://www.amazon.de/-/en/gp/product/B07PGLXK4X/ref=ox_sc_act_title_3?smid=AWHN4J191C396&psc=1
+	idler pulleys: https://www.amazon.de/gp/huc/view.html?ie=UTF8&newItems=C5f4059dc-aa97-4d25-9518-6a84d486d069%2C1
+	cable sleeves: biltema
+	5mm to 8mm shaft coupler: https://www.amazon.de/-/en/Flexible-Couplings-RepRap-Printer-Machine/dp/B07CWP5J1P/ref=pd_bxgy_img_3/257-5093779-5101236?_encoding=UTF8&pd_rd_i=B07CWP5J1P&pd_rd_r=b7135311-8f40-4979-be0e-d5d7cf4ff3df&pd_rd_w=SPMqY&pd_rd_wg=ItOo9&pf_rd_p=a8951a51-6d79-4743-90b9-7063e3f4b854&pf_rd_r=JWKJNSR8A4GEXKXVFRNG&psc=1&refRID=JWKJNSR8A4GEXKXVFRNG
+	jumpers: https://www.amazon.de/-/en/gp/product/B0731PMNNG/ref=ox_sc_act_title_1?smid=A22SB6W8K59090&psc=1
+	
+	Belts: 		(At least 5 belts in total)
+		Middle pulley:
+			GT2 belts 200mm: https://www.amazon.de/-/en/gp/product/B07VQ9BXBD/ref=ox_sc_act_title_3?smid=A1BV4N88UHB8BY&psc=1
+			2x GT2 belts 300mm: https://www.amazon.de/-/en/gp/product/B07VQ9BXBD/ref=ox_sc_act_title_3?smid=A1BV4N88UHB8BY&psc=1
+			2x GT2 belts 400mm: https://www.amazon.de/-/en/gp/product/B07VQ9BXBD/ref=ox_sc_act_title_3?smid=A1BV4N88UHB8BY&psc=1
+		
+		
+	Nuts/bolts:
+		35mm M5 bolt: biltema
+		4x M4 55mm: https://www.amazon.de/-/en/Professional-cylinder-hexagon-galvanised-hardened/dp/B01N0H6Y93/ref=sr_1_10?dchild=1&keywords=m4%2B55&qid=1623613548&sr=8-10&th=1
+		M8 45mm: biltema
+		Washers: biltema
+		Self locking nuts: biltema
+		Various lengths M3, M4 and M5 bolts and nuts: https://www.amazon.de/-/en/gp/product/B08TH7Q6G5/ref=ox_sc_act_title_21?smid=A417V4X71WZG8&psc=1
+		
+	
+	Second order:
+		2x radial ball bearing  35mm 47mm, 6807 : https://www.amazon.se/gp/product/B08SQQ72QT/ref=ox_sc_act_title_1?smid=A39I6CX8PA6MVG&psc=1
+		2x radial ball bearing  30mm 42mm, 6806 : https://www.kullagret.com/product/6806-2rs-61806-2rs-kullager-codex
+		<4x gt2 pulley 20 teeth: https://www.amazon.se/3Dman-Pulley-timing-aluminium-Printer/dp/B08TSY1XT3/ref=sr_1_2?dchild=1&keywords=gt2+pulley+20&qid=1624720214&sr=8-2
+		tving: biltema
+		2x 6mm rods: https://www.amazon.se/gp/product/B0029ZX5JC/ref=ox_sc_act_title_1?smid=ANU9KP01APNAG&psc=1
+		Näbbtång: clas ohlson
+		flertrådig kabel: https://www.amazon.se/dp/B07W5ZMBYL/ref=pe_24982401_503747021_TE_SCE_dp_2
+		m4 20: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-921
+		M4 25: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-922
+		m4 30: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-923
+		m4 40: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-925
+		M3 12: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-912
+		M3 16: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-913
+		M3 20: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-914
+		M5 25: https://www.kullagret.com/product/m3x12-insexskruv-12-9-din-932
+		
+	Third order:
+		gt2 pulley 20 teeth, 5 mm bore: https://www.amazon.se/gp/huc/view.html?ie=UTF8&newItems=C920d0ab2-5596-4078-9486-228d7b984ca6%2C1
+		M2 lock nut: 
+		m3 30: 
+		Tving: 
+	
+	
+
+Ordered:
+	Everything
+	
+	
+	
+Arrived:
+	4x Smooth rod shaft – 10mm 400mm: 					yes
+	1x Lead screw – 8mm 400mm: 							yes
+	4x Linear bearings 10mm: 							yes
+	1x Thrust ball bearing 40x60x13mm: 					yes
+	2x Thrust ball bearing 35x52x12mm: 					yes
+	5x Radial ball bearing 8x22x7mm: 					yes
+	4x Stepper Motor – NEMA 17: 						yes
+	A4988 Stepper Driver: 								yes 
+	Arduino CNC Shield: 								yes
+	Limit Switch: 										yes
+	DC Power Supply: 									yes
+	idler pulleys: 										yes
+	5mm to 8mm shaft coupler: 							yes
+	jumpers: 											yes
+	
+	Belts:
+		Middle pulley:
+			GT2 belts 200mm: 							yes
+			2x GT2 belts 300mm: 						yes
+			2x GT2 belts 400mm: 						yes
+		
+		
+	Nuts/bolts:		
+		4x M4 55mm: 									yes
+		Various lengths M3, M4 and M5 bolts and nuts:   yes
+		
+	Second order:
+		2x radial ball bearing  35mm 47mm, 6807:        no
+		2x radial ball bearing  30mm 42mm, 6806:        yes
+		<4x gt2 pulley 20 teeth: 						yes
+		2x 6mm rods: 									yes
+		flertrådig kabel: 								yes
+		m4 20:											yes
+		M4 25:											yes
+		m4 30:											yes
+		m4 40:											yes
+		M3 12:											yes
+		M3 16:											yes
+		M3 20:											yes
+		M5 25:											yes
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
