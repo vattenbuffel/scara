@@ -42,15 +42,33 @@ class CLI(cmd.Cmd):
 
     def do_home(self, arg):
         "Return turtle to the home position:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command go home")
+
         robot.home()
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with command go home")
 
     def do_pos(self, arg):
         "Moves the robot into the position:  X Y Z"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command pose")
+
         robot.goto_pose(*parse(arg))
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with command pose")
 
     def do_send(self, arg):
         "Send the data to the robot's arduino:  DATA"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command send data")
+
         serial_com.send_data(arg)
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with send data")
 
     def loop(self, intro=None):
         # Just a copy of cmd.cmdloop() but with a sleep added

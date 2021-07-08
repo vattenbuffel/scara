@@ -23,6 +23,7 @@ class Communicator:
         # Try to open the usb port
         self.serial = None # serial.Serial
         self.open_serial()
+        self.serial.flush()
 
         # Create a dictionary of received messages where the key is the string associated in messages types
         self.received_messages = {type_.name:MessageReceived(type_, "") for type_ in MessageTypes}
@@ -67,7 +68,7 @@ class Communicator:
     def add_ending(self, string):
         string += "\r\n"
 
-    def send_data(self, data, add_ending=False):
+    def send_data(self, data, add_ending=False, convert_to_bytes=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to send data: {data}")
             print(f"{self.name}: Add ending: {add_ending}")
@@ -76,6 +77,10 @@ class Communicator:
         if add_ending:
             self.add_ending(data)
         
+        # Converts the data to bytes
+        if convert_to_bytes:
+            data = data.encode()
+
         # Write the data
         self.serial.write(data)
 
@@ -99,18 +104,22 @@ class Communicator:
                     print(f"{self.name}: Data waiting to be read")
 
                 # Read new data
-                msg = self.serial.readline()
+                msg = self.serial.readline().decode()
                 msg_split = msg.split()
+
+                if self.verbose_level <= VerboseLevel.DEBUG:
+                    print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
                     type_ = MessageTypes.str_to_type(msg_split[0])
                     self.received_messages[msg_split[0].upper()] = MessageReceived(type_, msg_split[1:])
-                except KeyError as e:
+                except ValueError as e:
                     if self.verbose_level <= VerboseLevel.WARNING:
                         print(e)
                         traceback.print_exc()
                         print(f"{self.name}: Invalid message type: {msg_split[0]}")
+
 
             else:
                 if self.verbose_level <= VerboseLevel.ALL:

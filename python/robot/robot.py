@@ -55,7 +55,7 @@ class Robot:
 
     def home(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going home\nNOT IMPLEMENTED YET")
+            print(f"{self.name}: Going home. NOT IMPLEMENTED YET")
 
         data = "" #TODO: Change this to the correct data
         self.x = 0 #TODO: Change this to the correct data
@@ -65,9 +65,10 @@ class Robot:
         self.J2 = 0 #TODO: Change this to the correct data
         self.J3 = 0 #TODO: Change this to the correct data
         
-        # serial_com.send_data() # TODO: Send some data so that it goes home
+        serial_com.send_data("HOME") # TODO: Send some data so that it goes home
 
         self.done_event.wait()
+        self.done_event.clear()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: At home")

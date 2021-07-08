@@ -4,13 +4,13 @@ class MessageTypes(Enum):
     POS = 0
     DONE = 1
 
-    def str_to_type(self, string):
+    def str_to_type(string):
         for type in MessageTypes:
-            if type == string:
+            if type.name == string:
                 return type
         else:
-            raise Exception(f"No such received message type as: {string}")
+            raise ValueError("No such received message type as: " + string)
 
     def __eq__(self, other):
-        return self.value == other.value
+        return self.value == other.value and self.name == other.name
         
