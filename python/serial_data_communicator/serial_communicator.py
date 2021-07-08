@@ -6,8 +6,8 @@ from pathlib import Path
 import os
 from misc.verbosity_levels import VerboseLevel
 import traceback
-from misc.message_receieved import MessageReceived
-from misc.message_types import MessageTypes
+from message.message_receieved import MessageReceived
+from message.message_types import MessageTypes
 import threading
 import time
 
@@ -100,14 +100,14 @@ class Communicator:
         while True:
             # Check if new data
             if self.serial.in_waiting:
-                if self.verbose_level <= VerboseLevel.DEBUG:
+                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                     print(f"{self.name}: Data waiting to be read")
 
                 # Read new data
                 msg = self.serial.readline().decode()
                 msg_split = msg.split()
 
-                if self.verbose_level <= VerboseLevel.DEBUG:
+                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                     print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example

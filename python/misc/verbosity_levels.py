@@ -2,10 +2,10 @@ from enum import Enum
 
 class VerboseLevel(Enum):
     ALL = 0
-    DEBUG = 1
-    WARNING = 2
-    ERROR = 3
-    MAX = 3
+    MSG_ARRIVE = 1
+    DEBUG = 2
+    WARNING = 3
+    ERROR = 4
 
     def str_to_level(str):
         str_ = str.upper()

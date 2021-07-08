@@ -4,7 +4,7 @@ import yaml
 from pathlib import Path
 import os
 import time
-from misc.message_receieved import MessageReceived
+from message.message_receieved import MessageReceived
 from serial_data_communicator.serial_communicator import serial_com
 
 class MessageUpdated:
@@ -60,14 +60,14 @@ class MessageUpdated:
     
     def loop(self):
         while True:            
-            if self.verbose_level <= VerboseLevel.ALL:
+            if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                 print(f"{self.name}: Checking for new messages")
 
             for key in self.updated_dict:
                 event, msg = self.updated_dict[key]
                 # Check if a newer message has arrived, if so set the associated event
                 if msg.timestamp < serial_com.received_messages[key].timestamp:
-                    if self.verbose_level <= VerboseLevel.DEBUG:
+                    if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                         print(f"{self.name}: new message arrived of type: {key}")
 
                     event.set()

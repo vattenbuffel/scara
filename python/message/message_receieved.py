@@ -1,4 +1,4 @@
-from misc.message_types import MessageTypes
+from message.message_types import MessageTypes
 import time
 
 class MessageReceived:

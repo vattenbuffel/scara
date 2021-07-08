@@ -1,4 +1,4 @@
-from misc.message_types import MessageTypes
+from message.message_types import MessageTypes
 import threading
 from serial_data_communicator.serial_communicator import serial_com
 from serial_data_communicator.handy_functions import handy_functions
@@ -6,7 +6,7 @@ from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
 import os
-from message_updated.message_updated import MessageUpdated
+from message.message_updated import MessageUpdated
 from math import atan, acos, sqrt, cos, sin, pi
 
 class Robot:
@@ -243,5 +243,26 @@ class Robot:
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
+    def get_x(self):
+        return self.x
+        
+    def get_y(self):
+        return self.y
+        
+    def get_z(self):
+        return self.z
+        
+    def get_J1(self):
+        return self.J1
+        
+    def get_J2(self):
+        return self.J2
+        
+    def get_J3(self):
+        return self.J3
+        
+    def get_gripper(self):
+        return self.gripper_value
+        
 
 robot = Robot()

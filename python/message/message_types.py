@@ -15,6 +15,7 @@ class MessageTypes(Enum):
     POS = 0
     DONE = 1
     HOME = 2
+    HEARTBEAT = 3 # This message will be sent at regular intevals by the arduino and contains all information about it
 
     def str_to_type(string):
         for type in MessageTypes:

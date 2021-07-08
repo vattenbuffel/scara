@@ -1,4 +1,5 @@
 import cmd
+from serial_data_communicator.handy_functions import handy_functions
 import threading
 from misc.verbosity_levels import VerboseLevel
 import yaml
@@ -51,11 +52,27 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with command go home")
 
     def do_pos(self, arg):
-        "Moves the robot into the position:  X Y Z"
+        "Moves the robot into the position:  X Y Z, gripper_value"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command pose")
 
-        robot.goto_pose(*parse(arg))
+        try:
+            robot.goto_pose(*parse(arg))
+        except TypeError:
+            print(f"self.prompt Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with command pose")
+
+    def do_jog(self, arg):
+        "Moves the robot into the position:  J1, J2, J3, z, gripper_value"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command pose")
+
+        try:
+            robot.jog(*parse(arg))
+        except TypeError:
+            print(f"self.prompt Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
@@ -69,6 +86,95 @@ class CLI(cmd.Cmd):
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with send data")
+
+    def do_get_x(self, arg):
+        "Prints the x coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_x")
+
+        robot_x = robot.get_x()
+        print(f"{self.prompt} robot_x: {robot_x}")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with  get_x")
+
+
+    def do_get_y(self, arg):
+        "Prints the y coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_y")
+
+        robot_y = robot.get_y()
+        print(f"{self.prompt} robot_y: {robot_y}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with  get_y")
+
+
+    def do_get_z(self, arg):
+        "Prints the z coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_z")
+
+        robot_z = robot.get_z()
+        arduino_z = handy_functions.get_z()
+        print(f"{self.prompt} robot_z: {robot_z}, arduino_x: {arduino_z}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with  get_z")
+
+    
+    def do_get_J1(self, arg):
+        "Prints the J1 coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_J1")
+
+        robot_J1 = robot.get_J1()
+        arduino_J1 = handy_functions.get_J1()
+        print(f"{self.prompt} robot_J1: {robot_J1}, arduino_J1: {arduino_J1}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with  get_J1")
+
+
+    def do_get_J2(self, arg):
+        "Prints the J2 coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_J2")
+
+        robot_J2 = robot.get_J2()
+        arduino_J2 = handy_functions.get_J2()
+        print(f"{self.prompt} robot_J2: {robot_J2}, arduino_J2: {arduino_J2}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_J2")
+
+
+    def do_get_J3(self, arg):
+        "Prints the J3 coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_J3")
+
+        robot_J3 = robot.get_J3()
+        arduino_J3 = handy_functions.get_J3()
+        print(f"{self.prompt} robot_J3: {robot_J3}, arduino_J3: {arduino_J3}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_J3")
+
+
+    def do_get_gripper(self, arg):
+        "Prints the gripper coordinate of where the robot is:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_gripper")
+
+        robot_gripper = robot.get_gripper()
+        arduino_gripper = handy_functions.get_gripper()
+        print(f"{self.prompt} robot_gripper: {robot_gripper}, arduino_gripper: {arduino_gripper}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_gripper")
+
 
     def loop(self, intro=None):
         # Just a copy of cmd.cmdloop() but with a sleep added
