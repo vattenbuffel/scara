@@ -1,1 +1,5 @@
 name: "cli"
+L1: 228 #mm
+L2: 136.5 #mm
+base_speed: 50 #Maybe 500 is max
+base_acceleration: 50 #Maybe 500 is max
