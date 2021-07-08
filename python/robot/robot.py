@@ -1,11 +1,12 @@
+import threading
 from serial_data_communicator.serial_communicator import serial_com
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
 import os
+from message_updated.message_updated import MessageUpdated
 
 class Robot:
-
     def __init__(self):
         self.config = None # dict
         self.config_base = None # dict
@@ -18,6 +19,13 @@ class Robot:
         self.x = None
         self.y = None
         self.z = None
+        self.J1 = None
+        self.J2 = None
+        self.J3 = None
+
+        # Class that will check if new messages have arrived to serial_communicator
+        self.done_event = threading.Event()
+        self.message_update = MessageUpdated({"DONE": self.done_event})
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -53,8 +61,14 @@ class Robot:
         self.x = 0 #TODO: Change this to the correct data
         self.y = 0 #TODO: Change this to the correct data
         self.z = 0 #TODO: Change this to the correct data
+        self.J1 = 0 #TODO: Change this to the correct data
+        self.J2 = 0 #TODO: Change this to the correct data
+        self.J3 = 0 #TODO: Change this to the correct data
         
-        # Somehow wait here for the robot to actually move home
+        # serial_com.send_data() # TODO: Send some data so that it goes home
+
+        self.done_event.wait()
+
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: At home")
     

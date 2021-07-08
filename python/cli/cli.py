@@ -53,6 +53,8 @@ class CLI(cmd.Cmd):
         serial_com.send_data(arg)
 
     def loop(self, intro=None):
+        # Just a copy of cmd.cmdloop() but with a sleep added
+        
         self.preloop()
         if self.use_rawinput and self.completekey:
             try:

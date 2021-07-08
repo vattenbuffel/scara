@@ -25,7 +25,7 @@ class Communicator:
         self.open_serial()
 
         # Create a dictionary of received messages where the key is the string associated in messages types
-        self.received_messages = {type_.name:None for type_ in MessageTypes}
+        self.received_messages = {type_.name:MessageReceived(type_, "") for type_ in MessageTypes}
 
         
         # This thread reads messages via the serial port

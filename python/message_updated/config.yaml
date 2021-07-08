@@ -1,0 +1,2 @@
+name: "message_updated"
+message_update_check_hz: 1 # How often message_update should check for new messages

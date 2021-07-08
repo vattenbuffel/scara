@@ -2,4 +2,4 @@ name: "Serial_data_sender"
 baud_rate: 115200
 port: "COM6" #"dev/ttyUSB0"
 timeout_s: 1
-read_hz: 100
+read_hz: 1

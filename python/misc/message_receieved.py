@@ -7,6 +7,9 @@ class MessageReceived:
         self.data = data
         self.timestamp = time.time()
 
+    def update(self, data):
+        self.data = data
+        self.timestamp = time.time()
 
     def __eq__(self, other):
         return self.type == other.type and self.data == other.data and self.timestamp == other.timestamp
