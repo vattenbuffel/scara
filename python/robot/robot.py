@@ -204,7 +204,7 @@ class Robot:
             print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
 
     def get_pose(self):
-        return (self.x, self.y, self.z)
+        return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
 
     def home(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -212,7 +212,13 @@ class Robot:
 
         data = MessageTypes.HOME.name 
         
-        serial_com.send_data(data)
+        success = serial_com.send_data(data)
+
+        if not success:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: Failed with going home")
+            return
+
 
         self.done_event.wait()
         self.done_event.clear()
@@ -228,7 +234,7 @@ class Robot:
         self.J3 = J3 
         self.gripper_value = gripper_value
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
+        if self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
     
     def load_configs(self):

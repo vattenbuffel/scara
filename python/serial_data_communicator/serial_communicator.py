@@ -24,6 +24,7 @@ class Communicator:
         self.serial = None # serial.Serial
         self.open_serial()
         self.serial.flush()
+        self.arduino_started = False # Boolean to keep track of if the arduino has started. It will be put to True as soon as a heartbeat arrives
 
         # Create a dictionary of received messages where the key is the string associated in messages types
         self.received_messages = {type_.name:MessageReceived(type_, "") for type_ in MessageTypes}
@@ -69,9 +70,26 @@ class Communicator:
         string += "\r\n"
 
     def send_data(self, data, add_ending=False, convert_to_bytes=True):
+        """Sends data via the serial port. Returns True if successful otherwhise False
+
+        Args:
+            data ([type]): [description]
+            add_ending (bool, optional): [description]. Defaults to False.
+            convert_to_bytes (bool, optional): [description]. Defaults to True.
+
+        Returns:
+            [type]: [description]
+        """
+        
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to send data: {data}")
             print(f"{self.name}: Add ending: {add_ending}")
+        
+        if self.verbose_level <= VerboseLevel.WARNING and not self.arduino_started:
+            print(f"{self.name}: Warning: Arduino not started")
+            return False
+        
+        
 
         # Add \r\n to end of data
         if add_ending:
@@ -87,6 +105,9 @@ class Communicator:
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Sent data: {data}")
+        
+        return True
+
 
     def kill(self):
         if self.verbose_level <= VerboseLevel.WARNING:
@@ -108,12 +129,24 @@ class Communicator:
                 msg_split = msg.split()
 
                 if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
+                    print(f"{self.name}: Empty message arrived")
+                    continue
+
+
+                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                     print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
                     type_ = MessageTypes.str_to_type(msg_split[0])
                     self.received_messages[msg_split[0].upper()] = MessageReceived(type_, msg_split[1:])
+
+                    # If a heartbeat arrived set arduino_started to True
+                    if msg_split[0] == MessageTypes.HEARTBEAT.name:
+                        if  not self.arduino_started and self.verbose_level <= VerboseLevel.WARNING:
+                            print(f"{self.name} Arduino started")
+                        self.arduino_started = True
+
                 except ValueError as e:
                     if self.verbose_level <= VerboseLevel.WARNING:
                         print(e)

@@ -98,7 +98,6 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with  get_x")
 
-
     def do_get_y(self, arg):
         "Prints the y coordinate of where the robot is:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -109,7 +108,6 @@ class CLI(cmd.Cmd):
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with  get_y")
-
 
     def do_get_z(self, arg):
         "Prints the z coordinate of where the robot is:  None"
@@ -123,9 +121,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with  get_z")
 
-    
     def do_get_J1(self, arg):
-        "Prints the J1 coordinate of where the robot is:  None"
+        "Prints the J1 angles:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J1")
 
@@ -136,9 +133,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with  get_J1")
 
-
     def do_get_J2(self, arg):
-        "Prints the J2 coordinate of where the robot is:  None"
+        "Prints the J2 angle:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J2")
 
@@ -149,9 +145,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_J2")
 
-
     def do_get_J3(self, arg):
-        "Prints the J3 coordinate of where the robot is:  None"
+        "Prints the J3 angle:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J3")
 
@@ -162,9 +157,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_J3")
 
-
     def do_get_gripper(self, arg):
-        "Prints the gripper coordinate of where the robot is:  None"
+        "Prints the gripper value:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_gripper")
 
@@ -174,6 +168,23 @@ class CLI(cmd.Cmd):
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_gripper")
+
+    def do_get_pose(self, arg):
+        """
+        Prints the pose of the robot. First is the python's coordinate of the robot: x, y, z, J1, J2, J3, gripper_value.
+        Then the arduinos pose: z, J1, J2, J3, gripper_value:  None
+        """
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_pose")
+
+        robot_data = robot.get_pose()
+        arduino = handy_functions.get_pose()
+
+        print(f"{self.prompt} robot: {list(robot_data)},\n{self.prompt} arduino: {arduino}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_pose")
+
 
 
     def loop(self, intro=None):
