@@ -185,7 +185,44 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_pose")
 
+    def do_move_x(self,arg):
+        "Moves the robot only in x:  X"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_x")
 
+        try:
+            robot.move_x(*parse(arg))
+        except TypeError:
+            print(f"self.prompt Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_x")
+
+    def do_move_y(self,arg):
+        "Moves the robot only in y:  y"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_y")
+
+        try:
+            robot.move_y(*parse(arg))
+        except TypeError:
+            print(f"self.prompt Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_y")
+
+    def do_move_z(self,arg):
+        "Moves the robot only in z:  z"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_z")
+
+        try:
+            robot.move_z(*parse(arg))
+        except TypeError:
+            print(f"self.prompt Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_z")
 
     def loop(self, intro=None):
         # Just a copy of cmd.cmdloop() but with a sleep added

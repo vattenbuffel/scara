@@ -1,3 +1,4 @@
+from robot.robot import robot
 from message.message_types import MessageTypes
 import threading
 from serial_data_communicator.handy_functions import handy_functions
@@ -7,43 +8,38 @@ from pathlib import Path
 import os
 from message.message_updated import MessageUpdated
 
-class GUI:
-    def __init__(self):
-        self.config = None # dict
-        self.config_base = None # dict
-        self.name = None # str
-        self.verbose_level = None # misc.verbosity_level
-        
-        # Read all the configs
-        self.load_configs()
-
-        self.x = None
-        self.y = None
-        self.z = None
-        self.J1 = None
-        self.J2 = None
-        self.J3 = None
-        self.gripper_value = 0
-
-        # Class that will check if new messages have arrived to serial_communicator
-        self.done_event = threading.Event()
-        self.message_update = MessageUpdated({"DONE": self.done_event})
-
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
-
-    
-    def load_configs(self):
-        fp = Path(__file__)
-        config_fp = os.path.join(str(fp.parent), "config.yaml")
-        with open(config_fp) as f:
-            self.config = yaml.load(f, Loader=yaml.FullLoader)
-        config_fp = os.path.join(str(fp.parent.parent), "base_config.yaml")
-        with open(config_fp) as f:
-            self.config_base = yaml.load(f, Loader=yaml.FullLoader)
-        
-        self.name = self.config['name']
-        self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
+import streamlit as st
 
 
-gui = GUI()
+# if 'updated' not in st.session_state:
+# 	st.session_state.updated = False
+
+# def set_update():
+#     st.session_state.updated=True
+
+def loop():
+    col1, col2 = st.beta_columns(2)
+
+    with col1:
+        st.subheader('Inverse kinematics')
+        x_slider = st.slider("x", 0, 360, 1, 1)
+        y_slider = st.slider("y", 0, 360, 1, 1)
+        z_slider = st.slider("z", 0, 360, 1, 1)
+        # x_slider = st.slider("x", 0, 360, 1, 1, on_change=set_update)
+        # y_slider = st.slider("y", 0, 360, 1, 1, on_change=set_update)
+        # z_slider = st.slider("z", 0, 360, 1, 1, on_change=set_update)
+        print(f"Moving to pos x:{z_slider}, x:{y_slider}, x:{z_slider}")
+        robot.goto_pos(x_slider, y_slider, z_slider)
+
+    with col2:
+        st.subheader('Forward kinematics')
+        j1_slider = st.slider("J1", 0, 360, 1, 1)
+        j2_slider = st.slider("J2", 0, 360, 1, 1)
+        j3_slider = st.slider("J3", 0, 360, 1, 1)
+
+    st.subheader('Gripper')
+    gripper_slider = st.slider("gripper", 0, 100, 0, 1)
+
+    st.button("Home", on_click=lambda: print("Gonna home"))
+
+

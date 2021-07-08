@@ -44,11 +44,16 @@ class Robot:
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value)
 
-        serial_com.send_data(data)
+        success = serial_com.send_data(data)
+
+        if not success:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: Failed with jogging")
+            return
 
         # Wait for robot to be done
-        self.done_event.wait()
         self.done_event.clear()
+        self.done_event.wait()
 
         # Update position. 
         x,y = self.forward_kinematics(J1, J2)
@@ -184,12 +189,15 @@ class Robot:
 
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value)
-
-        serial_com.send_data(data)
+        success = serial_com.send_data(data)
+        if not success:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: Failed with going to pose")
+            return
 
         # Wait for robot to be done
-        self.done_event.wait()
         self.done_event.clear()
+        self.done_event.wait()
 
         # Update position. 
         self.x = x
@@ -201,7 +209,14 @@ class Robot:
         self.gripper_value = gripper_value
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
+            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
+
+    def goto_pos(self, x, y, z):
+        # Only changes the pos of the robot, not gripper
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
+
+        self.goto_pose(x, y, z, self.gripper_value)
 
     def get_pose(self):
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
@@ -270,5 +285,25 @@ class Robot:
     def get_gripper(self):
         return self.gripper_value
         
+    def move_x(self, x):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move x to: {x}")
+
+        self.goto_pose(x, self.y, self.z, self.gripper_value)
+
+    def move_y(self, y):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move y to: {y}")
+
+        self.goto_pose(self.x, y, self.z, self.gripper_value)
+
+    def move_z(self, z):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move z to: {z}")
+
+        self.goto_pose(self.x, self.y, z, self.gripper_value)
+
+
+
 
 robot = Robot()
