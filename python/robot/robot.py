@@ -1,5 +1,7 @@
+from misc.message_types import MessageTypes
 import threading
 from serial_data_communicator.serial_communicator import serial_com
+from serial_data_communicator.handy_functions import handy_functions
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
@@ -23,6 +25,7 @@ class Robot:
         self.J1 = None
         self.J2 = None
         self.J3 = None
+        self.gripper_value = 0
 
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
@@ -34,12 +37,12 @@ class Robot:
     def print_pose(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
-    def jog(self, J1, J2, J3, z):
+    def jog(self, J1, J2, J3, z, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to pose J1: {J1}, J2: {J2}, J3: {J3}, z:{z}")
+            print(f"{self.name}: Going to pose J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, self.z)
+        data = self.package_data(J1, J2, J3, z, gripper_value)
 
         serial_com.send_data(data)
 
@@ -55,17 +58,30 @@ class Robot:
         self.J1 = J1
         self.J2 = J2
         self.J3 = J3
+        self.gripper_value = gripper_value
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
+            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
+ 
+    def alter_gripper(self, gripper_value):
+        # Does this function really make sense? If so shouldn't there be a specific function for changing only x, y, z, j1, j2 and j3 as well?
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
-    def close_gripper(self):
-        pass
-    def open_gripper(self):
-        pass
-    def alter_gripper(self):
-        pass
+        # Package the pose in the correct way for the arduino to understand
+        data = self.package_data(self.J1, self.J2, self.J3, self.z, gripper_value)
+        serial_com.send_data(data)
 
+        # Wait for robot to be done
+        self.done_event.wait()
+        self.done_event.clear()
+
+        self.gripper_value = gripper_value
+
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: changed gripper value to: {gripper_value}")
+        
     def forward_kinematics(self,  J1, J2, in_radians=False):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
@@ -137,7 +153,7 @@ class Robot:
 
         return theta1, theta2, phi
         
-    def package_data(self, J1, J2, J3, z):
+    def package_data(self, J1, J2, J3, z, gripper_value):
         """
         data[0] - SAVE button status
         data[1] - RUN button status
@@ -153,21 +169,21 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to package data")
 
-        data = f"0,1,{J1},{J2},{J3},{z},0,{self.config['base_speed']},{self.config['base_acceleration']}"
+        data = f"0,1,{J1},{J2},{J3},{z},{gripper_value},{self.config['base_speed']},{self.config['base_acceleration']}"
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: packaged data: {data}")
 
         return data
 
-    def goto_pose(self, x, y, z):
+    def goto_pose(self, x, y, z, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to pose x: {x}, y: {y}, z: {z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, z)
+        data = self.package_data(J1, J2, J3, z, gripper_value)
 
         serial_com.send_data(data)
 
@@ -182,32 +198,38 @@ class Robot:
         self.J1 = J1
         self.J2 = J2
         self.J3 = J3
+        self.gripper_value = gripper_value
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At pose x: {x}, y: {y}, z: {z}")
+            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
 
     def get_pose(self):
         return (self.x, self.y, self.z)
 
     def home(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going home. NOT IMPLEMENTED YET")
+            print(f"{self.name}: Going home.")
 
-        data = "" #TODO: Change this to the correct data
-        self.x = 0 #TODO: Change this to the correct data
-        self.y = 0 #TODO: Change this to the correct data
-        self.z = 0 #TODO: Change this to the correct data
-        self.J1 = 0 #TODO: Change this to the correct data
-        self.J2 = 0 #TODO: Change this to the correct data
-        self.J3 = 0 #TODO: Change this to the correct data
+        data = MessageTypes.HOME.name 
         
-        serial_com.send_data("HOME") # TODO: Send some data so that it goes home
+        serial_com.send_data(data)
 
         self.done_event.wait()
         self.done_event.clear()
 
+        J1, J2, J3, z, gripper_value = handy_functions.get_pose()
+
+        x, y = self.forward_kinematics(J1, J2)
+        self.x = x 
+        self.y = y 
+        self.z = z 
+        self.J1 = J1 
+        self.J2 = J2 
+        self.J3 = J3 
+        self.gripper_value = gripper_value
+
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At home")
+            print(f"{self.name}: At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
     
     def load_configs(self):
         fp = Path(__file__)

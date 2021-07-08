@@ -45,7 +45,7 @@ class Communicator:
         with open(config_fp) as f:
             self.config_base = yaml.load(f, Loader=yaml.FullLoader)
         
-        self.name = self.config['name']
+        self.name = self.config['serial_com_name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def open_serial(self):
