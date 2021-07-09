@@ -39,9 +39,16 @@ class Robot:
     def print_pose(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
-    def goto_joints(self, J1, J2, J3, z, gripper_value):
+    def goto_joints(self, J1, J2, J3):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to pose J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
+            print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}")
+        
+        self.alter_robot(J1, J2, J3, self.z, self.gripper_value)
+
+
+    def alter_robot(self, J1, J2, J3, z, gripper_value):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value)
@@ -76,14 +83,8 @@ class Robot:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(self.J1, self.J2, self.J3, self.z, gripper_value)
-        serial_com.send_data(data)
+        self.alter_robot(self.J1, self.J2, self.J3, self.z, gripper_value)
 
-        # Wait for robot to be done
-        self.done_event.wait()
-        self.done_event.clear()
-
-        self.gripper_value = gripper_value
 
         
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -187,42 +188,30 @@ class Robot:
 
         return data
 
-    def goto_pose(self, x, y, z, gripper_value):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to pose x: {x}, y: {y}, z: {z}")
-
-        J1,J2,J3 = self.inverse_kinematics(x, y)
-
-        # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, z, gripper_value)
-        success = serial_com.send_data(data)
-        if not success:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with going to pose")
-            return
-
-        # Wait for robot to be done
-        self.done_event.clear()
-        self.done_event.wait()
-
-        # Update position. 
-        self.x = x
-        self.y = y
-        self.z = z
-        self.J1 = J1
-        self.J2 = J2
-        self.J3 = J3
-        self.gripper_value = gripper_value
-
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
-
     def goto_pos(self, x, y, z):
-        # Only changes the pos of the robot, not gripper
+        """
+        Only changes the pos of the robot, not gripper 
+        """ 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
 
-        self.goto_pose(x, y, z, self.gripper_value)
+        J1,J2,J3 = self.inverse_kinematics(x, y)
+        self.alter_robot(J1, J2, J3, z, self.gripper_value)
+
+    def goto_pose(self, J1, J2, J3, z):
+        """Changes angles of joints and z
+
+        Args:
+            J1 ([type]): [description]
+            J2 ([type]): [description]
+            J3 ([type]): [description]
+            z ([type]): [description]
+        """
+        if self.verbose_level <= VerboseLevel.DEBUG:            
+            print(f"{self.name}: Going to move to pose: J1:{J1}, J2:{J2}, J3:{J3}, z:{z}")
+
+        self.alter_robot(J1, J2, J3, z, self.gripper_value)
+
 
     def get_pose(self):
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
@@ -295,19 +284,19 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x}")
 
-        self.goto_pose(x, self.y, self.z, self.gripper_value)
+        self.goto_pos(x, self.y, self.z)
 
     def move_y(self, y):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move y to: {y}")
 
-        self.goto_pose(self.x, y, self.z, self.gripper_value)
+        self.goto_pos(self.x, y, self.z)
 
     def move_z(self, z):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move z to: {z}")
 
-        self.goto_pose(self.x, self.y, z, self.gripper_value)
+        self.goto_pos(self.x, self.y, z)
 
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
