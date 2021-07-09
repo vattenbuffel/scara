@@ -31,7 +31,7 @@ class Communicator:
 
         
         # This thread reads messages via the serial port
-        self.read_thread = threading.Thread(target=self.receive_message)
+        self.read_thread = threading.Thread(target=self.receive_message, name="serial_com_receive_msg_thread")
         self.read_thread.daemon = True
         self.read_thread.start()
 

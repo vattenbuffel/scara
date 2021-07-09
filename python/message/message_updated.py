@@ -30,7 +30,7 @@ class MessageUpdated:
         self.updated_dict = {key:[events_dict[key], MessageReceived(key, "")] for key in events_dict}
 
         # Thread that checks if a newer message has been added to serial com
-        self.check_thread = threading.Thread(target=self.loop)
+        self.check_thread = threading.Thread(target=self.loop, name=self.name + "_thread")
         self.check_thread.daemon = True
         self.check_thread.start()
 

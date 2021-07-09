@@ -303,5 +303,5 @@ def kill():
 
 cli = CLI()
 
-cli_thread = threading.Thread(target=cli.loop)
+cli_thread = threading.Thread(target=cli.loop, name=cli.name + "_thread")
 cli_thread.start()
