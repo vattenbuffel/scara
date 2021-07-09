@@ -4,6 +4,7 @@ class VerboseLevel(Enum):
     ALL = 0
     MSG_ARRIVE = 1
     DEBUG = 2
+    INFO = 2
     WARNING = 3
     ERROR = 4
 
