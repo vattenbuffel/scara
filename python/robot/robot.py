@@ -13,6 +13,7 @@ from math import atan, acos, sqrt, cos, sin, pi
 import math
 from robot.robot_cmd import RobotCmd
 from robot.robot_cmd_types import RobotCmdTypes
+import queue
 
 class Robot:
     def __init__(self):
@@ -36,8 +37,8 @@ class Robot:
         self.done_event = threading.Event()
         self.message_update = MessageUpdated({"DONE": self.done_event})
 
-        # Helper class that helps when robot should be altered
-        self.cmd = RobotCmd()
+        # Queue of helper RobotCmd, a class that helps when robot should be altered
+        self.cmd_queue = queue.Queue() # No max value
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -219,18 +220,12 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Triggering cmd of type: {type_.name}, with data: {data}.")
         
-        if self.cmd.event.is_set():
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: WARNING Cmd already set so robot is busy")
-            return False
-
-        self.cmd.type = type_
-        self.cmd.data = data
-        self.cmd.event.set()
+        cmd = RobotCmd(type_, data)
+        self.cmd_queue.put(cmd)
         return True
 
     def trigger_home_cmd(self):
-        self.trigger_robot_cmd(RobotCmdTypes.HOME, None)
+        return self.trigger_robot_cmd(RobotCmdTypes.HOME, (None,))
 
     def trigger_move_cmd(self, J1, J2, J3, z, gripper_value):
         """[summary]
@@ -265,7 +260,7 @@ class Robot:
         if not success and self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: WARNING Failed to home.")
 
-    def _home(self):
+    def _home(self, *arg):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
 
@@ -357,20 +352,16 @@ class Robot:
         
     def run(self):
         # A dict of functions to handle the commands
-        handle_fns = {RobotCmdTypes.HOME.name: lambda: self._home(), 
-                    RobotCmdTypes.MOVE.name: lambda: self._move_robot(*self.cmd.data)}
+        handle_fns = {RobotCmdTypes.HOME.name: self._home, 
+                    RobotCmdTypes.MOVE.name: self._move_robot}
         
         while True:
             if self.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{self.name}: Waiting for cmd.")
 
-            self.cmd.event.wait()
+            cmd = self.cmd_queue.get()
+            handle_fns[cmd.type.name](*cmd.data)
 
-            handle_fns[self.cmd.type.name]()
-
-            self.cmd.type = RobotCmdTypes.NONE
-            # This signals that robot is ready for a new command
-            self.cmd.event.clear()
             
 
             if self.verbose_level <= VerboseLevel.DEBUG:

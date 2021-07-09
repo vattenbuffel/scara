@@ -1,4 +1,3 @@
-import threading
 from robot.robot_cmd_types import RobotCmdTypes
 
 class RobotCmd:
@@ -9,8 +8,7 @@ class RobotCmd:
     the joint, z and grip values is contained. It also contains an event that will trigger 
     when the request has been done
     """
-    def __init__(self):
-        self.data = None
-        self.type = RobotCmdTypes.NONE 
-        self.event = threading.Event()
+    def __init__(self, type_:RobotCmdTypes, data):
+        self.data = data
+        self.type = type_
         
