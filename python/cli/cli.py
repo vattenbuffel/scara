@@ -8,6 +8,7 @@ import os
 from robot.robot import robot
 from serial_data_communicator.serial_communicator import serial_com
 import time
+import sys
 
 class CLI(cmd.Cmd):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -64,13 +65,13 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
 
-    def do_jog(self, arg):
+    def do_joints(self, arg):
         "Moves the robot into the position:  J1, J2, J3, z, gripper_value"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.jog(*parse(arg))
+            robot.goto_joints(*parse(arg))
         except TypeError:
             print(f"self.prompt Invalid command. Type help for help")
 
@@ -224,6 +225,14 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_z")
 
+    def do_kill(self, arg):
+        "Stops the program and kills all threads but the gui: kill"
+        kill()
+
+    def do_EOF(self, arg):
+        "Stops the program and kills all threads: ctrl+c"
+        self.do_kill(arg)
+
     def loop(self, intro=None):
         # Just a copy of cmd.cmdloop() but with a sleep added
         
@@ -281,12 +290,15 @@ def parse(arg):
 
 def kill():
     if cli.verbose_level <= VerboseLevel.DEBUG:
-        print(f"{cli.name}: will be killed")
-    
-    print(f"{cli.name}: kill not implemented")
-    
+        print(f"{cli.name}: Killing everything")
+    robot.kill()
+    serial_com.kill()
+    # gui.kill()
+    handy_functions.kill()
+        
     if cli.verbose_level <= VerboseLevel.ERROR:
         print(f"{cli.name}: Good bye!")
+    sys.exit()
 
 
 cli = CLI()

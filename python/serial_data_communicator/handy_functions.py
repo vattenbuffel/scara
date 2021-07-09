@@ -8,6 +8,7 @@ from misc.verbosity_levels import VerboseLevel
 import os
 import threading
 from message.message_updated import MessageUpdated
+import sys
 
 class HandyFunctions:
     def __init__(self) -> None:
@@ -81,7 +82,9 @@ class HandyFunctions:
     def get_gripper(self):
         return self.get_pose()[4]
 
-
+    def kill(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Dying")   
 
 
 handy_functions = HandyFunctions()

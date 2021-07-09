@@ -8,6 +8,8 @@ from pathlib import Path
 import os
 from message.message_updated import MessageUpdated
 from math import atan, acos, sqrt, cos, sin, pi
+import math
+import sys
 
 class Robot:
     def __init__(self):
@@ -37,7 +39,7 @@ class Robot:
     def print_pose(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
-    def jog(self, J1, J2, J3, z, gripper_value):
+    def goto_joints(self, J1, J2, J3, z, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to pose J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
@@ -48,7 +50,7 @@ class Robot:
 
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with jogging")
+                print(f"{self.name}: Failed with goto_joints")
             return
 
         # Wait for robot to be done
@@ -117,8 +119,12 @@ class Robot:
         if (x < 0 & y < 0): 
             theta2 = (-1) * theta2
         
-        
-        theta1 = atan(x / y) - atan((L2 * sin(theta2)) / (L1 + L2 * cos(theta2)))
+        # if y = 0 then div by zero
+        if y == 0:
+            theta1 = math.copysign(math.pi/2, x)
+            print(f"{self.name}: WARNING Zero division in atan(x/y). Setting to res to: {theta1} ")
+        else:
+            theta1 = atan(x / y) - atan((L2 * sin(theta2)) / (L1 + L2 * cos(theta2)))
         
         theta2 = (-1) * theta2 * 180 / pi
         theta1 = theta1 * 180 / pi
@@ -303,6 +309,10 @@ class Robot:
 
         self.goto_pose(self.x, self.y, z, self.gripper_value)
 
+    def kill(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Dying")    
+        
 
 
 

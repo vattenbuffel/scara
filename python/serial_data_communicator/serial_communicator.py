@@ -10,6 +10,7 @@ from message.message_receieved import MessageReceived
 from message.message_types import MessageTypes
 import threading
 import time
+import sys
 
 class Communicator:
     def __init__(self):
@@ -32,6 +33,7 @@ class Communicator:
         
         # This thread reads messages via the serial port
         self.read_thread = threading.Thread(target=self.receive_message)
+        self.read_thread.daemon = True
         self.read_thread.start()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -108,14 +110,11 @@ class Communicator:
         
         return True
 
-
     def kill(self):
-        if self.verbose_level <= VerboseLevel.WARNING:
-            print(f"Going to kill {self.name}")
-        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Dying")    
+            
         self.serial.close()
-        if self.verbose_level <= VerboseLevel.ERROR:
-            print(f"Good bye from {self.name}")
         
     def receive_message(self):
         while True:
@@ -128,8 +127,8 @@ class Communicator:
                 msg = self.serial.readline().decode()
                 msg_split = msg.split()
 
-                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-                    print(f"{self.name}: Empty message arrived")
+                if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.WARNING:
+                    print(f"{self.name}: WARNING Empty message arrived")
                     continue
 
 

@@ -31,6 +31,7 @@ class MessageUpdated:
 
         # Thread that checks if a newer message has been added to serial com
         self.check_thread = threading.Thread(target=self.loop)
+        self.check_thread.daemon = True
         self.check_thread.start()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
