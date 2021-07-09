@@ -1,3 +1,5 @@
+import traceback
+from streamlit.state.session_state import Value
 from message.message_types import MessageTypes
 import threading
 from serial_data_communicator.serial_communicator import serial_com
@@ -9,7 +11,8 @@ import os
 from message.message_updated import MessageUpdated
 from math import atan, acos, sqrt, cos, sin, pi
 import math
-import sys
+from robot.robot_cmd import RobotCmd
+from robot.robot_cmd_types import RobotCmdTypes
 
 class Robot:
     def __init__(self):
@@ -33,22 +36,28 @@ class Robot:
         self.done_event = threading.Event()
         self.message_update = MessageUpdated({"DONE": self.done_event})
 
+        # Helper class that helps when robot should be altered
+        self.cmd = RobotCmd()
+
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
 
-    def print_pose(self):
+        self.run_thread = threading.Thread(target=self.run, name=self.name + "_thread")
+        self.run_thread.daemon = True
+        self.run_thread.start()
+
+    def print_pos(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
     def goto_joints(self, J1, J2, J3):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}")
         
-        self.alter_robot(J1, J2, J3, self.z, self.gripper_value)
+        self.trigger_move_cmd(J1, J2, J3, self.z, self.gripper_value)
 
-
-    def alter_robot(self, J1, J2, J3, z, gripper_value):
+    def _move_robot(self, J1, J2, J3, z, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
+            print(f"{self.name}: Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value)
@@ -83,7 +92,7 @@ class Robot:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        self.alter_robot(self.J1, self.J2, self.J3, self.z, gripper_value)
+        self.trigger_move_cmd(self.J1, self.J2, self.J3, self.z, gripper_value)
 
 
         
@@ -116,7 +125,16 @@ class Robot:
         L1 = self.config['L1']
         L2 = self.config['L2']
         
-        theta2 = acos((sqrt(x) + sqrt(y) - sqrt(L1) - sqrt(L2)) / (2 * L1 * L2))
+        try:
+            theta2 = acos((sqrt(x) + sqrt(y) - sqrt(L1) - sqrt(L2)) / (2 * L1 * L2))
+        except ValueError as e:
+            if self.verbose_level <= VerboseLevel.ERROR:
+                traceback.print_exc()
+                print(e)
+                print(f"{self.name}: ERROR big maths problem. Variables were: x: {x}, y: {y}, L1: {L1}, L2: {L2}")
+
+            return None, None, None
+
         if (x < 0 & y < 0): 
             theta2 = (-1) * theta2
         
@@ -196,7 +214,32 @@ class Robot:
             print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
-        self.alter_robot(J1, J2, J3, z, self.gripper_value)
+        self.trigger_move_cmd(J1, J2, J3, z, self.gripper_value)
+
+    def trigger_robot_cmd(self, type_:RobotCmdTypes, data):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Triggering cmd of type: {type_.name}, with data: {data}.")
+        
+        if self.cmd.event.is_set():
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: WARNING Cmd already set so robot is busy")
+            return False
+
+        self.cmd.type = type_
+        self.cmd.data = data
+        self.cmd.event.set()
+        return True
+
+    def trigger_home_cmd(self):
+        self.trigger_robot_cmd(RobotCmdTypes.HOME, None)
+
+    def trigger_move_cmd(self, J1, J2, J3, z, gripper_value):
+        """[summary]
+
+        Args:
+            data (tuple): (J1,J2,J3,z,gripper_value)
+        """
+        self.trigger_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value))
 
     def goto_pose(self, J1, J2, J3, z):
         """Changes angles of joints and z
@@ -210,13 +253,20 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:            
             print(f"{self.name}: Going to move to pose: J1:{J1}, J2:{J2}, J3:{J3}, z:{z}")
 
-        self.alter_robot(J1, J2, J3, z, self.gripper_value)
-
+        self._move_robot(J1, J2, J3, z, self.gripper_value)
 
     def get_pose(self):
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
 
     def home(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going home.")
+        success = self.trigger_home_cmd()
+
+        if not success and self.verbose_level <= VerboseLevel.WARNING:
+            print(f"{self.name}: WARNING Failed to home.")
+
+    def _home(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
 
@@ -302,6 +352,26 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")    
         
+    def run(self):
+        # A dict of functions to handle the commands
+        handle_fns = {RobotCmdTypes.HOME.name: lambda: self._home(), 
+                    RobotCmdTypes.MOVE.name: lambda: self._move_robot(*self.cmd.data)}
+        
+        while True:
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Waiting for cmd.")
+
+            self.cmd.event.wait()
+
+            handle_fns[self.cmd.type.name]()
+
+            self.cmd.type = RobotCmdTypes.NONE
+            # This signals that robot is ready for a new command
+            self.cmd.event.clear()
+            
+
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Done with cmd.")
 
 
 

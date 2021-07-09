@@ -1,10 +1,14 @@
 from cli.cli import cli
 from robot import robot
 from serial_data_communicator.serial_communicator import serial_com
-from gui.gui import loop
+import streamlit as st
+
+if st._is_running_with_streamlit:
+    from gui.gui import loop
 
 
 if __name__ == '__main__':
-    loop()
+    if st._is_running_with_streamlit:
+        loop()
     print("Done in main")
     

@@ -53,12 +53,12 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with command go home")
 
     def do_pos(self, arg):
-        "Moves the robot into the position:  X Y Z, gripper_value"
+        "Moves the robot into the position:  X Y Z"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.goto_pose(*parse(arg))
+            robot.goto_pos(*parse(arg))
         except TypeError:
             print(f"self.prompt Invalid command. Type help for help")
 
@@ -66,7 +66,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with command pose")
 
     def do_joints(self, arg):
-        "Moves the robot into the position:  J1, J2, J3, z, gripper_value"
+        "Moves the joints:  J1, J2, J3"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command pose")
 
@@ -79,7 +79,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with command pose")
 
     def do_send(self, arg):
-        "Send the data to the robot's arduino:  DATA"
+        "Send the data to the robot's arduino. Probably is blocking:  DATA"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command send data")
 

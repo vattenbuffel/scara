@@ -10,7 +10,6 @@ from message.message_receieved import MessageReceived
 from message.message_types import MessageTypes
 import threading
 import time
-import sys
 
 class Communicator:
     def __init__(self):
