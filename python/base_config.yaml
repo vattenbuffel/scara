@@ -1,1 +1,1 @@
-verbose_level: DEBUG # Can be ALL, MSG_ARRIVE, DEBUG, WARNING or ERROR
+verbose_level: DEBUG # Can be ALL, MSG_ARRIVE, DEBUG, INFO, WARNING or ERROR

@@ -87,7 +87,6 @@ class Robot:
             print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
     def alter_gripper(self, gripper_value):
-        # Does this function really make sense? If so shouldn't there be a specific function for changing only x, y, z, j1, j2 and j3 as well?
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
@@ -351,6 +350,10 @@ class Robot:
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")    
+
+        
+        if self.verbose_level <= VerboseLevel.INFO:
+            print(f"{self.name}: Good bye!")
         
     def run(self):
         # A dict of functions to handle the commands

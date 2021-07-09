@@ -27,7 +27,7 @@ class CLI(cmd.Cmd):
         # Read all the configs
         self.load_configs()
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
+        if self.verbose_level <= VerboseLevel.INFO:
             print(f"Inited CLI.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
@@ -220,7 +220,7 @@ class CLI(cmd.Cmd):
         try:
             robot.move_z(*parse(arg))
         except TypeError:
-            print(f"self.prompt Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_z")
@@ -296,7 +296,7 @@ def kill():
     # gui.kill()
     handy_functions.kill()
         
-    if cli.verbose_level <= VerboseLevel.ERROR:
+    if cli.verbose_level <= VerboseLevel.INFO:
         print(f"{cli.name}: Good bye!")
     sys.exit()
 

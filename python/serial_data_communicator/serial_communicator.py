@@ -35,8 +35,28 @@ class Communicator:
         self.read_thread.daemon = True
         self.read_thread.start()
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
+        # Wait until the first heartbeat arrives and then put arduino_started to True
+        self.wait_first_heartbeat(self.received_messages[MessageTypes.HEARTBEAT.name])
+
+        if self.verbose_level <= VerboseLevel.INFO:
             print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+
+    def wait_first_heartbeat(self, prev_heartbeat):
+        """Busy wait loop until a heartbeat has arrived, then put arduino_started to True"""
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name} Waiting for arduino to start")
+        
+        prev_timestamp = prev_heartbeat.timestamp
+        # Wait until a new heartbeat with a different timestamp has arrived
+        while True:
+            timestamp = self.received_messages[MessageTypes.HEARTBEAT.name].timestamp
+            if timestamp != prev_timestamp:
+                break
+            time.sleep(0.1)
+
+        if self.verbose_level <= VerboseLevel.INFO:
+            print(f"{self.name} Arduino started")
+        self.arduino_started = True
 
     def load_configs(self):
         fp = Path(__file__)
@@ -126,8 +146,8 @@ class Communicator:
                 msg = self.serial.readline().decode()
                 msg_split = msg.split()
 
-                if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.WARNING:
-                    print(f"{self.name}: WARNING Empty message arrived")
+                if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.DEBUG:
+                    print(f"{self.name}: Empty message arrived")
                     continue
 
 
@@ -138,12 +158,6 @@ class Communicator:
                 try:
                     type_ = MessageTypes.str_to_type(msg_split[0])
                     self.received_messages[msg_split[0].upper()] = MessageReceived(type_, msg_split[1:])
-
-                    # If a heartbeat arrived set arduino_started to True
-                    if msg_split[0] == MessageTypes.HEARTBEAT.name:
-                        if  not self.arduino_started and self.verbose_level <= VerboseLevel.WARNING:
-                            print(f"{self.name} Arduino started")
-                        self.arduino_started = True
 
                 except ValueError as e:
                     if self.verbose_level <= VerboseLevel.WARNING:

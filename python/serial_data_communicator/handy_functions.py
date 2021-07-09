@@ -24,7 +24,7 @@ class HandyFunctions:
         self.heartbeat_event = threading.Event()
         self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event})
        
-        if self.verbose_level <= VerboseLevel.DEBUG:
+        if self.verbose_level <= VerboseLevel.INFO:
             print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
@@ -85,6 +85,10 @@ class HandyFunctions:
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")   
+
+        
+        if self.verbose_level <= VerboseLevel.INFO:
+            print(f"{self.name}: Good bye!")
 
 
 handy_functions = HandyFunctions()

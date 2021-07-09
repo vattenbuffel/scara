@@ -34,7 +34,7 @@ class MessageUpdated:
         self.check_thread.daemon = True
         self.check_thread.start()
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
+        if self.verbose_level <= VerboseLevel.INFO:
             print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
 
@@ -54,9 +54,8 @@ class MessageUpdated:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: will be killed")
         
-        print(f"{self.name}: kill not implemented")
         
-        if self.verbose_level <= VerboseLevel.ERROR:
+        if self.verbose_level <= VerboseLevel.INFO:
             print(f"{self.name}: Good bye!")
     
     def loop(self):
