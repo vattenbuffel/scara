@@ -1,5 +1,5 @@
 from cli.cli import cli
-from robot import robot
+from robot.robot import robot
 from serial_data_communicator.serial_communicator import serial_com
 import streamlit as st
 

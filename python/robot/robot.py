@@ -114,7 +114,7 @@ class Robot:
         L2 = self.config['L2']
         
         try:
-            theta2 = acos((sqrt(x) + sqrt(y) - sqrt(L1) - sqrt(L2)) / (2 * L1 * L2))
+            theta2 = acos((x**2 + y**2 - L1**2 - L2**2) / (2 * L1 * L2))
         except ValueError as e:
             if self.verbose_level <= VerboseLevel.ERROR:
                 traceback.print_exc()

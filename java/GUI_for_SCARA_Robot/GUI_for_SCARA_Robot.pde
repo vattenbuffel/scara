@@ -315,7 +315,7 @@ void draw() {
       theta1 = round(cp5.getController("j1Slider").getValue()); // get the value from the slider1
       theta2 = round(cp5.getController("j2Slider").getValue());
       forwardKinematics();
-      myPort.write(data);
+      ////myPort.write(data);
     }
   }
   slider1Previous = j1Slider;
@@ -325,7 +325,7 @@ void draw() {
       theta1 = round(cp5.getController("j1Slider").getValue()); // get the value from the slider1
       theta2 = round(cp5.getController("j2Slider").getValue());
       forwardKinematics();
-      myPort.write(data);
+      //myPort.write(data);
     }
   }
   slider2Previous = j2Slider;
@@ -335,7 +335,7 @@ void draw() {
       theta1 = round(cp5.getController("j1Slider").getValue()); // get the value from the slider1
       theta2 = round(cp5.getController("j2Slider").getValue());
       forwardKinematics();
-      myPort.write(data);
+      //myPort.write(data);
     }
   }
   slider3Previous = j3Slider;
@@ -343,7 +343,7 @@ void draw() {
   if (sliderzPrevious != zSlider) {
     if (activeIK == false) {     // Check whether the inverseKinematics mode is active, Executre Forward kinematics only if inverseKinematics mode is off or false
       zP = round(cp5.getController("zSlider").getValue());
-      myPort.write(data);
+      //myPort.write(data);
     }
   }
   sliderzPrevious = zSlider;
@@ -354,7 +354,7 @@ void draw() {
       gripperValue=gripperAdd+50;
       updateData();
       println(data);
-      myPort.write(data);
+      //myPort.write(data);
     }
   }
   gripperValuePrevious = gripperValue;
@@ -519,7 +519,7 @@ public void zJogPlus() {
 
 public void move() {
 
-  myPort.write(data);
+  //myPort.write(data);
   println(data);
 }
 
@@ -532,7 +532,7 @@ public void savePosition() {
   positionsCounter++;
   saveStatus = 1;
   updateData();
-  myPort.write(data);
+  //myPort.write(data);
   saveStatus=0;
 }
 
@@ -549,15 +549,15 @@ public void run() {
     cp5.getController("run").setColorLabel(255);
   }
   updateData();
-  myPort.write(data);
+  //myPort.write(data);
 }
 public void updateSA() {
-  myPort.write(data);
+  //myPort.write(data);
 }
 public void clearSteps() {
   saveStatus = 2; // clear all steps / program
   updateData();
-  myPort.write(data);
+  //myPort.write(data);
   println("Clear: "+data);
   positionsCounter=0;
   saveStatus = 0;
