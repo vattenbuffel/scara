@@ -2,7 +2,7 @@ serial_com_name: "Serial_communicator"
 baud_rate: 115200
 port: "COM6" #"dev/ttyUSB0"
 timeout_s: 1
-read_hz: 1
+read_hz: 100
 
 # Handy functions
 handy_functions_name: "Handy_functions"

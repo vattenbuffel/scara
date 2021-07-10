@@ -54,7 +54,7 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}")
         
-        self.trigger_move_cmd(J1, J2, J3, self.z, self.gripper_value)
+        self.add_move_cmd(J1, J2, J3, self.z, self.gripper_value)
 
     def _move_robot(self, J1, J2, J3, z, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -87,18 +87,6 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
-    def alter_gripper(self, gripper_value):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: going to change gripper value to: {gripper_value}")
-
-        # Package the pose in the correct way for the arduino to understand
-        self.trigger_move_cmd(self.J1, self.J2, self.J3, self.z, gripper_value)
-
-
-        
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: changed gripper value to: {gripper_value}")
-        
     def forward_kinematics(self,  J1, J2, in_radians=False):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
@@ -214,26 +202,26 @@ class Robot:
             print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
-        self.trigger_move_cmd(J1, J2, J3, z, self.gripper_value)
+        self.add_move_cmd(J1, J2, J3, z, self.gripper_value)
 
-    def trigger_robot_cmd(self, type_:RobotCmdTypes, data):
+    def add_robot_cmd(self, type_:RobotCmdTypes, data):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Triggering cmd of type: {type_.name}, with data: {data}.")
+            print(f"{self.name}: adding cmd of type: {type_.name}, with data: {data}.")
         
         cmd = RobotCmd(type_, data)
         self.cmd_queue.put(cmd)
         return True
 
-    def trigger_home_cmd(self):
-        return self.trigger_robot_cmd(RobotCmdTypes.HOME, (None,))
+    def add_home_cmd(self):
+        return self.add_robot_cmd(RobotCmdTypes.HOME, (None,))
 
-    def trigger_move_cmd(self, J1, J2, J3, z, gripper_value):
+    def add_move_cmd(self, J1, J2, J3, z, gripper_value):
         """[summary]
 
         Args:
             data (tuple): (J1,J2,J3,z,gripper_value)
         """
-        self.trigger_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value))
+        self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value))
 
     def goto_pose(self, J1, J2, J3, z):
         """Changes angles of joints and z
@@ -255,7 +243,7 @@ class Robot:
     def home(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
-        success = self.trigger_home_cmd()
+        success = self.add_home_cmd()
 
         if not success and self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: WARNING Failed to home.")
@@ -342,6 +330,36 @@ class Robot:
 
         self.goto_pos(self.x, self.y, z)
 
+    def move_J1(self, J1):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move J1 to: {J1}")
+
+        self.goto_joints(J1, self.J2, self.J3)
+    
+    def move_J2(self, J2):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move J2 to: {J2}")
+
+        self.goto_joints(self.J1, J2, self.J3)
+    
+    def move_J3(self, J3):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move J3 to: {J3}")
+
+        self.goto_joints(self.J1, self.J2, J3)
+    
+    def alter_gripper(self, gripper_value):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: going to change gripper value to: {gripper_value}")
+
+        # Package the pose in the correct way for the arduino to understand
+        self.add_move_cmd(self.J1, self.J2, self.J3, self.z, gripper_value)
+
+
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: changed gripper value to: {gripper_value}")
+        
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")    

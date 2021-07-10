@@ -224,6 +224,48 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_z")
+    
+    def do_move_J1(self,arg):
+        "Moves only the first joint of the robot:  J1 [deg]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_J1")
+
+        try:
+            robot.move_J1(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_J1")
+
+    
+    def do_move_J2(self,arg):
+        "Moves only the second joint of the robot:  J2 [deg]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_J2")
+
+        try:
+            robot.move_J2(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_J2")
+
+    
+    def do_move_J3(self,arg):
+        "Moves only the third joint of the robot:  J3 [deg]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_J3")
+
+        try:
+            robot.move_J3(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_J1")
+
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"
