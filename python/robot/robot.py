@@ -1,5 +1,4 @@
 import traceback
-from streamlit.state.session_state import Value
 from message.message_types import MessageTypes
 import threading
 from serial_data_communicator.serial_communicator import serial_com
@@ -9,8 +8,8 @@ import yaml
 from pathlib import Path
 import os
 from message.message_updated import MessageUpdated
-from math import atan, acos, sqrt, cos, sin, pi
-import math
+from math import atan2, cos, sin, pi
+import numpy as np
 from robot.robot_cmd import RobotCmd
 from robot.robot_cmd_types import RobotCmdTypes
 import queue
@@ -98,8 +97,8 @@ class Robot:
             J1 = J1 * pi / 180   # degrees to radians
             J2 = J2 * pi / 180
             
-        x = round(L1 * cos(J1) + L2 * cos(J1 + J2))
-        y = round(L1 * sin(J1) + L2 * sin(J1 + J2))
+        x = L1 * cos(J1) + L2 * cos(J1 + J2)
+        y = L1 * sin(J1) + L2 * sin(J1 + J2)
             
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: resulting positions: x:{x}, y:{y}")
@@ -112,59 +111,25 @@ class Robot:
 
         L1 = self.config['L1']
         L2 = self.config['L2']
-        
-        try:
-            theta2 = acos((x**2 + y**2 - L1**2 - L2**2) / (2 * L1 * L2))
-        except ValueError as e:
-            if self.verbose_level <= VerboseLevel.ERROR:
-                traceback.print_exc()
-                print(e)
-                print(f"{self.name}: ERROR big maths problem. Variables were: x: {x}, y: {y}, L1: {L1}, L2: {L2}")
 
+        
+        
+        theta2 = pi - np.arccos((L1**2 + L2**2 - x**2 - y**2) / (2 * L1 * L2) + 0j) # Ignoring the second solution, see documentation
+        # Sometimes theta2 becomes complex due to numerical error(I hope). Check if theta2 is too complex to be numerical error
+        if theta2.imag > self.config['imaginary_epsilon']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: WARNING Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
             return None, None, None
-
-        if (x < 0 & y < 0): 
-            theta2 = (-1) * theta2
-        
-        # if y = 0 then div by zero
-        if y == 0:
-            theta1 = math.copysign(math.pi/2, x)
-            print(f"{self.name}: WARNING Zero division in atan(x/y). Setting to res to: {theta1} ")
         else:
-            theta1 = atan(x / y) - atan((L2 * sin(theta2)) / (L1 + L2 * cos(theta2)))
-        
-        theta2 = (-1) * theta2 * 180 / pi
-        theta1 = theta1 * 180 / pi
+            theta2 = theta2.real
 
-        # Angles adjustment depending in which quadrant the final tool coordinate x,y is
-        if (x >= 0 & y >= 0):        # 1st quadrant
-            theta1 = 90 - theta1
-        
-        if (x < 0 & y > 0):       # 2nd quadrant
-            theta1 = 90 - theta1
-        
-        if (x < 0 & y < 0):        # 3d quadrant
-            theta1 = 270 - theta1
-            phi = 270 - theta1 - theta2
-            phi = (-1) * phi
-        
-        if (x > 0 & y < 0):        # 4th quadrant
-            theta1 = -90 - theta1
-        
-        if (x < 0 & y == 0): 
-            theta1 = 270 + theta1
-        
+
+        a = L1 + L2*cos(theta2)
+        b = L2*sin(theta2)
+        theta1 = atan2(y*a-b*x, x*a+b*y)
         
         # Calculate "phi" angle so gripper is parallel to the X axis
-        phi = 90 + theta1 + theta2
-        phi = (-1) * phi
-
-        # Angle adjustment depending in which quadrant the final tool coordinate x,y is
-        if (x < 0 & y < 0):        # 3d quadrant
-            phi = 270 - theta1 - theta2
-        
-        if (abs(phi) > 165): 
-            phi = 180 + phi
+        phi = pi/2 + theta1 + theta2 #TODO: not sure how correct this is
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
@@ -202,6 +167,11 @@ class Robot:
             print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
+        if J1 is None:
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Failed to go to pos: x:{x}, y:{y}, z:{z}")
+            return False
+
         self.add_move_cmd(J1, J2, J3, z, self.gripper_value)
 
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
