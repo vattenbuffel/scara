@@ -13,11 +13,11 @@ class MessageUpdated:
     serial communicator has and compares it to what it has. If a message is found to 
     be never then an event is set. This event is given as an input to this class.
     """
-    def __init__(self, events_dict:dict):
+    def __init__(self, events_dict:dict, name):
         # Read all the configs
         self.config_base = None # dict
         self.config = None # dict
-        self.name = None # str
+        self.name = name # str
         self.verbose_level = None # misc.verbosity_level
         
         # Read all the configs
@@ -47,7 +47,7 @@ class MessageUpdated:
         with open(config_fp) as f:
             self.config_base = yaml.load(f, Loader=yaml.FullLoader)
         
-        self.name = self.config['name']
+        self.name += '_' + self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def kill(self):
@@ -67,6 +67,9 @@ class MessageUpdated:
                 event, msg = self.updated_dict[key]
                 # Check if a newer message has arrived, if so set the associated event
                 if msg.timestamp < serial_com.received_messages[key].timestamp:
+                    if 'robot' in self.name:
+                        bajs = 5
+
                     if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                         print(f"{self.name}: new message arrived of type: {key}")
 

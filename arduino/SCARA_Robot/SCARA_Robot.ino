@@ -81,6 +81,7 @@ void setup() {
   delay(1000);
   data[5] = 100;
   homing();
+  delay(190000000000000000000);
 }
 
 void loop() {
@@ -272,7 +273,7 @@ void homing() {
   // Homing Stepper3
   Serial.println(F("Gonna home stepper 3"));
   while (digitalRead(limitSwitch3) != 1) {
-    stepper3.setSpeed(-1100);
+    stepper3.setSpeed(-1000);
     stepper3.runSpeed();
     stepper3.setCurrentPosition(-1662); // When limit switch pressed set position to 0 steps
   }

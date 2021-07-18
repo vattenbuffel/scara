@@ -52,9 +52,8 @@ To buy:
 		
 	Third order:
 		gt2 pulley 20 teeth, 5 mm bore: https://www.amazon.se/gp/huc/view.html?ie=UTF8&newItems=C920d0ab2-5596-4078-9486-228d7b984ca6%2C1
-		M2 lock nut: 
 		m3 30: 
-		Tving: 
+		a4988 driver: https://www.amazon.se/ARCELI-kompatibel-stegpinne-v%C3%A4rmes%C3%A4nka-3D-skrivarkontrollramper/dp/B07MXXL2KW/ref=pd_sim_2/257-8353603-5005663?pd_rd_w=bTHAu&pf_rd_p=0d4a43a9-9d92-4b9f-9d0d-6609164c1176&pf_rd_r=G5QJ5D234F6M6J3BP61F&pd_rd_r=43b0876a-3048-4a73-8d95-5582b8d24915&pd_rd_wg=Uqd2g&pd_rd_i=B07MXXL2KW&psc=1
 	
 	
 
@@ -91,7 +90,7 @@ Arrived:
 		Various lengths M3, M4 and M5 bolts and nuts:   yes
 		
 	Second order:
-		2x radial ball bearing  35mm 47mm, 6807:        no
+		2x radial ball bearing  35mm 47mm, 6807:        yes
 		2x radial ball bearing  30mm 42mm, 6806:        yes
 		<4x gt2 pulley 20 teeth: 						yes
 		2x 6mm rods: 									yes

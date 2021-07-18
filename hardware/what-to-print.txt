@@ -3,7 +3,7 @@ Printing:
 		Nothing
 	
 	Converted to gcode:
-		Gripper cover
+		Nothing
 		
 	Done printing:
 		base2
@@ -38,6 +38,7 @@ Printing:
 		gripper wide end
 		gripper wide gripper end left side
 		gripper servo holder
+		Gripper cover
 		
 		
 		

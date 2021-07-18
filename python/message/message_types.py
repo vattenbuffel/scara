@@ -1,7 +1,7 @@
 from enum import Enum
 
 class MessageTypes(Enum):
-    """Messages that can be sent to and received from the arduino
+    """Messages that can be received from the arduino
 
     Args:
         Enum ([type]): [description]

@@ -43,7 +43,7 @@ class CLI(cmd.Cmd):
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def do_home(self, arg):
-        "Return turtle to the home position:  None"
+        "Return robot to the home position:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command go home")
 
@@ -66,7 +66,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with command pose")
 
     def do_joints(self, arg):
-        "Moves the joints:  J1, J2, J3"
+        "Moves the joints to the angles given:  J1, J2, J3"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command pose")
 
@@ -226,7 +226,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with move_z")
     
     def do_move_J1(self,arg):
-        "Moves only the first joint of the robot:  J1 [deg]"
+        "Moves only the first joint of the robot to the angle given:  J1 [deg]"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_J1")
 
@@ -238,9 +238,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_J1")
 
-    
     def do_move_J2(self,arg):
-        "Moves only the second joint of the robot:  J2 [deg]"
+        "Moves only the second joint of the robot to the angle given:  J2 [deg]"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_J2")
 
@@ -252,9 +251,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_J2")
 
-    
     def do_move_J3(self,arg):
-        "Moves only the third joint of the robot:  J3 [deg]"
+        "Moves only the third joint of the robot to the angle given:  J3 [deg]"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_J3")
 
@@ -265,7 +263,6 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_J1")
-
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"

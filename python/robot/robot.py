@@ -34,7 +34,7 @@ class Robot:
 
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
-        self.message_update = MessageUpdated({"DONE": self.done_event})
+        self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name)
 
         # Queue of helper RobotCmd, a class that helps when robot should be altered
         self.cmd_queue = queue.Queue() # No max value
@@ -60,7 +60,7 @@ class Robot:
             print(f"{self.name}: Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, z, gripper_value)
+        data = self.package_data(J1, J2, J3, z, gripper_value, False)
 
         success = serial_com.send_data(data)
 
@@ -136,10 +136,13 @@ class Robot:
 
         return theta1, theta2, phi
         
-    def package_data(self, J1, J2, J3, z, gripper_value):
+    def package_data(self, J1, J2, J3, z, gripper_value, home, cnvrt_bool=True):
         """
-        data[0] - SAVE button status
-        data[1] - RUN button status
+        cnvrt_bool: The arduino has to get 1 or 0, not True or False. If they need to be translated to
+        1 or 0 then put cnvrt_bool to True.
+        
+        data[0] - STOP
+        data[1] - HOME
         data[2] - Joint 1 angle
         data[3] - Joint 2 angle
         data[4] - Joint 3 angle
@@ -148,11 +151,15 @@ class Robot:
         data[7] - Speed value
         data[8] - Acceleration value
         """
+        #TODO: Implement stop
     
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to package data")
+        
+        if cnvrt_bool:
+            home = 1 if home else 0
 
-        data = f"0,1,{J1},{J2},{J3},{z},{gripper_value},{self.config['base_speed']},{self.config['base_acceleration']}"
+        data = f"0,{home},{J1},{J2},{J3},{z},{gripper_value},{self.config['base_speed']},{self.config['base_acceleration']}"
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: packaged data: {data}")
@@ -221,9 +228,8 @@ class Robot:
     def _home(self, *arg):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
-
-        data = MessageTypes.HOME.name 
         
+        data = self.package_data(0,0,0,0,0,True)
         success = serial_com.send_data(data)
 
         if not success:

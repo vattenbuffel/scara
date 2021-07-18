@@ -105,6 +105,7 @@ class Communicator:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to send data: {data}")
             print(f"{self.name}: Add ending: {add_ending}")
+            print(f"{self.name}: convert_to_bytes: {convert_to_bytes}")
         
         if self.verbose_level <= VerboseLevel.WARNING and not self.arduino_started:
             print(f"{self.name}: Warning: Arduino not started")
@@ -143,7 +144,14 @@ class Communicator:
                     print(f"{self.name}: Data waiting to be read")
 
                 # Read new data
-                msg = self.serial.readline().decode()
+                try:
+                    msg = self.serial.readline().decode()
+                except UnicodeDecodeError as e:
+                    if self.verbose_level <= VerboseLevel.WARNING:
+                        traceback.print_exc()
+                        print(f"{self.name}: Invalid char received from the arduino")
+                    continue
+
                 msg_split = msg.split()
 
                 if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.DEBUG:
@@ -151,8 +159,9 @@ class Communicator:
                     continue
 
 
-                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-                    print(f"{self.name}: Read: {msg}")
+                if self.verbose_level <= VerboseLevel.DEBUG: # should be level msg_receive
+                    if not "HEARTBEAT" in msg: # TEMP
+                        print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:

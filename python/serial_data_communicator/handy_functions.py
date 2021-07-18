@@ -22,7 +22,7 @@ class HandyFunctions:
         
         # Class that will check if new messages have arrived to serial_communicator
         self.heartbeat_event = threading.Event()
-        self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event})
+        self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event}, self.name)
        
         if self.verbose_level <= VerboseLevel.INFO:
             print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -53,7 +53,6 @@ class HandyFunctions:
 
         pose = serial_com.received_messages[MessageTypes.HEARTBEAT.name].data
         pose = [float(p) for p in pose]
-        # pose = [1,2,3,4,5]
 
         if len(pose) != 5:
             if self.verbose_level <= VerboseLevel.ERROR:
