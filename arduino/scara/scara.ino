@@ -16,8 +16,8 @@
 #define limitSwitch3 9
 #define limitSwitch4 A3
 
-#define home_speed 50
-#define home_acceleration 50
+#define home_speed 500
+#define home_acceleration 2000
 
 #define z_height_start_mm 155
 

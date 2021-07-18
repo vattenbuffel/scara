@@ -59,6 +59,14 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
+        # Make sure the pos wanted are possible
+        success = self.validate_movement_data(J1, J2, J3, z, gripper_value, self.config['base_speed'], self.config['base_acceleration'])
+        if not success:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name}: Failed with goto_joints")
+            return
+
+
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value, False, True)
 
@@ -86,6 +94,50 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
+    def validate_movement_data(self, J1, J2, J3, z, gripper_value, vel, acc):
+        """Validates the input and makes sure the angle values, z-axis values, gripper values,
+            velocity and acceleration is within bounds.
+            
+        """
+
+        if J1 < self.config['J1_min'] or J1 > self.config['J1_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: J1 out of bound")
+            return False
+
+        if J2 < self.config['J2_min'] or J2 > self.config['J2_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: J2 out of bound")
+            return False
+
+        if J3 < self.config['J3_min'] or J3 > self.config['J3_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: J3 out of bound")
+            return False
+
+        if z < self.config['z_min'] or z > self.config['z_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: z out of bound")
+            return False
+
+        if gripper_value < self.config['gripper_min'] or gripper_value > self.config['gripper_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: gripper_value out of bound")
+            return False
+
+        if vel < self.config['v_min'] or vel > self.config['v_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: vel out of bound")
+            return False
+
+        
+        if acc < self.config['a_min'] or acc > self.config['a_max']:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                print(f"{self.name} Warning: acc out of bound")
+            return False
+
+        return True
+        
     def forward_kinematics(self,  J1, J2, in_radians=False):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
