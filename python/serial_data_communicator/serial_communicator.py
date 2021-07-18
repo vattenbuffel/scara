@@ -160,7 +160,7 @@ class Communicator:
 
 
                 if self.verbose_level <= VerboseLevel.DEBUG: # should be level msg_receive
-                    if not "HEARTBEAT" in msg: # TEMP
+                    if not "HEARTBEAT" in msg: # TODO:TEMP
                         print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example

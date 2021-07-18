@@ -67,9 +67,6 @@ class MessageUpdated:
                 event, msg = self.updated_dict[key]
                 # Check if a newer message has arrived, if so set the associated event
                 if msg.timestamp < serial_com.received_messages[key].timestamp:
-                    if 'robot' in self.name:
-                        bajs = 5
-
                     if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                         print(f"{self.name}: new message arrived of type: {key}")
 
