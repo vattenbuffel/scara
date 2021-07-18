@@ -231,7 +231,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_J1")
 
         try:
-            robot.move_J1(*parse(arg))
+            robot.move_J1(*parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -244,7 +244,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_J2")
 
         try:
-            robot.move_J2(*parse(arg))
+            robot.move_J2(*parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -257,7 +257,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_J3")
 
         try:
-            robot.move_J3(*parse(arg))
+            robot.move_J3(*parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 

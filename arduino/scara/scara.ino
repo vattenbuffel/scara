@@ -27,13 +27,23 @@
 #define STEPS_TO_MM_Z(n) ((int) ((n)/zDistanceToSteps))
 
 // Macro to calculate how many steps deg degrees corresponds to with angle_to_steps = ang_to_steps
-#define DEG_TO_STEPS_BASE(deg, ang_to_steps) ((int) (n*ang_to_steps))
+#define DEG_TO_STEPS_BASE(deg, ang_to_steps) ((int) ((deg)*ang_to_steps))
 //Macro to calculate deg to steps in theta1
-#define DEG_TO_STEPS_THETA1(deg) (DEG_TO_STEPS_BASE(deg, theta1AngleToSteps))
+#define DEG_TO_STEPS_THETA1(deg) (DEG_TO_STEPS_BASE((deg), theta1AngleToSteps))
 //Macro to calculate deg to steps in theta2
-#define DEG_TO_STEPS_THETA2(deg) (DEG_TO_STEPS_BASE(deg, theta2AngleToSteps))
+#define DEG_TO_STEPS_THETA2(deg) (DEG_TO_STEPS_BASE((deg), theta2AngleToSteps))
 //Macro to calculate deg to steps in theta3
-#define DEG_TO_STEPS_THETA3(deg) (DEG_TO_STEPS_BASE(deg, theta3AngleToSteps))
+#define DEG_TO_STEPS_THETA3(deg) (DEG_TO_STEPS_BASE((deg), theta3AngleToSteps))
+
+// Macro to calculate how many degrees n steps corresponds to with angle_to_steps = ang_to_steps
+#define STEPS_TO_DEG_BASE(n, ang_to_steps) (((float)(n)/ang_to_steps))
+//Macro to calculate deg to steps in theta1
+#define STEPS_TO_DEG_THETA1(n) (STEPS_TO_DEG_BASE((n), theta1AngleToSteps))
+//Macro to calculate deg to steps in theta2
+#define STEPS_TO_DEG_THETA2(n) (STEPS_TO_DEG_BASE((n), theta2AngleToSteps))
+//Macro to calculate deg to steps in theta3
+#define STEPS_TO_DEG_THETA3(n) (STEPS_TO_DEG_BASE((n), theta3AngleToSteps))
+
 
 void homeing();
 void stop();
@@ -145,12 +155,9 @@ void loop() {
 
 void move(){
   stepper1Position = data[3] * theta1AngleToSteps;
-  stepper2Position = data[4] * theta2AngleToSteps;
-  stepper3Position = data[5] * phiAngleToSteps;
+  stepper3Position = data[4] * theta2AngleToSteps;
+  stepper2Position = data[5] * phiAngleToSteps;
   stepper4Position = data[6] * zDistanceToSteps;
-
-  Serial.print("z stepper position: ");
-  Serial.println(stepper4Position);
 
   stepper1.moveTo(stepper1Position);
   stepper2.moveTo(stepper2Position);
@@ -163,19 +170,19 @@ void move(){
   stepper4.setAcceleration(data[9]);
 
   // Set the speed and sign of the speed for each motor
-  stepper1.setSpeed(data[8]* ((data[3]>z) ? 1:-1));
-  stepper2.setSpeed(data[8]* ((data[4]>z) ? 1:-1));
-  stepper3.setSpeed(data[8]* ((data[5]>z) ? 1:-1));
+  stepper1.setSpeed(data[8]* ((data[3]>theta1) ? 1:-1));
+  stepper2.setSpeed(data[8]* ((data[5]>phi) ? 1:-1));
+  stepper3.setSpeed(data[8]* ((data[4]>theta2) ? 1:-1));
   stepper4.setSpeed(data[8]* ((data[6]>z) ? 1:-1));
 
   gripperServo.write(data[7]);
 
   // while (stepper1.currentPosition() != stepper1Position || stepper2.currentPosition() != stepper2Position || stepper3.currentPosition() != stepper3Position || stepper4.currentPosition() != stepper4Position) {
-  while(stepper4.currentPosition() != stepper4Position){
+  while(stepper3.currentPosition() != stepper3Position){
     // stepper1.runSpeed();
     // stepper2.runSpeed();
-    // stepper3.runSpeed();
-    stepper4.runSpeed();
+    stepper3.runSpeed();
+    // stepper4.runSpeed();
   }
   Serial.println("Done moving");
   delay(100);
@@ -221,39 +228,40 @@ void homeing() {
   // TODO: Actually do the above
 
 
-  Serial.println(F("Gonna home stepper 4"));
-  // Homing Stepper4
-  while (digitalRead(limitSwitch4) != 1) {
-    stepper4.setSpeed(1500);
-    stepper4.runSpeed();
-  }
-  Serial.println("found home\n");
-  stepper4.setCurrentPosition(z_height_start_mm*zDistanceToSteps); // When limit switch pressed set position to 0 steps
-  delay(20);
-  int goal_pos = stepper4.currentPosition() - MM_TO_STEPS_Z(50);
-  stepper4.moveTo(goal_pos);
-  while (stepper4.currentPosition() != goal_pos) {
-    stepper4.run();
-  }
-  z = STEPS_TO_MM_Z(stepper4.currentPosition());
-  Serial.println(F("Done homing stepper 4"));
-  
-  
-
-  // // Homing Stepper3
-  // Serial.println(F("Gonna home stepper 3"));
-  // while (digitalRead(limitSwitch3) != 1) {
-  //   stepper3.setSpeed(-1100);
-  //   stepper3.runSpeed();
-  //   stepper3.setCurrentPosition(-1662); // When limit switch pressed set position to 0 steps
+  // Serial.println(F("Gonna home stepper 4"));
+  // // Homing Stepper4
+  // while (digitalRead(limitSwitch4) != 1) {
+  //   stepper4.setSpeed(1500);
+  //   stepper4.runSpeed();
   // }
+  // Serial.println("found home\n");
+  // stepper4.setCurrentPosition(z_height_start_mm*zDistanceToSteps); // When limit switch pressed set position to 0 steps
   // delay(20);
-
-  // stepper3.moveTo(0);
-  // while (stepper3.currentPosition() != 0) {
-  //   stepper3.run();
+  int goal_pos = stepper4.currentPosition() - MM_TO_STEPS_Z(50);
+  // stepper4.moveTo(goal_pos);
+  // while (stepper4.currentPosition() != goal_pos) {
+  //   stepper4.run();
   // }
-  // Serial.println(F("Done homing stepper 3"));
+  // z = STEPS_TO_MM_Z(stepper4.currentPosition());
+  // Serial.println(F("Done homing stepper 4"));
+  
+  
+
+  // Homing Stepper3
+  Serial.println(F("Gonna home stepper 3"));
+  while (digitalRead(limitSwitch3) != 1) {
+    stepper3.setSpeed(-1100);
+    stepper3.runSpeed();
+  }
+  stepper3.setCurrentPosition(-5500); // When limit switch pressed set position to 0 steps
+  delay(20);
+  goal_pos = stepper3.currentPosition() + DEG_TO_STEPS_THETA2(25);
+  stepper3.moveTo(goal_pos);
+  while (stepper3.currentPosition() != goal_pos) {
+    stepper3.run();
+  }
+  theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
+  Serial.println(F("Done homing stepper 3"));
 
   // // Homing Stepper2
   // Serial.println(F("Gonna home stepper 2"));

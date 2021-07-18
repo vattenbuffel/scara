@@ -96,42 +96,41 @@ class Robot:
  
     def validate_movement_data(self, J1, J2, J3, z, gripper_value, vel, acc):
         """Validates the input and makes sure the angle values, z-axis values, gripper values,
-            velocity and acceleration is within bounds.
-            
+            velocity and acceleration is within bounds.    
         """
 
-        if J1 < self.config['J1_min'] or J1 > self.config['J1_max']:
+        if not self.config['J1_min'] <= J1 <= self.config['J1_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: J1 out of bound")
             return False
 
-        if J2 < self.config['J2_min'] or J2 > self.config['J2_max']:
+        if not self.config['J2_min'] <= J2 <= self.config['J2_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: J2 out of bound")
             return False
 
-        if J3 < self.config['J3_min'] or J3 > self.config['J3_max']:
+        if not self.config['J3_min'] <= J3 <= self.config['J3_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: J3 out of bound")
             return False
 
-        if z < self.config['z_min'] or z > self.config['z_max']:
+        if not self.config['z_min'] <= z <= self.config['z_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: z out of bound")
             return False
 
-        if gripper_value < self.config['gripper_min'] or gripper_value > self.config['gripper_max']:
+        if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: gripper_value out of bound")
             return False
 
-        if vel < self.config['v_min'] or vel > self.config['v_max']:
+        if not self.config['v_min'] <= vel <= self.config['v_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: vel out of bound")
             return False
 
         
-        if acc < self.config['a_min'] or acc > self.config['a_max']:
+        if not self.config['a_min'] <= acc <= self.config['a_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: acc out of bound")
             return False
@@ -188,7 +187,7 @@ class Robot:
 
         return theta1, theta2, phi
         
-    def package_data(self, J1, J2, J3, z, gripper_value, home, move, cnvrt_bool=True):
+    def package_data(self, J1, J2, J3, z, gripper_value, home, move, cnvrt_bool=True, in_rad=True):
         """
         cnvrt_bool: The arduino has to receive 1 or 0, not True or False. If home, move and stop need to be translated to
         1 or 0 then put cnvrt_bool to True.
@@ -212,6 +211,12 @@ class Robot:
         if cnvrt_bool:
             home = 1 if home else 0
             move = 1 if move else 0   
+        
+        # Convert rad to deg, which the arduino understands
+        if in_rad:
+            J1 = np.rad2deg(J1)
+            J2 = np.rad2deg(J2)
+            J3 = np.rad2deg(J3)
 
         data = f"0,{home},{move},{J1},{J2},{J3},{z},{gripper_value},{self.config['base_speed']},{self.config['base_acceleration']}"
         
@@ -360,22 +365,25 @@ class Robot:
 
         self.goto_pos(self.x, self.y, z)
 
-    def move_J1(self, J1):
+    def move_J1(self, J1, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J1 to: {J1}")
+            print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
 
+        J1 = J1 if in_rad else np.deg2rad(J1)
         self.goto_joints(J1, self.J2, self.J3)
     
-    def move_J2(self, J2):
+    def move_J2(self, J2, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J2 to: {J2}")
+            print(f"{self.name}: Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
 
+        J2 = J2 if in_rad else np.deg2rad(J2)
         self.goto_joints(self.J1, J2, self.J3)
     
-    def move_J3(self, J3):
+    def move_J3(self, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J3 to: {J3}")
+            print(f"{self.name}: Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
 
+        J3 = J3 if in_rad else np.deg2rad(J3)
         self.goto_joints(self.J1, self.J2, J3)
     
     def alter_gripper(self, gripper_value):
