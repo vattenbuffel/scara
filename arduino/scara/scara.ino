@@ -102,10 +102,12 @@ void setup() {
   stepper4.setMaxSpeed(4000);
   stepper4.setAcceleration(2000);
 
-  gripperServo.attach(A0, 600, 2500);
+  // gripperServo.attach(A0, 600, 2500);
+  gripperServo.attach(A0);
   // initial servo value - open gripper
-  data[6] = 180;
-  gripperServo.write(data[6]);
+  gripper_value = 0
+  data[6] = gripper_value;
+  gripperServo.write(gripper_value);
   delay(1000);
   data[5] = 100;
   // homeing();
@@ -170,8 +172,8 @@ void move(){
   stepper4.setAcceleration(data[9]);
 
   // Set the speed and sign of the speed for each motor
-  stepper1.setSpeed(data[8]* ((data[3]>phi) ? 1:-1));
-  stepper2.setSpeed(data[8]* ((data[5]>theta1) ? 1:-1));
+  stepper1.setSpeed(data[8]* ((data[5]>phi) ? 1:-1));
+  stepper2.setSpeed(data[8]* ((data[3]>theta1) ? 1:-1));
   stepper3.setSpeed(data[8]* ((data[4]>theta2) ? 1:-1));
   stepper4.setSpeed(data[8]* ((data[6]>z) ? 1:-1));
 
@@ -180,9 +182,12 @@ void move(){
   // while (stepper1.currentPosition() != stepper1Position || stepper2.currentPosition() != stepper2Position || stepper3.currentPosition() != stepper3Position || stepper4.currentPosition() != stepper4Position) {
   while(stepper2.currentPosition() != stepper2Position || stepper3.currentPosition() != stepper3Position || stepper4.currentPosition() != stepper4Position){
     // stepper1.runSpeed();
-    stepper2.runSpeed();
-    stepper3.runSpeed();
-    stepper4.runSpeed();
+    if (stepper2.currentPosition() != stepper2Position)
+      stepper2.runSpeed();
+    if (stepper3.currentPosition() != stepper3Position)
+      stepper3.runSpeed();
+    if (stepper4.currentPosition() != stepper4Position)
+      stepper4.runSpeed();
   }
   Serial.println("Done moving");
   delay(100);
@@ -275,7 +280,7 @@ void homeing() {
       stepper2.setSpeed(-1300);
       stepper2.runSpeed();
     }
-    stepper2.setCurrentPosition(-4600); 
+    stepper2.setCurrentPosition(-5000); 
     delay(20);
     int goal_pos = stepper2.currentPosition() + DEG_TO_STEPS_THETA1(25);
     stepper2.moveTo(goal_pos);

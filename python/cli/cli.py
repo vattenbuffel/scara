@@ -72,7 +72,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.goto_joints(*parse(arg))
+            robot.goto_joints(*parse(arg), in_rad=False)
         except TypeError:
             print(f"self.prompt Invalid command. Type help for help")
 
@@ -128,8 +128,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J1")
 
-        robot_J1 = robot.get_J1()
-        arduino_J1 = handy_functions.get_J1()
+        robot_J1 = np.rad2deg(robot.get_J1())
+        arduino_J1 = handy_functions.get_J1(in_rad=False)
         print(f"{self.prompt} robot_J1: {robot_J1}, arduino_J1: {arduino_J1}")
         
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -140,8 +140,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J2")
 
-        robot_J2 = robot.get_J2()
-        arduino_J2 = handy_functions.get_J2()
+        robot_J2 = np.rad2deg(robot.get_J2())
+        arduino_J2 = handy_functions.get_J2(in_rad=False)
         print(f"{self.prompt} robot_J2: {robot_J2}, arduino_J2: {arduino_J2}")
         
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -152,8 +152,8 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_J3")
 
-        robot_J3 = robot.get_J3()
-        arduino_J3 = handy_functions.get_J3()
+        robot_J3 = np.rad2deg(robot.get_J3())
+        arduino_J3 = handy_functions.get_J3(in_rad=False)
         print(f"{self.prompt} robot_J3: {robot_J3}, arduino_J3: {arduino_J3}")
         
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -184,7 +184,7 @@ class CLI(cmd.Cmd):
         robot_data[4] = np.rad2deg(robot_data[4])
         robot_data[5] = np.rad2deg(robot_data[5])
         
-        arduino = handy_functions.get_pose(in_rad=True)
+        arduino = handy_functions.get_pose(in_rad=False)
 
         print(f"{self.prompt} robot: {robot_data},\n{self.prompt} arduino: {arduino}")
         
@@ -270,7 +270,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Done with move_J1")
 
     def do_move_gripper(self,arg):
-        "Moves only the gripperof the robot to the given value:  val [0-180]"
+        "Moves only the gripper of the robot to the given value:  val [0-180]"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_gripper")
 
@@ -281,6 +281,32 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_gripper")
+    
+    def do_open_gripper(self,arg):
+        "Opens the gripper"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command open_gripper")
+
+        try:
+            robot.open_gripper()
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with open_gripper")
+
+    def do_close_gripper(self,arg):
+        "Closes the gripper"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command close_gripper")
+
+        try:
+            robot.close_gripper()
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with close_gripper")
 
 
 

@@ -49,10 +49,15 @@ class Robot:
     def print_pos(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
-    def goto_joints(self, J1, J2, J3):
+    def goto_joints(self, J1, J2, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}")
+            print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
         
+        if not in_rad:
+            J1 = np.deg2rad(J1)
+            J2 = np.deg2rad(J2)
+            J3 = np.deg2rad(J3)
+
         self.add_move_cmd(J1, J2, J3, self.z, self.gripper_value)
 
     def _move_robot(self, J1, J2, J3, z, gripper_value):
@@ -113,7 +118,7 @@ class Robot:
         if not self.config['J3_min'] <= J3 <= self.config['J3_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name} Warning: J3 out of bound")
-            return False
+            # return False #TODO: temp since J3 isn't with us right now
 
         if not self.config['z_min'] <= z <= self.config['z_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
@@ -165,23 +170,33 @@ class Robot:
         L2 = self.config['L2']
 
         
-        
-        theta2 = pi - np.arccos((L1**2 + L2**2 - x**2 - y**2) / (2 * L1 * L2) + 0j) # Ignoring the second solution, see documentation
+        # Calculate the angle of the second joint. There are always 2 possibilites
+        theta2 = [None, None]
+        theta2[0] = pi - np.arccos((L1**2 + L2**2 - x**2 - y**2) / (2 * L1 * L2) + 0j) 
+        theta2[1] = - theta2[0]
         # Sometimes theta2 becomes complex due to numerical error(I hope). Check if theta2 is too complex to be numerical error
-        if theta2.imag > self.config['imaginary_epsilon']:
+        for i in range(len(theta2)):
+            if theta2[i].imag > self.config['imaginary_epsilon']:
+                # If theta2 is too imaginary then an invalid position was given, if so put theat2 to None
+                theta2[i] = None
+            else:
+                theta2[i] = theta2[i].real
+
+        # If both theta2 are None then impossible position given
+        if theta2[0] is None and theta2[1] is None:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name}: WARNING Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
             return None, None, None
-        else:
-            theta2 = theta2.real
 
-
-        a = L1 + L2*cos(theta2)
-        b = L2*sin(theta2)
-        theta1 = atan2(y*a-b*x, x*a+b*y)
+        def calc_theta1(theta2):
+            a = L1 + L2*cos(theta2)
+            b = L2*sin(theta2)
+            return atan2(y*a-b*x, x*a+b*y)
+        
+        theta1 = [calc_theta1(theta2[0]), calc_theta1(theta2[1])]
         
         # Calculate "phi" angle so gripper is parallel to the X axis
-        phi = pi/2 + theta1 + theta2 #TODO: not sure how correct this is
+        phi = pi/2 + theta1[0] + theta2[0] #TODO: not sure how correct this is
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
@@ -239,7 +254,20 @@ class Robot:
                 print(f"{self.name}: Failed to go to pos: x:{x}, y:{y}, z:{z}")
             return False
 
-        self.add_move_cmd(J1, J2, J3, z, self.gripper_value)
+        # Pick a valid solution out of the 2 possibile ones
+        good_i = None
+        for i in range(2):
+            if self.validate_movement_data(J1[i], J2[i], J3, z, self.gripper_value, self.config['base_speed'], self.config['base_acceleration']):
+                good_i = i
+                break
+        if good_i is None:
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Failed to go to pos: x:{x}, y:{y}, z:{z}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
+            return False
+
+
+        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value)
+        return True
 
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -400,6 +428,18 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: changed gripper value to: {gripper_value}")
         
+    def close_gripper(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: going to close gripper")
+
+        self.alter_gripper(self.config['gripper_max'])
+
+    def open_gripper(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: going to open gripper")
+
+        self.alter_gripper(self.config['gripper_min'])
+
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")    

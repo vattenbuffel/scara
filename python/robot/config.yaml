@@ -15,10 +15,10 @@ J1_min: -1.58
 J2_max: 1.58
 J2_min: -1.58
 
-J3_max: 1.58
-J3_min: -1.58
+J3_max: 3.14
+J3_min: -3.14
 
-gripper_max: 180
+gripper_max: 40
 gripper_min: 0
 
 v_max: 2000
