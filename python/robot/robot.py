@@ -80,6 +80,7 @@ class Robot:
         # Wait for robot to be done
         self.done_event.clear()
         self.done_event.wait()
+        self.done_event.clear()
 
         # Update position. 
         x,y = self.forward_kinematics(J1, J2)
@@ -137,7 +138,7 @@ class Robot:
 
         return True
         
-    def forward_kinematics(self,  J1, J2, in_radians=False):
+    def forward_kinematics(self,  J1, J2, in_radians=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
 
@@ -296,7 +297,8 @@ class Robot:
                 print(f"{self.name}: Failed with going home")
             return
 
-
+        
+        self.done_event.clear()
         self.done_event.wait()
         self.done_event.clear()
 

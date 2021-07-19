@@ -9,6 +9,7 @@ from robot.robot import robot
 from serial_data_communicator.serial_communicator import serial_com
 import time
 import sys
+import numpy as np
 
 class CLI(cmd.Cmd):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -178,10 +179,14 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command get_pose")
 
-        robot_data = robot.get_pose()
-        arduino = handy_functions.get_pose()
+        robot_data = list(robot.get_pose())
+        robot_data[3] = np.rad2deg(robot_data[3])
+        robot_data[4] = np.rad2deg(robot_data[4])
+        robot_data[5] = np.rad2deg(robot_data[5])
+        
+        arduino = handy_functions.get_pose(in_rad=True)
 
-        print(f"{self.prompt} robot: {list(robot_data)},\n{self.prompt} arduino: {arduino}")
+        print(f"{self.prompt} robot: {robot_data},\n{self.prompt} arduino: {arduino}")
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_pose")
@@ -263,6 +268,21 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_J1")
+
+    def do_move_gripper(self,arg):
+        "Moves only the gripperof the robot to the given value:  val [0-180]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_gripper")
+
+        try:
+            robot.alter_gripper(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with move_gripper")
+
+
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"

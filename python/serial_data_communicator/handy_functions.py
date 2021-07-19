@@ -9,6 +9,7 @@ import os
 import threading
 from message.message_updated import MessageUpdated
 import sys
+import numpy as np
 
 class HandyFunctions:
     def __init__(self) -> None:
@@ -39,7 +40,7 @@ class HandyFunctions:
         self.name = self.config['handy_functions_name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def get_pose(self):
+    def get_pose(self, in_rad=True):
         """Gets the pose and gripper value of the arduino. Waits for a new heartbeat to arrive.
 
         Returns:
@@ -54,6 +55,11 @@ class HandyFunctions:
         pose = serial_com.received_messages[MessageTypes.HEARTBEAT.name].data
         pose = [float(p) for p in pose]
 
+        # Convert to rad
+        for i in range(3):
+            pose[i] = np.deg2rad(pose[i])
+
+
         if len(pose) != 5:
             if self.verbose_level <= VerboseLevel.ERROR:
                 print(f"{self.name} ERROR no heartbeat received from arduino. Stopping code.")
@@ -66,14 +72,14 @@ class HandyFunctions:
 
             
         
-    def get_J1(self):
-        return self.get_pose()[0]
+    def get_J1(self, in_rad=True):
+        return self.get_pose(in_rad=in_rad)[0]
         
-    def get_J2(self):
-        return self.get_pose()[1]
+    def get_J2(self, in_rad=True):
+        return self.get_pose(in_rad=in_rad)[1]
         
-    def get_J3(self):
-        return self.get_pose()[2]
+    def get_J3(self, in_rad=True):
+        return self.get_pose(in_rad=in_rad)[2]
     
     def get_z(self):
         return self.get_pose()[3]
