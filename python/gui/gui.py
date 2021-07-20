@@ -16,10 +16,16 @@ class MovementData:
 if 'init' not in st.session_state:
     st.session_state.init = False
 
-    st.session_state.update_fns = {'update_x':robot.move_x, 'update_y':robot.move_y, 
-    'update_z':robot.move_z, 'update_J1':robot.move_J1, 'update_J2':robot.move_J2, 
-    'update_J3':robot.move_J3, 'update_gripper':robot.alter_gripper, 
-    'update_home':lambda *data: robot.home(), 'update_vel': robot.set_velocity, 'update_acc':robot.set_acceleration}
+    st.session_state.update_fns = { 'update_x':robot.move_x,
+                                    'update_y':robot.move_y, 
+                                    'update_z':robot.move_z,
+                                    'update_J1':lambda data:robot.move_J1(data, in_rad=False),
+                                    'update_J2':lambda data:robot.move_J2(data, in_rad=False), 
+                                    'update_J3':lambda data:robot.move_J3(data, in_rad=False),
+                                    'update_gripper':robot.alter_gripper, 
+                                    'update_home':lambda *data: robot.home(),
+                                    'update_vel': robot.set_velocity,
+                                    'update_acc':robot.set_acceleration}
 
     for key in st.session_state.update_fns:
         if key not in st.session_state:
