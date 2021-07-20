@@ -10,11 +10,16 @@ class MovementData:
         self.should_move = should_move
         self.val = val
         
+        # Load robot config so that min and max values for speed etc can be shown
+        config_fp = os.path.join(str(fp.parent.parent), "./robot/config.yaml")
+        with open(config_fp) as f:
+            self.config_robot = yaml.load(f, Loader=yaml.FullLoader)
+        
 
 if 'init' not in st.session_state:
     st.session_state.init = False
 
-    st.session_state.update_fns = {'update_x':robot.move_x, 'update_y':robot.move_y, 'update_z':robot.move_z, 'update_J1':robot.move_J1, 'update_J2':robot.move_J2, 'update_J3':robot.move_J3, 'update_gripper':robot.alter_gripper, 'update_home':lambda *data: robot.home()}
+    st.session_state.update_fns = {'update_x':robot.move_x, 'update_y':robot.move_y, 'update_z':robot.move_z, 'update_J1':robot.move_J1, 'update_J2':robot.move_J2, 'update_J3':robot.move_J3, 'update_gripper':robot.alter_gripper, 'update_home':lambda *data: robot.home(), 'update_vel': robot.update_velocity, 'update_acc':robot.update_acceleration}
     for key in st.session_state.update_fns:
         if key not in st.session_state:
             st.session_state[key] = MovementData(False, 0)
@@ -44,8 +49,6 @@ def loop():
         st.session_state['update_x'].val = st.slider("x", 0, 360, 1, 1, on_change=lambda: set_update('update_x'))
         st.session_state['update_y'].val = st.slider("y", 0, 360, 1, 1, on_change=lambda: set_update('update_y'))
         st.session_state['update_z'].val = st.slider("z", 0, 360, 1, 1, on_change=lambda: set_update('update_z'))
-        
-        print(f"After col1: {st.session_state['update_x']}")
 
     with col2:
         st.subheader('Forward kinematics')

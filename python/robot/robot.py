@@ -33,6 +33,9 @@ class Robot:
         self.z = 0#None
         self.gripper_value = 0
 
+        self.vel = self.config['base_speed']
+        self.acc = self.config['base_acceleration']
+
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
         self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name)
@@ -59,14 +62,14 @@ class Robot:
             J2 = np.deg2rad(J2)
             J3 = np.deg2rad(J3)
 
-        self.add_move_cmd(J1, J2, J3, self.z, self.gripper_value)
+        self.add_move_cmd(J1, J2, J3, self.z, self.gripper_value, self.vel, self.acc)
 
-    def _move_robot(self, J1, J2, J3, z, gripper_value):
+    def _move_robot(self, J1, J2, J3, z, gripper_value, vel, acc):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Make sure the pos wanted are possible
-        success = self.validate_movement_data(J1, J2, J3, z, gripper_value, self.config['base_speed'], self.config['base_acceleration'])
+        success = self.validate_movement_data(J1, J2, J3, z, gripper_value, vel, acc)
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name}: Failed with goto_joints")
@@ -74,7 +77,7 @@ class Robot:
 
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, z, gripper_value, False, True)
+        data = self.package_data(J1, J2, J3, z, gripper_value, self.vel, self.acc, False, True)
 
         success = serial_com.send_data(data)
 
@@ -204,7 +207,7 @@ class Robot:
 
         return theta1, theta2, phi
         
-    def package_data(self, J1, J2, J3, z, gripper_value, home, move, cnvrt_bool=True, in_rad=True):
+    def package_data(self, J1, J2, J3, z, gripper_value, vel, acc, home, move, cnvrt_bool=True, in_rad=True):
         """
         cnvrt_bool: The arduino has to receive 1 or 0, not True or False. If home, move and stop need to be translated to
         1 or 0 then put cnvrt_bool to True.
@@ -235,7 +238,7 @@ class Robot:
             J2 = np.rad2deg(J2)
             J3 = np.rad2deg(J3)
 
-        data = f"0,{home},{move},{J1},{J2},{J3},{z},{gripper_value},{self.config['base_speed']},{self.config['base_acceleration']}"
+        data = f"0,{home},{move},{J1},{J2},{J3},{z},{gripper_value},{vel},{acc}"
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: packaged data: {data}")
@@ -258,7 +261,7 @@ class Robot:
         # Pick a valid solution out of the 2 possibile ones
         good_i = None
         for i in range(2):
-            if self.validate_movement_data(J1[i], J2[i], J3, z, self.gripper_value, self.config['base_speed'], self.config['base_acceleration']):
+            if self.validate_movement_data(J1[i], J2[i], J3, z, self.gripper_value, self.vel, self.acc):
                 good_i = i
                 break
         if good_i is None:
@@ -267,7 +270,7 @@ class Robot:
             return False
 
 
-        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value)
+        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.acc)
         return True
 
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
@@ -281,13 +284,13 @@ class Robot:
     def add_home_cmd(self):
         return self.add_robot_cmd(RobotCmdTypes.HOME, (None,))
 
-    def add_move_cmd(self, J1, J2, J3, z, gripper_value):
+    def add_move_cmd(self, J1, J2, J3, z, gripper_value, vel, acc):
         """[summary]
 
         Args:
-            data (tuple): (J1,J2,J3,z,gripper_value)
+            data (tuple): (J1,J2,J3,z,gripper_value, vel, acc)
         """
-        self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value))
+        self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value, vel, acc))
 
     def goto_pose(self, J1, J2, J3, z):
         """Changes angles of joints and z
@@ -318,7 +321,7 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
         
-        data = self.package_data(0,0,0,0,0,True,False)
+        data = self.package_data(0,0,0,0,0,0,0,True,False)
         success = serial_com.send_data(data)
 
         if not success:
@@ -440,6 +443,16 @@ class Robot:
             print(f"{self.name}: going to open gripper")
 
         self.alter_gripper(self.config['gripper_min'])
+
+    def set_velocity(self, vel):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: updating velocity from {self.vel} to {vel}")
+        self.vel = vel
+
+    def set_acceleration(self, acc):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: updating acceleration from {self.acc} to {acc}")
+        self.acc = acc
 
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:

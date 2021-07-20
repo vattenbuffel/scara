@@ -39,7 +39,6 @@ class CLI(cmd.Cmd):
         config_fp = os.path.join(str(fp.parent.parent), "base_config.yaml")
         with open(config_fp) as f:
             self.config_base = yaml.load(f, Loader=yaml.FullLoader)
-        
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
@@ -307,6 +306,33 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with close_gripper")
+
+    def do_set_velocity(self,arg):
+        "Changes the velocity of all the joints: velocity [0-2000]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command set_velocity")
+
+        try:
+            robot.set_velocity(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with set_velocity")
+
+    def do_set_acceleration(self,arg):
+        "Changes the acceleration of all the joints: acceleration [0-4000]"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command set_acceleration")
+
+        try:
+            robot.set_acceleration(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with set_acceleration")
+
 
 
 
