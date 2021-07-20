@@ -333,6 +333,22 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with set_acceleration")
 
+    def do_get_cmds(self, arg):
+        "Returns information about the cmds of the robot:"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_cmds")
+
+        try:
+            cmds = robot.get_cmds()
+            print(f"{self.prompt} There are: {len(cmds)} commands and they are:")
+            for cmd in cmds:
+                print(f"{self.prompt} {cmd}")
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_cmds")
+
 
 
 

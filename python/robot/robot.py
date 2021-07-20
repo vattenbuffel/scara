@@ -24,7 +24,9 @@ class Robot:
         # Read all the configs
         self.load_configs()
 
-        self.J1 = 0# None #Temp putting these to not None
+        # These are the latest know position of the robot. They're updated as soon as a 
+        # move cmd or home cmd is performed
+        self.J1 = 0#None #Temp putting these to not None
         self.J2 = 0#None
         self.J3 = 0#None
         x,y = self.forward_kinematics(0,0)
@@ -32,6 +34,18 @@ class Robot:
         self.y = y#None
         self.z = 0#None
         self.gripper_value = 0
+
+        # These are the goal positions, it is where the robot will be when all cmds are 
+        # performed, of the robot. These are only used to chain commands.
+        self.J1_goal = 0#None #Temp putting these to not None
+        self.J2_goal = 0#None
+        self.J3_goal = 0#None
+        x,y = self.forward_kinematics(0,0)
+        self.x_goal = x#None 
+        self.y_goal = y#None
+        self.z_goal = 0#None
+        self.gripper_value_goal = 0
+
 
         self.vel = self.config['base_speed']
         self.acc = self.config['base_acceleration']
@@ -62,7 +76,7 @@ class Robot:
             J2 = np.deg2rad(J2)
             J3 = np.deg2rad(J3)
 
-        self.add_move_cmd(J1, J2, J3, self.z, self.gripper_value, self.vel, self.acc)
+        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.acc)
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, vel, acc):
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -279,19 +293,38 @@ class Robot:
         
         cmd = RobotCmd(type_, data)
         self.cmd_queue.put(cmd)
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
         return True
 
     def add_home_cmd(self):
         return self.add_robot_cmd(RobotCmdTypes.HOME, (None,))
 
     def add_move_cmd(self, J1, J2, J3, z, gripper_value, vel, acc):
-        """[summary]
-
+        """This adds a move cmd to the queue. It also updates goal positions.
         Args:
             data (tuple): (J1,J2,J3,z,gripper_value, vel, acc)
         """
-        self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value, vel, acc))
+        x,y = self.forward_kinematics(J1, J2)
+        self.x_goal = x 
+        self.y_goal = y 
+        self.z_goal = z 
+        self.J1_goal = J1 
+        self.J2_goal = J2 
+        self.J3_goal = J3 
+        self.gripper_value_goal = gripper_value
 
+        return self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value, vel, acc))
+
+    def get_cmds(self):
+        """Returns a list of all of the robot's cmds
+
+        Returns:
+            [type]: [description]
+        """
+        cmds = list(self.cmd_queue.queue.copy())
+        return cmds
+        
     def goto_pose(self, J1, J2, J3, z):
         """Changes angles of joints and z
 
@@ -304,6 +337,8 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:            
             print(f"{self.name}: Going to move to pose: J1:{J1}, J2:{J2}, J3:{J3}, z:{z}")
 
+        #TODO: Check if this function is correct. Shouldn't it add a move cmd?
+        print(f"{self.name} This function is probably wrong")
         self._move_robot(J1, J2, J3, z, self.gripper_value)
 
     def get_pose(self):
@@ -344,6 +379,14 @@ class Robot:
         self.J2 = J2 
         self.J3 = J3 
         self.gripper_value = gripper_value
+        
+        self.x_goal = x 
+        self.y_goal = y 
+        self.z_goal = z 
+        self.J1_goal = J1 
+        self.J2_goal = J2 
+        self.J3_goal = J3 
+        self.gripper_value_goal = gripper_value
 
         if self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
@@ -391,41 +434,41 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move y to: {y}")
 
-        self.goto_pos(self.x, y, self.z)
+        self.goto_pos(self.x_goal, y, self.z_goal)
 
     def move_z(self, z):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move z to: {z}")
 
-        self.goto_pos(self.x, self.y, z)
+        self.goto_pos(self.x_goal, self.y_goal, z)
 
     def move_J1(self, J1, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
 
         J1 = J1 if in_rad else np.deg2rad(J1)
-        self.goto_joints(J1, self.J2, self.J3)
+        self.goto_joints(J1, self.J2_goal, self.J3_goal)
     
     def move_J2(self, J2, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
 
         J2 = J2 if in_rad else np.deg2rad(J2)
-        self.goto_joints(self.J1, J2, self.J3)
+        self.goto_joints(self.J1_goal, J2, self.J3_goal)
     
     def move_J3(self, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
 
         J3 = J3 if in_rad else np.deg2rad(J3)
-        self.goto_joints(self.J1, self.J2, J3)
+        self.goto_joints(self.J1_goal, self.J2_goal, J3)
     
     def alter_gripper(self, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        self.add_move_cmd(self.J1, self.J2, self.J3, self.z, gripper_value)
+        self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value)
 
 
         

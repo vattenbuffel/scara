@@ -1,7 +1,7 @@
 name: "robot"
 L1: 228 #mm
 L2: 136.5 #mm
-base_speed: 500 #2000 is max
+base_speed: 2000 #2000 is max
 base_acceleration: 2000 #4000 is max
 imaginary_epsilon: 1.0e-5 # Due to numerical errors(I hope), J2 sometimes becomes complex when calculating inverse kinematics. This is for how much "complexity" is allowed 
 

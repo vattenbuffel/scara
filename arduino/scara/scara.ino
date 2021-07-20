@@ -108,7 +108,6 @@ void setup() {
   gripper_value = 0;
   data[6] = gripper_value;
   gripperServo.write(gripper_value);
-  delay(1000);
   data[5] = 100;
   // homeing();
 }
