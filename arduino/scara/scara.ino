@@ -105,7 +105,7 @@ void setup() {
   // gripperServo.attach(A0, 600, 2500);
   gripperServo.attach(A0);
   // initial servo value - open gripper
-  gripper_value = 0
+  gripper_value = 0;
   data[6] = gripper_value;
   gripperServo.write(gripper_value);
   delay(1000);
@@ -237,15 +237,16 @@ void homeing() {
   // Homing Stepper4
   for (int i=0; i < 2; i++){
     while (digitalRead(limitSwitch4) != 1) {
-      stepper4.setSpeed(1500);
+      stepper4.setSpeed(500);
       stepper4.runSpeed();
     }
     stepper4.setCurrentPosition(z_height_start_mm*zDistanceToSteps); 
     delay(20);
     int goal_pos = stepper4.currentPosition() - MM_TO_STEPS_Z(50);
     stepper4.moveTo(goal_pos);
+      stepper4.setSpeed(-500);
     while (stepper4.currentPosition() != goal_pos) {
-      stepper4.run();
+      stepper4.runSpeed();
     }
     delay(100);
   }
@@ -254,7 +255,7 @@ void homeing() {
   
   
 
-  // Homing Stepper3
+  Homing Stepper3
   Serial.println(F("Gonna home stepper 3"));
   for (int i=0; i < 2; i++){
     while (digitalRead(limitSwitch3) != 1) {
@@ -265,8 +266,9 @@ void homeing() {
     delay(20);
     int goal_pos = -DEG_TO_STEPS_THETA2(90);
     stepper3.moveTo(goal_pos);
+      stepper3.setSpeed(1100);
     while (stepper3.currentPosition() != goal_pos) {
-      stepper3.run();
+      stepper3.runSpeed();
     }
     delay(100);
   }
@@ -284,8 +286,9 @@ void homeing() {
     delay(20);
     int goal_pos = stepper2.currentPosition() + DEG_TO_STEPS_THETA1(25);
     stepper2.moveTo(goal_pos);
+      stepper2.setSpeed(1300);
     while (stepper2.currentPosition() != goal_pos) {
-      stepper2.run();
+      stepper2.runSpeed();
     }
     delay(100);
   }

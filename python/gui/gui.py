@@ -45,17 +45,17 @@ def loop():
 
     with col2:
         st.subheader('Forward kinematics')
-        j1_slider = st.slider("J1", 0, 360, 1, 1, on_change=lambda: set_update('updated_joints'))
-        j2_slider = st.slider("J2", 0, 360, 1, 1, on_change=lambda: set_update('updated_joints'))
-        j3_slider = st.slider("J3", 0, 360, 1, 1, on_change=lambda: set_update('updated_joints'))
+        j1_slider = st.slider("J1", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
+        j2_slider = st.slider("J2", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
+        j3_slider = st.slider("J3", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
         if st.session_state['updated_joints']:
             if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Moving robot to J1:{j1_slider}, J2:{j2_slider}, J3:{j3_slider}, z:{z_slider}") #TODO Make it consider verbosity levels
-            robot.goto_joints(j1_slider, j2_slider, j3_slider)
+                print(f"{st.session_state.name}: Moving robot to J1:{j1_slider}, J2:{j2_slider}, J3:{j3_slider}, z:{z_slider}") 
+            robot.goto_joints(j1_slider, j2_slider, j3_slider, in_rad=False)
             st.session_state['updated_joints'] = False
 
     st.subheader('Gripper')
-    gripper_slider = st.slider("gripper", 0, 100, 0, 1, on_change=lambda: set_update('updated_gripper'))
+    gripper_slider = st.slider("gripper", 0, 40, 0, 1, on_change=lambda: set_update('updated_gripper'))
     if st.session_state['updated_gripper']:
         if st.session_state.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{st.session_state.name}: updated_gripper to: {gripper_slider}")
