@@ -56,6 +56,7 @@ class Robot:
 
         # Queue of helper RobotCmd, a class that helps when robot should be altered
         self.cmd_queue = queue.Queue() # No max value
+        self.cmd_cur:RobotCmd = None
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -323,7 +324,7 @@ class Robot:
             [type]: [description]
         """
         cmds = list(self.cmd_queue.queue.copy())
-        return cmds
+        return (self.cmd_cur, cmds)
         
     def goto_pose(self, J1, J2, J3, z):
         """Changes angles of joints and z
@@ -514,8 +515,11 @@ class Robot:
             if self.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{self.name}: Waiting for cmd.")
 
-            cmd = self.cmd_queue.get()
-            handle_fns[cmd.type.name](*cmd.data)
+            self.cmd_cur = self.cmd_queue.get()
+            handle_fns[self.cmd_cur.type.name](*self.cmd_cur.data)
+
+            # Done with cmd so put done cmd to None
+            self.cmd_cur = None
 
             
 
