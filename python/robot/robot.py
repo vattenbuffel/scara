@@ -24,12 +24,13 @@ class Robot:
         # Read all the configs
         self.load_configs()
 
-        self.x = None
-        self.y = None
-        self.z = None
-        self.J1 = None
-        self.J2 = None
-        self.J3 = None
+        self.J1 = 0# None #Temp putting these to not None
+        self.J2 = 0#None
+        self.J3 = 0#None
+        x,y = self.forward_kinematics(0,0)
+        self.x = x#None 
+        self.y = y#None
+        self.z = 0#None
         self.gripper_value = 0
 
         # Class that will check if new messages have arrived to serial_communicator
@@ -176,7 +177,7 @@ class Robot:
         theta2[1] = - theta2[0]
         # Sometimes theta2 becomes complex due to numerical error(I hope). Check if theta2 is too complex to be numerical error
         for i in range(len(theta2)):
-            if theta2[i].imag > self.config['imaginary_epsilon']:
+            if np.abs(theta2[i].imag) > self.config['imaginary_epsilon']:
                 # If theta2 is too imaginary then an invalid position was given, if so put theat2 to None
                 theta2[i] = None
             else:

@@ -11,4 +11,3 @@ if __name__ == '__main__':
     if st._is_running_with_streamlit:
         loop()
     print("Done in main")
-    

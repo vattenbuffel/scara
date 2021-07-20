@@ -5,15 +5,20 @@ import yaml
 from pathlib import Path
 import os
 
+class MovementData:
+    def __init__(self, should_move, val):
+        self.should_move = should_move
+        self.val = val
+        
 
-if 'updated_pos' not in st.session_state:
-    st.session_state.updated_pos = False
-if 'updated_joints' not in st.session_state:
-	st.session_state.updated_joints = False
-if 'updated_gripper' not in st.session_state:
-	st.session_state.updated_gripper = False
-if 'updated_home' not in st.session_state:
-	st.session_state.updated_home = False
+if 'init' not in st.session_state:
+    st.session_state.init = False
+
+    st.session_state.update_fns = {'update_x':robot.move_x, 'update_y':robot.move_y, 'update_z':robot.move_z, 'update_J1':robot.move_J1, 'update_J2':robot.move_J2, 'update_J3':robot.move_J3, 'update_gripper':robot.alter_gripper, 'update_home':lambda *data: robot.home()}
+    for key in st.session_state.update_fns:
+        if key not in st.session_state:
+            st.session_state[key] = MovementData(False, 0)
+
 if 'config' not in st.session_state:
     fp = Path(__file__)
     config_fp = os.path.join(str(fp.parent), "config.yaml")
@@ -27,46 +32,39 @@ if 'config' not in st.session_state:
     st.session_state.name = st.session_state.config['name']
 
 def set_update(key):
-    st.session_state[key]=True
+    st.session_state[key].should_move = True
+
+
 
 def loop():
     col1, col2 = st.beta_columns(2)
 
     with col1:
         st.subheader('Inverse kinematics')
-        x_slider = st.slider("x", 0, 360, 1, 1, on_change=lambda: set_update('updated_pos'))
-        y_slider = st.slider("y", 0, 360, 1, 1, on_change=lambda: set_update('updated_pos'))
-        z_slider = st.slider("z", 0, 360, 1, 1, on_change=lambda: set_update('updated_pos'))
-        if st.session_state['updated_pos']:
-            if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Moving to pos x:{z_slider}, y:{y_slider}, z:{z_slider}") 
-            robot.goto_pos(x_slider, y_slider, z_slider)
-            st.session_state['updated_pos'] = False
+        st.session_state['update_x'].val = st.slider("x", 0, 360, 1, 1, on_change=lambda: set_update('update_x'))
+        st.session_state['update_y'].val = st.slider("y", 0, 360, 1, 1, on_change=lambda: set_update('update_y'))
+        st.session_state['update_z'].val = st.slider("z", 0, 360, 1, 1, on_change=lambda: set_update('update_z'))
+        
+        print(f"After col1: {st.session_state['update_x']}")
 
     with col2:
         st.subheader('Forward kinematics')
-        j1_slider = st.slider("J1", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
-        j2_slider = st.slider("J2", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
-        j3_slider = st.slider("J3", -90, 90, 0, 1, on_change=lambda: set_update('updated_joints'))
-        if st.session_state['updated_joints']:
-            if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Moving robot to J1:{j1_slider}, J2:{j2_slider}, J3:{j3_slider}, z:{z_slider}") 
-            robot.goto_joints(j1_slider, j2_slider, j3_slider, in_rad=False)
-            st.session_state['updated_joints'] = False
+        st.session_state['update_J1'].val = st.slider("J1", -90, 90, 0, 1, on_change=lambda: set_update('update_J1'))
+        st.session_state['update_J2'].val = st.slider("J2", -90, 90, 0, 1, on_change=lambda: set_update('update_J2'))
+        st.session_state['update_J3'].val = st.slider("J3", -90, 90, 0, 1, on_change=lambda: set_update('update_J3'))
 
     st.subheader('Gripper')
-    gripper_slider = st.slider("gripper", 0, 40, 0, 1, on_change=lambda: set_update('updated_gripper'))
-    if st.session_state['updated_gripper']:
-        if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: updated_gripper to: {gripper_slider}")
-        robot.alter_gripper(gripper_slider)
-        st.session_state['updated_gripper'] = False
+    st.session_state['update_gripper'].val = st.slider("gripper", 0, 40, 0, 1, on_change=lambda: set_update('update_gripper'))
 
-    st.button("Home", on_click=lambda: set_update('updated_home'))
-    if st.session_state['updated_home']:
-        if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Going home") 
-        robot.home()
-        st.session_state['updated_home'] = False
+    # Home button doesn't need a value
+    st.button("Home", on_click=lambda: set_update('update_home'))
 
+    for key in st.session_state.update_fns:
+        if st.session_state[key].should_move:
+            if st.session_state.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{st.session_state.name}: Action: {key}, moving to {st.session_state[key].val}") 
+            st.session_state.update_fns[key](st.session_state[key].val)
+
+            # Since it's done moving should_move should be False
+            st.session_state[key].should_move = False
 
