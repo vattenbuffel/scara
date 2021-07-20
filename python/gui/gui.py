@@ -56,6 +56,7 @@ def loop():
         st.session_state['update_x'].val = st.slider("x", 0, 360, 1, 1, on_change=lambda: set_update('update_x'))
         st.session_state['update_y'].val = st.slider("y", 0, 360, 1, 1, on_change=lambda: set_update('update_y'))
         st.session_state['update_z'].val = st.slider("z", st.session_state.config_robot['z_min'], st.session_state.config_robot['z_max'], 1, 1, on_change=lambda: set_update('update_z'))
+        st.session_state['update_vel'].val = st.slider("velocity", st.session_state.config_robot['v_min'], st.session_state.config_robot['v_max'], st.session_state.config_robot['base_speed'], 1, on_change=lambda: set_update('update_vel'))
 
     with col2:
         st.subheader('Forward kinematics')
@@ -69,6 +70,7 @@ def loop():
         st.session_state['update_J1'].val = st.slider("J1", J1_min, J1_max, 0, 1, on_change=lambda: set_update('update_J1'))
         st.session_state['update_J2'].val = st.slider("J2", J2_min, J2_max, 0, 1, on_change=lambda: set_update('update_J2'))
         st.session_state['update_J3'].val = st.slider("J3", J3_min, J3_max, 0, 1, on_change=lambda: set_update('update_J3'))
+        st.session_state['update_acc'].val = st.slider("acceleration", st.session_state.config_robot['a_min'], st.session_state.config_robot['a_max'], st.session_state.config_robot['base_acceleration'], 1, on_change=lambda: set_update('update_acc'))
 
     st.subheader('Gripper')
     st.session_state['update_gripper'].val = st.slider("gripper", st.session_state.config_robot['gripper_min'], st.session_state.config_robot['gripper_max'], 0, 1, on_change=lambda: set_update('update_gripper'))
