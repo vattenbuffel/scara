@@ -5,6 +5,13 @@ import yaml
 from pathlib import Path
 import os
 import numpy as np
+import pandas as pd
+from PIL import Image
+from streamlit_drawable_canvas import st_canvas
+from heatmap.heatmap import heatmap
+
+
+st.set_page_config(page_title="test", layout="wide")
 
 class MovementData:
     def __init__(self, should_move, val):
@@ -54,7 +61,86 @@ def set_update(key):
 
 
 
-def loop():
+
+
+
+
+def heatmap_mode():
+    col1, col2 = st.beta_columns(2)
+
+    # Either load or create the heatmap
+    img_name = f"./imgs/{heatmap.config['img_name']}.png"
+    try:
+        img = Image.open(img_name)
+    except FileNotFoundError:
+        if st.session_state.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{st.session_state.name} Couldn't find heat map with name: {img_name}, creating one")
+        st.error("Couldn't find a heatmap. Creating it. This will take a while")
+        img = heatmap.generate_heatmap()
+
+    # Create a canvas component
+    with col1:
+        st.title("Possible positions")
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+            stroke_width=1,
+            stroke_color="#000000",
+            background_color="#eee",
+            background_image=img,
+            update_streamlit=True,
+            width=650, #Load these from the heatmap config
+            height=650,
+            drawing_mode="circle",
+        )
+
+    # Do something interesting with the image data and paths
+    with col2:
+        st.title("Goal positions")
+        if canvas_result.image_data is not None:
+            st.image(canvas_result.image_data)
+
+        # For debugging:
+        # if canvas_result.json_data is not None:
+        #     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+
+        send = st.button("Send")
+
+        if send:
+            if canvas_result.json_data is not None:
+                df = pd.json_normalize(canvas_result.json_data["objects"])
+                if len(df) != 0:
+                    df["center_x"] = df["left"] + df["radius"] * np.cos(
+                        df["angle"] * np.pi / 180
+                    )
+                    df["center_y"] = df["top"] + df["radius"] * np.sin(
+                        df["angle"] * np.pi / 180
+                    )
+
+                    for _, row in df.iterrows():
+                        # st.markdown(
+                        #     f'Center coords: ({row["center_x"]:.2f}, {row["center_y"]:.2f}). Radius: {row["radius"]:.2f}'
+                        # )
+                        robot.move_xy(row["center_x"], row["center_y"])
+                        
+
+    # Display help text
+    col1, col2, _ = st.beta_columns(3)
+    with col2:
+        '''
+        # Help
+
+        This is a visualisation tool to help move the robot. The left image is a heatmap of possible positions. 
+        The columns corresponds to x and rows to y. Black means that the position cannot be reached and white 
+        that it can be reached. Clicking on the left image creates a goal position of the robot. These can be 
+        seen in the right image but without the interfering heatmap. Pressing send will move the robot into the 
+        goal positions in the order they were placed.
+
+        Note that no validation of the movements are performed before the send command is actually pressed. This 
+        means that you can input incorrect positions without knowing.
+        '''
+
+
+def normal_mode():
     col1, col2 = st.beta_columns(2)
 
     with col1:
@@ -93,3 +179,12 @@ def loop():
             # Since it's done moving should_move should be False
             st.session_state[key].should_move = False
 
+def loop():
+    # Enable normal mode of heatmap mode
+    mode = st.sidebar.radio("Mode", ("Normal", "Heatmap"))
+
+    if mode == "Normal":
+        normal_mode()
+    elif mode == "Heatmap":
+        heatmap_mode()
+    

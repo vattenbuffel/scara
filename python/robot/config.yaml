@@ -28,3 +28,5 @@ a_max: 4000
 a_min: 0
 
 limit_epsilon: 1.0e-12 # For when checking if min or max values are complied with. 
+
+base_radius: 60 # The radius of the part of the robot base that turns

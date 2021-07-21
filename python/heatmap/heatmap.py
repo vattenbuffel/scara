@@ -38,6 +38,7 @@ class HeatMap:
         self.mm_to_px_y = None # float
         self.px_to_mm_x = None # float
         self.px_to_mm_y = None # float
+        self.update_conversions()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -168,6 +169,8 @@ class HeatMap:
 
         # Add robot ellipse
         draw = ImageDraw.Draw(self.heatmap)
+        print(f"robot.config['base_radius']={robot.config['base_radius']}")
+        print(f"self.mm_to_px_x={self.mm_to_px_x}")
         robot_radius = robot.config['base_radius']*self.mm_to_px_x
         draw.ellipse([(self.width//2-robot_radius,self.height//2-robot_radius),(self.width//2+robot_radius,self.height//2+robot_radius)], fill=(255,119,0))
         

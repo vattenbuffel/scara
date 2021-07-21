@@ -443,6 +443,12 @@ class Robot:
 
         self.goto_pos(self.x_goal, self.y_goal, z)
 
+    def move_xy(self, x, y):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move x to: {x} and y to: {y}")
+
+        self.goto_pos(x, y, self.z_goal)
+
     def move_J1(self, J1, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
