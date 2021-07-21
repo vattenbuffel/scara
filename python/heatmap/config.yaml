@@ -1,0 +1,5 @@
+name: "heatmap"
+dx: 0.1 # How fine the grid will be. If x0 = 0 and x1 = 1 there will be dx number of steps inbetween x0 and x1.
+img_name: position_heatmap
+img_height: 650 # These are hardcoded like this because of streamlit not wanting to display bigger images
+img_width: 650 
