@@ -120,7 +120,8 @@ def heatmap_mode():
                         # st.markdown(
                         #     f'Center coords: ({row["center_x"]:.2f}, {row["center_y"]:.2f}). Radius: {row["radius"]:.2f}'
                         # )
-                        robot.move_xy(row["center_x"], row["center_y"])
+                        x ,y = heatmap.pixels_to_pos(row["center_x"], row["center_y"])
+                        robot.move_xy(x, y)
                         
 
     # Display help text
