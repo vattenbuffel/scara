@@ -528,7 +528,7 @@ class Robot:
             
 
             if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Done with cmd.")
+                print(f"{self.name}: Done with cmd.\n")
 
 
 

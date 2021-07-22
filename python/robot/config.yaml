@@ -1,4 +1,4 @@
-name: "robot"
+name: "Robot"
 L1: 228 #mm
 L2: 136.5 #mm
 base_speed: 2000 #2000 is max

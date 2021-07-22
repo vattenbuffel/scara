@@ -175,7 +175,7 @@ class Communicator:
 
                 if self.verbose_level <= VerboseLevel.DEBUG: 
                     if not "HEARTBEAT" in msg: 
-                        print(f"{self.name}: Read: {msg}")
+                        print(f"{self.name}: Read: {msg}", end="")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
