@@ -475,9 +475,9 @@ class Robot:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value)
+        self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
 
-
+        aethaeth
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: changed gripper value to: {gripper_value}")

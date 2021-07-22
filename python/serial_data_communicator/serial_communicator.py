@@ -23,7 +23,6 @@ class Communicator:
         # Try to open the usb port
         self.serial = None # serial.Serial
         self.open_serial()
-        self.serial.flush()
         self.arduino_started = False # Boolean to keep track of if the arduino has started. It will be put to True as soon as a heartbeat arrives
 
         # Create a dictionary of received messages where the key is the string associated in messages types
@@ -72,7 +71,8 @@ class Communicator:
 
     def open_serial(self):
         try:
-            self.serial = serial.Serial(self.config['port'], self.config['baud_rate'], timeout=self.config['timeout_s'])
+            # self.serial = serial.Serial(self.config['port'], self.config['baud_rate'], timeout=self.config['timeout_s'])
+            self.serial = serial.Serial(self.config['port'], self.config['baud_rate'])
         except SerialException as e:
             if self.verbose_level <= VerboseLevel.ERROR:
                 traceback.print_exc()
@@ -86,6 +86,8 @@ class Communicator:
                 traceback.print_exc()
                 print(e)
             exit()
+        
+        self.serial.flush()
             
     def add_ending(self, string):
         string += "\r\n"
