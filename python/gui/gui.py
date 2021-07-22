@@ -185,11 +185,15 @@ def normal_mode():
     # Home button doesn't need a value
     st.button("Home", on_click=lambda: set_update('update_home'))
 
+    error_box = st.empty()
+
     for key in st.session_state.update_fns:
         if st.session_state[key].should_move:
             if st.session_state.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{st.session_state.name}: Action: {key}, moving to {st.session_state[key].val}") 
-            st.session_state.update_fns[key](st.session_state[key].val)
+            res = st.session_state.update_fns[key](st.session_state[key].val)
+            if not res:
+                error_box.error("Invalid position given")
 
             # Since it's done moving should_move should be False
             st.session_state[key].should_move = False
