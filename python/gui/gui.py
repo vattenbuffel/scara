@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 import numpy as np
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageDraw
 from streamlit_drawable_canvas import st_canvas
 from heatmap.heatmap import heatmap
 
@@ -62,7 +62,23 @@ def set_update(key):
 
 
 
+def extract_circle_centers(canvas_result):
+    df = pd.json_normalize(canvas_result.json_data["objects"])
+    centers = []
 
+    if len(df) != 0:
+        df["center_x"] = df["left"] + df["radius"] * np.cos(
+            df["angle"] * np.pi / 180
+        )
+        df["center_y"] = df["top"] + df["radius"] * np.sin(
+            df["angle"] * np.pi / 180
+        )
+
+        
+        st.subheader("List of circle drawings")
+        for _, row in df.iterrows():
+            centers.append((row["center_x"], row["center_y"]))
+    return centers
 
 
 def heatmap_mode():
@@ -97,7 +113,16 @@ def heatmap_mode():
     with col2:
         st.title("Goal positions")
         if canvas_result.image_data is not None:
-            st.image(canvas_result.image_data)
+            # Draw an image with all of the goal positions in order
+            img = Image.new('RGB', (650,650), color = (255, 255, 255))
+            draw = ImageDraw.Draw(img)
+            
+            # # Take the positions and add them to this image, but instead of circles, add them as numbers
+            centers = extract_circle_centers(canvas_result)
+            for i, center in enumerate(centers):
+                draw.text(center, str(i), fill="black", align="center", stroke_width=10)
+
+            st.image(img)
 
         # For debugging:
         # if canvas_result.json_data is not None:
@@ -106,22 +131,11 @@ def heatmap_mode():
         send = st.button("Send")
 
         if send:
-            if canvas_result.json_data is not None:
-                df = pd.json_normalize(canvas_result.json_data["objects"])
-                if len(df) != 0:
-                    df["center_x"] = df["left"] + df["radius"] * np.cos(
-                        df["angle"] * np.pi / 180
-                    )
-                    df["center_y"] = df["top"] + df["radius"] * np.sin(
-                        df["angle"] * np.pi / 180
-                    )
-
-                    for _, row in df.iterrows():
-                        # st.markdown(
-                        #     f'Center coords: ({row["center_x"]:.2f}, {row["center_y"]:.2f}). Radius: {row["radius"]:.2f}'
-                        # )
-                        x ,y = heatmap.pixels_to_pos(row["center_x"], row["center_y"])
-                        robot.move_xy(x, y)
+            for center in extract_circle_centers(canvas_result):
+                if st.session_state.verbose_level <= VerboseLevel.DEBUG:
+                    print(f"{st.session_state.name}: Moving robot to (x,y): {center}")
+                x,y = heatmap.pixels_to_pos(*center)
+                robot.move_xy(x, y)
                         
 
     # Display help text
