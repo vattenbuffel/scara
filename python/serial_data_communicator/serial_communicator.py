@@ -114,21 +114,27 @@ class Communicator:
             return False
         
         
+        # For some reason the msg can't be too long or the arduino will not receive the corret msg. It might also be that 
+        # There's a random \n in there somewhere
+        data_send = ""
+        for d in data:
+            data_send += f"{d:.3f},"
+        
 
         # Add \r\n to end of data
         if add_ending:
-            self.add_ending(data)
+            self.add_ending(data_send)
         
-        # Converts the data to bytes
+        # Converts the data_send to bytes
         if convert_to_bytes:
-            data = data.encode()
+            data_send = data_send.encode()
 
         # Write the data
-        self.serial.write(data)
+        self.serial.write(data_send)
 
         
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Sent data: {data}")
+            print(f"{self.name} Sent data: {data_send}")
         
         return True
 
@@ -160,9 +166,15 @@ class Communicator:
                     print(f"{self.name}: Empty message arrived")
                     continue
 
+                if "\r\n" not in msg:
+                    if self.verbose_level <= VerboseLevel.ERROR:
+                        print(f"{self.name}: An unfinished message arrived")
+                    raise ValueError(f"{self.name} An unfinished message arrived")
 
-                if self.verbose_level <= VerboseLevel.DEBUG: # should be level msg_receive
-                    if not "HEARTBEAT" in msg: # TODO:TEMP
+
+
+                if self.verbose_level <= VerboseLevel.DEBUG: 
+                    if not "HEARTBEAT" in msg: 
                         print(f"{self.name}: Read: {msg}")
 
                 # See if it is a valid message. A valid message should start with pos or done for example

@@ -252,8 +252,8 @@ class Robot:
             J1 = np.rad2deg(J1)
             J2 = np.rad2deg(J2)
             J3 = np.rad2deg(J3)
-
-        data = f"0,{home},{move},{J1},{J2},{J3},{z},{gripper_value},{vel},{acc}"
+        
+        data = (0,home,move,J1,J2,J3,z,gripper_value,vel,acc)
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: packaged data: {data}")
@@ -476,8 +476,6 @@ class Robot:
 
         # Package the pose in the correct way for the arduino to understand
         self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
-
-        aethaeth
         
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: changed gripper value to: {gripper_value}")

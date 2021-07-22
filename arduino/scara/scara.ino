@@ -16,8 +16,10 @@
 #define limitSwitch3 9
 #define limitSwitch4 A3
 
-#define home_speed 500
-#define home_acceleration 2000
+// #define home_speed 500
+// #define home_acceleration 2000
+
+#define n_data 10
 
 #define z_height_start_mm 155
 
@@ -75,7 +77,7 @@ byte inputValue[5];
 int k = 0;
 
 String content = "";
-int data[10];
+int data[n_data];
 
 
 void setup() {
@@ -118,15 +120,27 @@ void loop() {
   delay(25); // Sometimes the data sent by publish_heartbeat got corrupted. This seems to have alleviated this problem
 
   if (Serial.available()) {
-    content = Serial.readString(); // Read the incomding data from Processing
+    content = Serial.readString(); // Read the incomding data from python
     Serial.print("Received: ");
     Serial.println(content);
     // Extract the data from the string and put into separate integer variables (data[] array)
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < n_data; i++) {
       int index = content.indexOf(","); // locate the first ","
+      if (index == -1 && i != n_data-1){
+        Serial.println("Invalid msg received");
+      }
       data[i] = atol(content.substring(0, index).c_str()); //Extract the number from start to the ","
       content = content.substring(index + 1); //Remove the number from the string
+
+      // Print the data received:
+      Serial.print(" data[");
+      Serial.print(i);
+      Serial.print("]: ");
+      Serial.print(data[i]); 
+      Serial.print(","); 
     }
+    Serial.println();
+    
     /*
      data[0] - STOP 
      data[1] - HOME 

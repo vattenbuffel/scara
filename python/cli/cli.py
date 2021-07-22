@@ -226,6 +226,16 @@ class CLI(cmd.Cmd):
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
+    def do_move_xy(self,arg):
+        "Moves the robot to the corrdinate (x,y):  x, y"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command move_xy")
+
+        try:
+            robot.move_xy(*parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_z")
     
@@ -414,7 +424,8 @@ class CLI(cmd.Cmd):
 
 def parse(arg):
     "Convert a series of zero or more numbers to an argument tuple"
-    return tuple(map(int, arg.split()))
+    # return tuple(map(int, arg.split()))
+    return tuple(map(float, arg.split()))
 
 def kill():
     if cli.verbose_level <= VerboseLevel.DEBUG:
