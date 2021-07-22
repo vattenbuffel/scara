@@ -425,6 +425,12 @@ class Robot:
     def get_gripper(self):
         return self.gripper_value
         
+    def get_vel(self):
+        return self.vel
+
+    def get_acc(self):
+        return self.acc
+
     def move_x(self, x):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x}")

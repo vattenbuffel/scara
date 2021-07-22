@@ -158,6 +158,27 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_J3")
 
+    def do_get_vel(self, arg):
+        "Prints the velocity of the robot:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_vel")
+
+        print(f"{self.prompt} Velocity: {robot.get_vel()}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_vel")
+
+            
+    def do_get_acc(self, arg):
+        "Prints the acceleration of the robot:  None"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command get_acc")
+
+        print(f"{self.prompt} Acceleration: {robot.get_acc()}")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with get_acc")
+
     def do_get_gripper(self, arg):
         "Prints the gripper value:  None"
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -360,9 +381,6 @@ class CLI(cmd.Cmd):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_cmds")
 
-
-
-
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"
         kill()
@@ -424,7 +442,6 @@ class CLI(cmd.Cmd):
 
 def parse(arg):
     "Convert a series of zero or more numbers to an argument tuple"
-    # return tuple(map(int, arg.split()))
     return tuple(map(float, arg.split()))
 
 def kill():
