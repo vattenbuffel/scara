@@ -107,8 +107,12 @@ class HeatMap:
             x (int): the x position of the pixel
             y (int): the y postion of the pixel
         """
+        # Overlap the coordinate frames
         x -= self.width/2
         y -= self.height/2
+
+        # Rotate around x axis
+        y *= -1
 
         # Convert px to mm
         x = x*self.px_to_mm_x
@@ -123,17 +127,19 @@ class HeatMap:
             x (int): the x position in mm
             y (int): the y postion in mm
         """
+        # Overlap the coordinate frames
+        x += self.width/2
+        y += self.height/2
+
+        # Rotate around x axis
+        y *= -1
+
         # Convert pos to px
         x = x*self.mm_to_px_x
         y = y*self.mm_to_px_y
 
-        # Translate the coordinates helf the image up and left
-        x += self.width/2
-        y += self.height/2
-
         x = int(x)
         y = int(y)
-
 
         return x, y
 
