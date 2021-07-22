@@ -160,8 +160,9 @@ def normal_mode():
 
     with col1:
         st.subheader('Inverse kinematics')
-        st.session_state['update_x'].val = st.slider("x", 0, 360, 1, 1, on_change=lambda: set_update('update_x'))
-        st.session_state['update_y'].val = st.slider("y", 0, 360, 1, 1, on_change=lambda: set_update('update_y'))
+        x_max = int(robot.config['L1'] + robot.config['L2'])
+        st.session_state['update_x'].val = st.slider("x", -x_max, x_max, 1, 1, on_change=lambda: set_update('update_x'))
+        st.session_state['update_y'].val = st.slider("y", -x_max, x_max, 1, 1, on_change=lambda: set_update('update_y'))
         st.session_state['update_z'].val = st.slider("z", st.session_state.config_robot['z_min'], st.session_state.config_robot['z_max'], 1, 1, on_change=lambda: set_update('update_z'))
         st.session_state['update_vel'].val = st.slider("velocity", st.session_state.config_robot['v_min'], st.session_state.config_robot['v_max'], st.session_state.config_robot['base_speed'], 1, on_change=lambda: set_update('update_vel'))
 
@@ -190,7 +191,7 @@ def normal_mode():
     for key in st.session_state.update_fns:
         if st.session_state[key].should_move:
             if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Action: {key}, moving to {st.session_state[key].val}") 
+                print(f"{st.session_state.name}: Action: {key}, value: {st.session_state[key].val}") 
             res = st.session_state.update_fns[key](st.session_state[key].val)
             if not res:
                 error_box.error("Invalid position given")

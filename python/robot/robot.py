@@ -502,11 +502,13 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: updating velocity from {self.vel} to {vel}")
         self.vel = vel
+        return True
 
     def set_acceleration(self, acc):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: updating acceleration from {self.acc} to {acc}")
         self.acc = acc
+        return True
 
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
