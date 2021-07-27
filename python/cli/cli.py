@@ -10,6 +10,7 @@ from serial_data_communicator.serial_communicator import serial_com
 import time
 import sys
 import numpy as np
+from g_code.g_code import g_code
 
 class CLI(cmd.Cmd):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -58,7 +59,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.goto_pos(*parse(arg))
+            robot.move_xyz(*parse(arg))
         except TypeError:
             print(f"self.prompt Invalid command. Type help for help")
 
@@ -380,6 +381,14 @@ class CLI(cmd.Cmd):
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with get_cmds")
+
+    def do_parse(self, arg):
+        "Parses a g_code file"
+        g_code.parse()
+        
+    def do_move_parse(self, arg):
+        "Moves according to parsed g_code file"
+        g_code.move_parsed()
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"

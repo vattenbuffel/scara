@@ -260,7 +260,7 @@ class Robot:
 
         return data
 
-    def goto_pos(self, x, y, z):
+    def move_xyz(self, x, y, z):
         """
         Only changes the pos of the robot, not gripper 
         """ 
@@ -436,25 +436,25 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x}")
 
-        return self.goto_pos(x, self.y, self.z)
+        return self.move_xyz(x, self.y, self.z)
 
     def move_y(self, y):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move y to: {y}")
 
-        return self.goto_pos(self.x_goal, y, self.z_goal)
+        return self.move_xyz(self.x_goal, y, self.z_goal)
 
     def move_z(self, z):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move z to: {z}")
 
-        return self.goto_pos(self.x_goal, self.y_goal, z)
+        return self.move_xyz(self.x_goal, self.y_goal, z)
 
     def move_xy(self, x, y):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x} and y to: {y}")
 
-        return self.goto_pos(x, y, self.z_goal)
+        return self.move_xyz(x, y, self.z_goal)
 
     def move_J1(self, J1, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
