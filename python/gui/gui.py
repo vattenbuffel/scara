@@ -195,6 +195,7 @@ def normal_mode():
             res = st.session_state.update_fns[key](st.session_state[key].val)
             if not res:
                 error_box.error("Invalid position given")
+            print(f"res: {res}")
 
             # Since it's done moving should_move should be False
             st.session_state[key].should_move = False

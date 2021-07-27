@@ -21,7 +21,10 @@
 
 #define n_data 10
 
-#define z_height_start_mm 155
+// With gripper
+// #define z_height_start_mm 155
+// With pen holder
+#define z_height_start_mm 150 
 
 // Macro to calculate how many steps n mm corresponds to in z
 #define MM_TO_STEPS_Z(n) ((int) ((n)*zDistanceToSteps))
@@ -112,6 +115,7 @@ void setup() {
   gripperServo.write(gripper_value);
   data[5] = 100;
   // homeing();
+  // delay(10000000);
 }
 
 void loop() {
@@ -295,11 +299,11 @@ void homeing() {
       stepper2.setSpeed(-1300);
       stepper2.runSpeed();
     }
-    stepper2.setCurrentPosition(-5000); 
+    stepper2.setCurrentPosition(-8800); 
     delay(20);
-    int goal_pos = stepper2.currentPosition() + DEG_TO_STEPS_THETA1(25);
+    int goal_pos = DEG_TO_STEPS_THETA1(-90);    
     stepper2.moveTo(goal_pos);
-      stepper2.setSpeed(1300);
+    stepper2.setSpeed(1300);
     while (stepper2.currentPosition() != goal_pos) {
       stepper2.runSpeed();
     }

@@ -11,4 +11,4 @@ if st._is_running_with_streamlit:
 if __name__ == '__main__':
     if st._is_running_with_streamlit:
         loop()
-    print("Done in main")
+    print(f"Done in main\n{cli.prompt}", end="")

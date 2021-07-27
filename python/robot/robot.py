@@ -349,6 +349,7 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
         success = self.add_home_cmd()
+        return success
 
         if not success and self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: WARNING Failed to home.")
@@ -435,57 +436,59 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x}")
 
-        self.goto_pos(x, self.y, self.z)
+        return self.goto_pos(x, self.y, self.z)
 
     def move_y(self, y):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move y to: {y}")
 
-        self.goto_pos(self.x_goal, y, self.z_goal)
+        return self.goto_pos(self.x_goal, y, self.z_goal)
 
     def move_z(self, z):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move z to: {z}")
 
-        self.goto_pos(self.x_goal, self.y_goal, z)
+        return self.goto_pos(self.x_goal, self.y_goal, z)
 
     def move_xy(self, x, y):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move x to: {x} and y to: {y}")
 
-        self.goto_pos(x, y, self.z_goal)
+        return self.goto_pos(x, y, self.z_goal)
 
     def move_J1(self, J1, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
 
         J1 = J1 if in_rad else np.deg2rad(J1)
-        self.goto_joints(J1, self.J2_goal, self.J3_goal)
+        return self.goto_joints(J1, self.J2_goal, self.J3_goal)
     
     def move_J2(self, J2, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
 
         J2 = J2 if in_rad else np.deg2rad(J2)
-        self.goto_joints(self.J1_goal, J2, self.J3_goal)
+        return self.goto_joints(self.J1_goal, J2, self.J3_goal)
     
     def move_J3(self, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
 
         J3 = J3 if in_rad else np.deg2rad(J3)
-        self.goto_joints(self.J1_goal, self.J2_goal, J3)
+        return self.goto_joints(self.J1_goal, self.J2_goal, J3)
     
     def alter_gripper(self, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
+        success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
         
+
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: changed gripper value to: {gripper_value}")
-        
+        return success
+
     def close_gripper(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: going to close gripper")

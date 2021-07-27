@@ -150,7 +150,7 @@ class HeatMap:
         self.width, self.height = heatmap.size()
         self.update_conversions()
 
-    def generate_heatmap(self, width=None, height=None, save=True):
+    def generate_heatmap(self, width=None, height=None, save=True, path=None):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name} Going to generate heatmap")
 
@@ -167,14 +167,13 @@ class HeatMap:
 
         # Add robot ellipse
         draw = ImageDraw.Draw(self.heatmap)
-        print(f"robot.config['base_radius']={robot.config['base_radius']}")
-        print(f"self.mm_to_px_x={self.mm_to_px_x}")
         robot_radius = robot.config['base_radius']*self.mm_to_px_x
         draw.ellipse([(self.width//2-robot_radius,self.height//2-robot_radius),(self.width//2+robot_radius,self.height//2+robot_radius)], fill=(255,119,0))
         
 
         if save:
-            path = f"./imgs/{self.config['img_name']}.png"
+            if path is None:
+                path = f"./imgs/{self.config['img_name']}.png"
             self.heatmap.save(path)
             if self.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{self.name} Saved heatmap as: {path}")
@@ -184,7 +183,7 @@ class HeatMap:
 
         return self.heatmap
 
-    def display_heatmap(self, heatmap=None):
+    def show_heatmap(self, heatmap=None):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to display heatmap")
 
