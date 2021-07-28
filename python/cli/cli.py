@@ -374,8 +374,8 @@ class CLI(cmd.Cmd):
             cur_cmd, cmds = robot.get_cmds()
             print(f"{self.prompt} The current cmd is: {cur_cmd}")
             print(f"{self.prompt} There are: {len(cmds)} more waiting and they are and they are:")
-            for cmd in cmds:
-                print(f"{self.prompt} {cmd}")
+            for i, cmd in enumerate(cmds):
+                print(f"{self.prompt} {i}: {cmd}")
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
