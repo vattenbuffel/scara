@@ -9,11 +9,11 @@ imaginary_epsilon: 1.0e-5 # Due to numerical errors(I hope), J2 sometimes become
 z_max: 150
 z_min: 0
 
-J1_max: 1.58
-J1_min: -1.58
+J1_max: 3
+J1_min: -3
 
-J2_max: 1.58
-J2_min: -1.58
+J2_max: 3
+J2_min: -3
 
 J3_max: 3.14
 J3_min: -3.14

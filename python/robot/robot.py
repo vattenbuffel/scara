@@ -349,10 +349,11 @@ class Robot:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
         success = self.add_home_cmd()
-        return success
 
         if not success and self.verbose_level <= VerboseLevel.WARNING:
             print(f"{self.name}: WARNING Failed to home.")
+        
+        return success
 
     def _home(self, *arg):
         if self.verbose_level <= VerboseLevel.DEBUG:
