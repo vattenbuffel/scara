@@ -1,2 +1,9 @@
 name: "G-Code"
 base_path: "g_code.gcode"
+base_speed: 250
+
+x_base_offset: 100
+y_base_offset: 0
+z_base_offset: 0
+
+dx: 0.01 # How many steps there are between two radians. Between 0 and 1 there is dx number of steps

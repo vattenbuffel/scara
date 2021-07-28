@@ -24,7 +24,7 @@
 // With gripper
 // #define z_height_start_mm 155
 // With pen holder
-#define z_height_start_mm 150 
+#define z_height_start_mm 155 
 
 // Macro to calculate how many steps n mm corresponds to in z
 #define MM_TO_STEPS_Z(n) ((int) ((n)*zDistanceToSteps))
