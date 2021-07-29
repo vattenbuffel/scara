@@ -59,9 +59,9 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.move_xyz(*parse(arg))
+            robot.move_xyz(*self.parse(arg))
         except TypeError:
-            print(f"self.prompt Invalid command. Type help for help")
+            print(f"{self.promt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
@@ -72,9 +72,9 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.goto_joints(*parse(arg), in_rad=False)
+            robot.goto_joints(*self.parse(arg), in_rad=False)
         except TypeError:
-            print(f"self.prompt Invalid command. Type help for help")
+            print(f"{self.promt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
@@ -218,9 +218,9 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_x")
 
         try:
-            robot.move_x(*parse(arg))
+            robot.move_x(*self.parse(arg))
         except TypeError:
-            print(f"self.prompt Invalid command. Type help for help")
+            print(f"{self.promt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_x")
@@ -231,9 +231,9 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_y")
 
         try:
-            robot.move_y(*parse(arg))
+            robot.move_y(*self.parse(arg))
         except TypeError:
-            print(f"self.prompt Invalid command. Type help for help")
+            print(f"{self.promt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_y")
@@ -244,30 +244,43 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_z")
 
         try:
-            robot.move_z(*parse(arg))
+            robot.move_z(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
     def do_move_xy(self,arg):
-        "Moves the robot to the corrdinate (x,y):  x, y"
+        "Moves the robot to the coordinate (x,y):  x, y"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_xy")
 
         try:
-            robot.move_xy(*parse(arg))
+            robot.move_xy(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Done with move_z")
+            print(f"{self.name}: Done with move_xy")
     
+    def do_moveL_xy(self,arg):
+        "Moves the robot to the coordinate (x,y) such that the tcp moves linearly:  x, y"
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command moveL_xy")
+
+        try:
+            robot.move_xy_line(*self.parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with moveL_xy")
+
     def do_move_J1(self,arg):
         "Moves only the first joint of the robot to the angle given:  J1 [deg]"
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Received command move_J1")
 
         try:
-            robot.move_J1(*parse(arg), in_rad=False)
+            robot.move_J1(*self.parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -280,7 +293,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_J2")
 
         try:
-            robot.move_J2(*parse(arg), in_rad=False)
+            robot.move_J2(*self.parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -293,7 +306,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_J3")
 
         try:
-            robot.move_J3(*parse(arg), in_rad=False)
+            robot.move_J3(*self.parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -306,7 +319,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command move_gripper")
 
         try:
-            robot.alter_gripper(*parse(arg))
+            robot.alter_gripper(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -345,7 +358,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command set_velocity")
 
         try:
-            robot.set_velocity(*parse(arg))
+            robot.set_velocity(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -358,7 +371,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command set_acceleration")
 
         try:
-            robot.set_acceleration(*parse(arg))
+            robot.set_acceleration(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -384,11 +397,11 @@ class CLI(cmd.Cmd):
 
     def do_parse(self, arg):
         "Parses a g_code file"
-        g_code.parse()
+        g_code.self.parse()
         
     def do_move_parse(self, arg):
-        "Moves according to parsed g_code file"
-        g_code.move_parsed()
+        "Moves according to self.parsed g_code file"
+        g_code.move_self.parsed()
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"
@@ -407,7 +420,7 @@ class CLI(cmd.Cmd):
                 import readline
                 self.old_completer = readline.get_completer()
                 readline.set_completer(self.complete)
-                readline.parse_and_bind(self.completekey+": complete")
+                readline.self.parse_and_bind(self.completekey+": complete")
             except ImportError:
                 pass
         try:
@@ -449,9 +462,13 @@ class CLI(cmd.Cmd):
         
 
 
-def parse(arg):
-    "Convert a series of zero or more numbers to an argument tuple"
-    return tuple(map(float, arg.split()))
+    def parse(self, arg):
+        "Convert a series of zero or more numbers to an argument tuple"
+        try:
+            return tuple(map(float, arg.split()))
+        except ValueError:
+            print(f"{self.promt} Invalid command. Type help for help")
+            
 
 def kill():
     if cli.verbose_level <= VerboseLevel.DEBUG:
