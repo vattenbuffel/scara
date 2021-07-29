@@ -11,6 +11,7 @@ import time
 import sys
 import numpy as np
 from g_code.g_code import g_code
+from heatmap.heatmap import heatmap
 
 class CLI(cmd.Cmd):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -61,7 +62,7 @@ class CLI(cmd.Cmd):
         try:
             robot.move_xyz(*self.parse(arg))
         except TypeError:
-            print(f"{self.promt} Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
@@ -74,7 +75,7 @@ class CLI(cmd.Cmd):
         try:
             robot.goto_joints(*self.parse(arg), in_rad=False)
         except TypeError:
-            print(f"{self.promt} Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with command pose")
@@ -220,7 +221,7 @@ class CLI(cmd.Cmd):
         try:
             robot.move_x(*self.parse(arg))
         except TypeError:
-            print(f"{self.promt} Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_x")
@@ -233,7 +234,7 @@ class CLI(cmd.Cmd):
         try:
             robot.move_y(*self.parse(arg))
         except TypeError:
-            print(f"{self.promt} Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done with move_y")
@@ -403,6 +404,48 @@ class CLI(cmd.Cmd):
         "Moves according to self.parsed g_code file"
         g_code.move_self.parsed()
 
+    def do_heatmap_generate(self, arg):
+        "Generate a heatmap showing possible x,y coordinates: Show[0 or 1] Save[0 or 1]"
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command heatmap_generate")
+        
+        try:
+            show, save = self.parse(arg)
+        except ValueError:
+            print(f"{self.prompt}Invalid command. Type help for help")
+            return
+
+        heatmap.generate_heatmap(save=save)
+        
+        if show:
+            heatmap.show_heatmap()
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with heatmap_generate")
+
+    def do_heatmap_load_base(self, arg):
+        "Loads the base heatmap"
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command heatmap_load_base")
+        
+        heatmap.load_base_heatmap()
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with heatmap_load_base")
+
+    def do_heatmap_show(self, arg):
+        "Shows the current heatmap"
+
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Received command heatmap_show")
+        
+        heatmap.show_heatmap()
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done with heatmap_show")
+
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"
         kill()
@@ -467,7 +510,7 @@ class CLI(cmd.Cmd):
         try:
             return tuple(map(float, arg.split()))
         except ValueError:
-            print(f"{self.promt} Invalid command. Type help for help")
+            print(f"{self.prompt} Invalid command. Type help for help")
             
 
 def kill():
