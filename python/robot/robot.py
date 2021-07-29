@@ -126,38 +126,38 @@ class Robot:
 
         if not self.config['J1_min'] <= J1 <= self.config['J1_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: J1 out of bound")
+                print(f"{self.name}: Warning: J1 out of bound")
             return False
 
         if not self.config['J2_min'] <= J2 <= self.config['J2_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: J2 out of bound")
+                print(f"{self.name}: Warning: J2 out of bound")
             return False
 
         if not self.config['J3_min'] <= J3 <= self.config['J3_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: J3 out of bound")
+                print(f"{self.name}: Warning: J3 out of bound")
             # return False #TODO: temp since J3 isn't with us right now
 
         if not self.config['z_min'] <= z <= self.config['z_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: z out of bound")
+                print(f"{self.name}: Warning: z out of bound")
             return False
 
         if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: gripper_value out of bound")
+                print(f"{self.name}: Warning: gripper_value out of bound")
             return False
 
         if not self.config['v_min'] <= vel <= self.config['v_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: vel out of bound")
+                print(f"{self.name}: Warning: vel out of bound")
             return False
 
         
         if not self.config['a_min'] <= acc <= self.config['a_max']:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name} Warning: acc out of bound")
+                print(f"{self.name}: Warning: acc out of bound")
             return False
 
         return True
@@ -288,6 +288,27 @@ class Robot:
         self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.acc)
         return True
 
+    def move_xy_line(self, x, y):
+        """Move the robot so that the tcp moves in a line between current pos and x,y
+
+        Args:
+            x ([type]): [description]
+            y ([type]): [description]
+        """
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to move linearly to pos: x:{x}, y:{y} ")
+
+        n = int(max(abs(x - self.x_goal), abs(y - self.y_goal))/ self.config["dx"])
+        xx = np.linspace(self.x_goal, x, n) 
+        yy = np.linspace(self.y_goal, y, n) 
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: There are {n} steps ")
+
+        for i in range(n):
+            self.move_xy(xx[i], yy[i])
+
+
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: adding cmd of type: {type_.name}, with data: {data}.")
@@ -356,6 +377,9 @@ class Robot:
         return success
 
     def _home(self, *arg):
+        """This adds a home cmd to the robot cmd queue. 
+        NOTE: No movement calls should be performed before homeing is done. As this will most likely result in unwanted positions.
+        """
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going home.")
         
@@ -539,7 +563,7 @@ class Robot:
 
             
 
-            if self.verbose_level <= VerboseLevel.DEBUG:
+            if self.verbose_level <= VerboseLevel.INFO:
                 print(f"{self.name}: Done with cmd.\n")
 
 
