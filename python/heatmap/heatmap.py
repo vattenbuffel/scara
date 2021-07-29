@@ -40,6 +40,8 @@ class HeatMap:
         self.px_to_mm_y = None # float
         self.update_conversions()
 
+        self.heatmap = None
+
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
 
@@ -60,6 +62,21 @@ class HeatMap:
 
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
+
+    def load_base_heatmap(self):
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Going to load base heatmap")
+
+        img_name = f"./imgs/{self.config['img_name']}.png"
+        try:
+            img = Image.open(img_name)
+            self.set_heatmap(img)
+        except FileNotFoundError:
+            if self.verbose_level <= VerboseLevel.INFO:
+                print(f"{self.name}: No base heatmap exist. Create one with generate_heatmap")
+        
+        if self.verbose_level <= VerboseLevel.DEBUG:
+            print(f"{self.name}: Done loading base heatmap")
 
     def add_heatmap(self, n):
         """Adds the heatmap to self.heatmap
@@ -93,9 +110,9 @@ class HeatMap:
                     self.heatmap.putpixel((x_i,y_i), (255,255,255,255))
             
             # Print progress
-            if self.verbose_level <= VerboseLevel.DEBUG:
+            if self.verbose_level <= VerboseLevel.INFO:
                 print_enable_disable.print_enable()
-                print(f"{self.name} Done with {100*x_i/n:.3f} % of the image")
+                print(f"{self.name}: Done with {100*x_i/n:.3f} % of the image")
                 print_enable_disable.print_disable()
 
         print_enable_disable.print_enable()
@@ -145,14 +162,14 @@ class HeatMap:
 
     def set_heatmap(self, heatmap:Image):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Setting heatmap to {heatmap}")
+            print(f"{self.name}: Setting heatmap to {heatmap}")
         self.heatmap = heatmap
-        self.width, self.height = heatmap.size()
+        self.width, self.height = heatmap.size
         self.update_conversions()
 
     def generate_heatmap(self, width=None, height=None, save=True, path=None):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Going to generate heatmap")
+            print(f"{self.name}: Going to generate heatmap")
 
         n = np.ceil((self.x_max - self.x_min)/self.dx).astype(int)
         self.heatmap = Image.new('RGB', (n,n), color = (0, 0, 0))
@@ -176,10 +193,10 @@ class HeatMap:
                 path = f"./imgs/{self.config['img_name']}.png"
             self.heatmap.save(path)
             if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name} Saved heatmap as: {path}")
+                print(f"{self.name}: Saved heatmap as: {path}")
 
         if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Done generating heatmap")
+            print(f"{self.name}: Done generating heatmap")
 
         return self.heatmap
 
@@ -190,6 +207,12 @@ class HeatMap:
         if heatmap is not None:
             heatmap.show()
         else:
+            if self.heatmap is None:
+                if self.verbose_level <= VerboseLevel.ERROR:
+                    print(f"{self.name}: No heatmap loaded. Load one via either load_base_heatmap or set_heatmap")
+                return
+
+
             self.heatmap.show()
 
 heatmap = HeatMap()
