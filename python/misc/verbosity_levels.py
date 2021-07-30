@@ -4,9 +4,9 @@ class VerboseLevel(Enum):
     ALL = 0
     MSG_ARRIVE = 1
     DEBUG = 2
-    INFO = 2
-    WARNING = 3
-    ERROR = 4
+    INFO = 3
+    WARNING = 4
+    ERROR = 5
 
     def str_to_level(str):
         str_ = str.upper()

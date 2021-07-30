@@ -77,9 +77,9 @@ class GCode:
                 if line.block.gcodes:   
                     # If it's a G02 or G03 cmd then it's remade into a series of linear movements
                     if line.gcodes[0].word.value == 2 and line.gcodes[0].word.letter == "G":
-                        self.G02_to_G01(line.block.gcodes[0].params, machine.abs_pos.values, True)
+                        self.G02_to_G01(line.block.gcodes[0].params, machine.abs_pos.values)
                     elif line.gcodes[0].word.value == 3 and line.gcodes[0].word.letter == "G":
-                        self.G03_to_G01(line.block.gcodes[0].params, machine.abs_pos.values, True)
+                        self.G03_to_G01(line.block.gcodes[0].params, machine.abs_pos.values)
 
                     # Move the virtual machine and then move it's position
                     machine.process_gcodes(line.block.gcodes[0]) 

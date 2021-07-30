@@ -12,5 +12,4 @@ if st._is_running_with_streamlit:
 if __name__ == '__main__':
     if st._is_running_with_streamlit:
         loop()
-    g_code.parse()
     print(f"Done in main\n{cli.prompt}", end="")
