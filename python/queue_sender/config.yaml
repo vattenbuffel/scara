@@ -1,0 +1,2 @@
+name: "Queue_sender"
+queue_length: 10 # How many messages can be queued at the arduino
