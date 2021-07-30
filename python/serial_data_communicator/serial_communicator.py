@@ -141,9 +141,30 @@ class Communicator:
     def kill(self):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Dying")    
-            
+
+        self.serial.flush()    
         self.serial.close()
-        
+
+    def read_msg(self):
+        # Read new data
+        try:
+            msg = ""
+            char = ""
+            while char  != "\n":
+                while not self.serial.in_waiting: # Bust wait loop. Not neat but the characters should arrive quickly and therefor not block for much
+                    pass
+                char = self.serial.read().decode()
+                msg += char
+
+
+        except UnicodeDecodeError as e:
+            if self.verbose_level <= VerboseLevel.WARNING:
+                traceback.print_exc()
+                print(f"{self.name}: Invalid char received from the arduino")
+            return None
+
+        return msg
+            
     def receive_message(self):
         while True:
             # Check if new data
@@ -151,15 +172,10 @@ class Communicator:
                 if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
                     print(f"{self.name}: Data waiting to be read")
 
-                # Read new data
-                try:
-                    msg = self.serial.readline().decode()
-                except UnicodeDecodeError as e:
-                    if self.verbose_level <= VerboseLevel.WARNING:
-                        traceback.print_exc()
-                        print(f"{self.name}: Invalid char received from the arduino")
+                msg = self.read_msg()
+                if msg is None:
+                    # Invalid char read. Often happens while the arduino is starting
                     continue
-
                 msg_split = msg.split()
 
                 if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.DEBUG:
@@ -175,7 +191,7 @@ class Communicator:
 
                 if self.verbose_level <= VerboseLevel.DEBUG: 
                     if not "HEARTBEAT" in msg: 
-                        print(f"{self.name}: Read: {msg}", end="")
+                        print(f"{self.name}: Read: {msg}", end="" if "\n" in msg else "\n")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
@@ -192,7 +208,11 @@ class Communicator:
             else:
                 if self.verbose_level <= VerboseLevel.ALL:
                     print(f"{self.name}: No data to read")
-            time.sleep(1/self.config['read_hz'])
+            
+            if not self.serial.in_waiting:
+                # Only wait once the buffer has been emptied
+                time.sleep(1/self.config['read_hz'])
+
 
 
 serial_com = Communicator()

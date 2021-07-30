@@ -76,8 +76,6 @@ const float theta2AngleToSteps = 35.555555;
 const float phiAngleToSteps = 10;
 const float zDistanceToSteps = 100; 
 
-byte inputValue[5];
-int k = 0;
 
 String content = "";
 int data[n_data];
@@ -115,13 +113,28 @@ void setup() {
   gripperServo.write(gripper_value);
   data[5] = 100;
   // homeing();
+  // // delay(10000000);
+
+  // // Test
+  // float J2[] = {-90, -45, 0, 45, 90, 45, 0, -45, -90,};
+  // int i = 0;
+  // int goal_pos = J2[i] * theta2AngleToSteps;
+
+  // while(i < sizeof(J2)/sizeof(J2[0])){
+  //   if STEPS_TO_DEG_THETA2(abs(stepper3.currentPosition() - goal_pos) < DEG_TO_STEPS_THETA2(5)){
+  //     i++;
+  //     goal_pos = J2[i] * theta2AngleToSteps;
+  //     stepper3.moveTo(goal_pos);
+  //     stepper3.setSpeed(500* ((goal_pos>stepper3.currentPosition()) ? 1:-1));
+  //   }
+  //   stepper3.runSpeed();
+  // }
   // delay(10000000);
 }
 
 void loop() {
   // Serial.println("should publish heartbeat");
   publish_heartbeat();
-  delay(25); // Sometimes the data sent by publish_heartbeat got corrupted. This seems to have alleviated this problem
 
   if (Serial.available()) {
     content = Serial.readString(); // Read the incomding data from python
@@ -252,29 +265,29 @@ void homeing() {
 
   Serial.println(F("Gonna home stepper 4"));
   // Homing Stepper4
-  for (int i=0; i < 2; i++){
-    while (digitalRead(limitSwitch4) != 1) {
-      stepper4.setSpeed(1500);
-      stepper4.runSpeed();
-    }
-    stepper4.setCurrentPosition(z_height_start_mm*zDistanceToSteps); 
-    delay(20);
-    int goal_pos = stepper4.currentPosition() - MM_TO_STEPS_Z(50);
-    stepper4.moveTo(goal_pos);
-      stepper4.setSpeed(-1500);
-    while (stepper4.currentPosition() != goal_pos) {
-      stepper4.runSpeed();
-    }
-    delay(100);
-  }
-  z = STEPS_TO_MM_Z(stepper4.currentPosition());
-  Serial.println(F("Finish homing stepper 4"));
+  // for (int i=0; i < 2; i++){
+  //   while (digitalRead(limitSwitch4) != 1) {
+  //     stepper4.setSpeed(1500);
+  //     stepper4.runSpeed();
+  //   }
+  //   stepper4.setCurrentPosition(z_height_start_mm*zDistanceToSteps); 
+  //   delay(20);
+  //   int goal_pos = stepper4.currentPosition() - MM_TO_STEPS_Z(50);
+  //   stepper4.moveTo(goal_pos);
+  //     stepper4.setSpeed(-1500);
+  //   while (stepper4.currentPosition() != goal_pos) {
+  //     stepper4.runSpeed();
+  //   }
+  //   delay(100);
+  // }
+  // z = STEPS_TO_MM_Z(stepper4.currentPosition());
+  // Serial.println(F("Finish homing stepper 4"));
   
   
 
   // Homing Stepper3
   Serial.println(F("Gonna home stepper 3"));
-  for (int i=0; i < 2; i++){
+  for (int i=0; i < 1; i++){
     while (digitalRead(limitSwitch3) != 1) {
       stepper3.setSpeed(-1100);
       stepper3.runSpeed();
@@ -292,25 +305,25 @@ void homeing() {
   theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
   Serial.println(F("Finish homing stepper 3"));
 
-  // Homing Stepper2
-  Serial.println(F("Gonna home stepper 2"));
-  for (int i=0; i < 2; i++){
-    while (digitalRead(limitSwitch2) != 1) {
-      stepper2.setSpeed(-1300);
-      stepper2.runSpeed();
-    }
-    stepper2.setCurrentPosition(-8800); 
-    delay(20);
-    int goal_pos = DEG_TO_STEPS_THETA1(-90);    
-    stepper2.moveTo(goal_pos);
-    stepper2.setSpeed(1300);
-    while (stepper2.currentPosition() != goal_pos) {
-      stepper2.runSpeed();
-    }
-    delay(100);
-  }
-  theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
-  Serial.println(F("Finish homing stepper 2"));
+  // // Homing Stepper2
+  // Serial.println(F("Gonna home stepper 2"));
+  // for (int i=0; i < 2; i++){
+  //   while (digitalRead(limitSwitch2) != 1) {
+  //     stepper2.setSpeed(-1300);
+  //     stepper2.runSpeed();
+  //   }
+  //   stepper2.setCurrentPosition(-8800); 
+  //   delay(20);
+  //   int goal_pos = DEG_TO_STEPS_THETA1(-90);    
+  //   stepper2.moveTo(goal_pos);
+  //   stepper2.setSpeed(1300);
+  //   while (stepper2.currentPosition() != goal_pos) {
+  //     stepper2.runSpeed();
+  //   }
+  //   delay(100);
+  // }
+  // theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
+  // Serial.println(F("Finish homing stepper 2"));
 
 
   // Homing Stepper1
