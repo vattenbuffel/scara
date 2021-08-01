@@ -23,12 +23,15 @@ class QueueSender:
 
         self.n_in_queue = 0
         self.cmd_available_event = threading.Event()
+        self.cmd_available_event.set()
 
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
         self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name)
 
-        self.thread(self.run, name=self.name + "_run_thread")
+        self.thread = threading.Thread(target=self.run, name=self.name + "_run_thread")
+        self.thread.daemon = True
+        self.thread.start()
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -46,23 +49,28 @@ class QueueSender:
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def put(self, data):
+    def send(self, data):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to send data. Currently {self.n_in_queue} data in queue.")
 
-        if self.n_in_queue < self.config['queue_length']:
+        if self.n_in_queue >= self.config['queue_length']:
             self.cmd_available_event.clear()
        
+       # Check if data can be sent
         self.cmd_available_event.wait()
         self.n_in_queue += 1
-        serial_com.send_data(data)
+        success = serial_com.send_data(data)
 
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Done sending data.")
 
+        return success
+
     def run(self):
         while True:
             self.done_event.wait()
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Robot done with data. Currently {self.n_in_queue-1} data in queue.")
             self.done_event.clear()
             self.n_in_queue -= 1
             self.cmd_available_event.set()

@@ -1,7 +1,5 @@
-import traceback
 from message.message_types import MessageTypes
 import threading
-from serial_data_communicator.serial_communicator import serial_com
 from serial_data_communicator.handy_functions import handy_functions
 from misc.verbosity_levels import VerboseLevel
 import yaml
@@ -13,6 +11,7 @@ import numpy as np
 from robot.robot_cmd import RobotCmd
 from robot.robot_cmd_types import RobotCmdTypes
 import queue
+from queue_sender.queue_sender import queue_sender
 
 class Robot:
     def __init__(self):
@@ -93,18 +92,15 @@ class Robot:
 
         # Package the pose in the correct way for the arduino to understand
         data = self.package_data(J1, J2, J3, z, gripper_value, self.vel, self.acc, False, True)
-
-        success = serial_com.send_data(data)
+        
+        # Add msg to queue_sender, block if needed
+        success = queue_sender.send(data)
 
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:
                 print(f"{self.name}: Failed with goto_joints")
             return
 
-        # Wait for robot to be done
-        self.done_event.clear()
-        self.done_event.wait()
-        self.done_event.clear()
 
         # Update position. 
         x,y = self.forward_kinematics(J1, J2)
@@ -308,7 +304,6 @@ class Robot:
         for i in range(n):
             self.move_xy(xx[i], yy[i])
 
-
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: adding cmd of type: {type_.name}, with data: {data}.")
@@ -384,7 +379,7 @@ class Robot:
             print(f"{self.name}: Going home.")
         
         data = self.package_data(0,0,0,0,0,0,0,True,False)
-        success = serial_com.send_data(data)
+        success = queue_sender.send(data)
 
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:

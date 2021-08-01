@@ -91,8 +91,9 @@ class Communicator:
             
     def add_ending(self, string):
         string += "\r\n"
+        return string
 
-    def send_data(self, data, add_ending=False, convert_to_bytes=True):
+    def send_data(self, data, add_ending=True, convert_to_bytes=True):
         """Sends data via the serial port. Returns True if successful otherwhise False
 
         Args:
@@ -123,14 +124,27 @@ class Communicator:
 
         # Add \r\n to end of data
         if add_ending:
-            self.add_ending(data_send)
+            data_send = self.add_ending(data_send)
         
         # Converts the data_send to bytes
         if convert_to_bytes:
             data_send = data_send.encode()
 
+        # Split the data into smaller chunks if too big
+        data_ = []
+        while len(data_send) != 0:
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Splitting data into smaller chunks")
+            data_.append(data_send[:self.config["serial_buffer_size"]])
+            data_send = data_send[self.config["serial_buffer_size"]:]
+
+
         # Write the data
-        self.serial.write(data_send)
+        for data in data_:
+            if self.verbose_level <= VerboseLevel.DEBUG:
+                print(f"{self.name}: Sending data: {data}")
+            time.sleep(0.1) #TODO: THIS IS NOT GOOD. INSTEAD OF A RANDOM SLEEP DURATION THE CODE SHOULD SOMEHOW WAIT FOR A RESPONSE BEFORE SENDING
+            self.serial.write(data)
 
         
         if self.verbose_level <= VerboseLevel.DEBUG:
@@ -151,9 +165,10 @@ class Communicator:
             msg = ""
             char = ""
             while char  != "\n":
-                while not self.serial.in_waiting: # Bust wait loop. Not neat but the characters should arrive quickly and therefor not block for much
+                while not self.serial.in_waiting: # Busy wait loop. Not neat but the characters should arrive quickly and therefor not block for much
                     pass
-                char = self.serial.read().decode()
+                data = self.serial.read()
+                char = data.decode()
                 msg += char
 
 
@@ -184,8 +199,8 @@ class Communicator:
 
                 if "\r\n" not in msg:
                     if self.verbose_level <= VerboseLevel.ERROR:
-                        print(f"{self.name}: An unfinished message arrived")
-                    raise ValueError(f"{self.name} An unfinished message arrived")
+                        print(f"{self.name}: An unfinished message arrived: {msg}")
+                    # raise ValueError(f"{self.name} An unfinished message arrived")
 
 
 
