@@ -1,0 +1,7 @@
+color:
+  ALL: "white" # The color messages with debug status ALL will appear as
+  MSG_ARIVE: "white" # The color messages with debug status MSG_ARIVE will appear as
+  DEBUG: "white" # The color messages with debug status DEBUG will appear as
+  INFO: "blue" # The color messages with debug status INFO will appear as
+  WARNING: "yellow" # The color messages with debug status WARNING will appear as
+  ERROR: "red" # The color messages with debug status ERROR will appear as

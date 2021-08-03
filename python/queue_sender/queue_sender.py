@@ -36,7 +36,6 @@ class QueueSender:
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
 
-
     def load_configs(self):
         fp = Path(__file__)
         config_fp = os.path.join(str(fp.parent), "config.yaml")

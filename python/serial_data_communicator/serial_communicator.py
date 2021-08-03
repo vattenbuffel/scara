@@ -10,15 +10,17 @@ from message.message_receieved import MessageReceived
 from message.message_types import MessageTypes
 import threading
 import time
+from logger.logger import Logger
 
-class Communicator:
+class Communicator(Logger):
     def __init__(self):
         # Read all the configs
         self.config = None # dict
         self.config_base = None # dict
         self.name = None # str
-        self.verbose_level = None # misc.verbosity_level
         self.load_configs()
+
+        Logger.__init__(self, self.name) 
 
         # Try to open the usb port
         self.serial = None # serial.Serial
@@ -37,8 +39,9 @@ class Communicator:
         # Wait until the first heartbeat arrives and then put arduino_started to True
         self.wait_first_heartbeat(self.received_messages[MessageTypes.HEARTBEAT.name])
 
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+        # if self.verbose_level <= VerboseLevel.INFO:
+        #     print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def wait_first_heartbeat(self, prev_heartbeat):
         """Busy wait loop until a heartbeat has arrived, then put arduino_started to True"""
