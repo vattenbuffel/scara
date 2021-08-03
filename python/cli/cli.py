@@ -73,7 +73,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command pose")
 
         try:
-            robot.goto_joints(*self.parse(arg), in_rad=False)
+            robot.move_J1J2J3(*self.parse(arg), in_rad=False)
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -268,7 +268,7 @@ class CLI(cmd.Cmd):
             print(f"{self.name}: Received command moveL_xy")
 
         try:
-            robot.move_xy_line(*self.parse(arg))
+            robot.moveL_xy(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 

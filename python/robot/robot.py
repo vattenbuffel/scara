@@ -67,7 +67,7 @@ class Robot:
     def print_pos(self):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
-    def goto_joints(self, J1, J2, J3, in_rad=True):
+    def move_J1J2J3(self, J1, J2, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
         
@@ -86,7 +86,7 @@ class Robot:
         success = self.validate_movement_data(J1, J2, J3, z, gripper_value, vel, acc)
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with goto_joints")
+                print(f"{self.name}: Failed with move_J1J2J3")
             return
 
 
@@ -98,7 +98,7 @@ class Robot:
 
         if not success:
             if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with goto_joints")
+                print(f"{self.name}: Failed with move_J1J2J3")
             return
 
 
@@ -284,7 +284,7 @@ class Robot:
         self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.acc)
         return True
 
-    def move_xy_line(self, x, y):
+    def moveL_xy(self, x, y):
         """Move the robot so that the tcp moves in a line between current pos and x,y
 
         Args:
@@ -481,21 +481,21 @@ class Robot:
             print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
 
         J1 = J1 if in_rad else np.deg2rad(J1)
-        return self.goto_joints(J1, self.J2_goal, self.J3_goal)
+        return self.move_J1J2J3(J1, self.J2_goal, self.J3_goal)
     
     def move_J2(self, J2, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
 
         J2 = J2 if in_rad else np.deg2rad(J2)
-        return self.goto_joints(self.J1_goal, J2, self.J3_goal)
+        return self.move_J1J2J3(self.J1_goal, J2, self.J3_goal)
     
     def move_J3(self, J3, in_rad=True):
         if self.verbose_level <= VerboseLevel.DEBUG:
             print(f"{self.name}: Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
 
         J3 = J3 if in_rad else np.deg2rad(J3)
-        return self.goto_joints(self.J1_goal, self.J2_goal, J3)
+        return self.move_J1J2J3(self.J1_goal, self.J2_goal, J3)
     
     def alter_gripper(self, gripper_value):
         if self.verbose_level <= VerboseLevel.DEBUG:
