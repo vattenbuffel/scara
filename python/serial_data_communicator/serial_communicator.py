@@ -39,14 +39,11 @@ class Communicator(Logger):
         # Wait until the first heartbeat arrives and then put arduino_started to True
         self.wait_first_heartbeat(self.received_messages[MessageTypes.HEARTBEAT.name])
 
-        # if self.verbose_level <= VerboseLevel.INFO:
-        #     print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
         self.INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def wait_first_heartbeat(self, prev_heartbeat):
         """Busy wait loop until a heartbeat has arrived, then put arduino_started to True"""
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Waiting for arduino to start")
+        self.DEBUG(f"Waiting for arduino to start")
         
         prev_timestamp = prev_heartbeat.timestamp
         # Wait until a new heartbeat with a different timestamp has arrived
@@ -56,8 +53,7 @@ class Communicator(Logger):
                 break
             time.sleep(0.1)
 
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"{self.name} Arduino started")
+        self.INFO(f"Arduino started")
         self.arduino_started = True
 
     def load_configs(self):
@@ -80,7 +76,7 @@ class Communicator(Logger):
             if self.verbose_level <= VerboseLevel.ERROR:
                 traceback.print_exc()
                 print(e)
-                print(f"{self.name}: Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are:")
+                self.ERROR(f"Invalid usb port given. Specify the correct one in the serial sender config file. Possible usb ports are:")
                 for port in  list(serial.tools.list_ports.comports()):
                     print(f"{port}\n")
             exit()
@@ -108,13 +104,12 @@ class Communicator(Logger):
             [type]: [description]
         """
         
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to send data: {data}")
-            print(f"{self.name}: Add ending: {add_ending}")
-            print(f"{self.name}: convert_to_bytes: {convert_to_bytes}")
+        self.DEBUG(f"Going to send data: {data}")
+        self.DEBUG(f"Add ending: {add_ending}")
+        self.DEBUG(f"convert_to_bytes: {convert_to_bytes}")
         
-        if self.verbose_level <= VerboseLevel.WARNING and not self.arduino_started:
-            print(f"{self.name}: Warning: Arduino not started")
+        if not self.arduino_started:
+            print(f"Warning: Arduino not started")
             return False
         
         
@@ -136,28 +131,24 @@ class Communicator(Logger):
         # Split the data into smaller chunks if too big
         data_ = []
         while len(data_send) != 0:
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Splitting data into smaller chunks")
+            self.DEBUG(f"Splitting data into smaller chunks")
             data_.append(data_send[:self.config["serial_buffer_size"]])
             data_send = data_send[self.config["serial_buffer_size"]:]
 
 
         # Write the data
         for data in data_:
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Sending data: {data}")
+            self.DEBUG(f"Sending data: {data}")
             time.sleep(0.1) #TODO: THIS IS NOT GOOD. INSTEAD OF A RANDOM SLEEP DURATION THE CODE SHOULD SOMEHOW WAIT FOR A RESPONSE BEFORE SENDING
             self.serial.write(data)
 
         
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Sent data: {data_send}")
+        self.DEBUG(f"Sent data: {data_send}")
         
         return True
 
     def kill(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Dying")    
+        self.INFO(f"{self.name}: Dying")    
 
         self.serial.flush()    
         self.serial.close()
@@ -178,7 +169,7 @@ class Communicator(Logger):
         except UnicodeDecodeError as e:
             if self.verbose_level <= VerboseLevel.WARNING:
                 traceback.print_exc()
-                print(f"{self.name}: Invalid char received from the arduino")
+                self.WARNING(f"Invalid char received from the arduino")
             return None
 
         return msg
@@ -187,8 +178,7 @@ class Communicator(Logger):
         while True:
             # Check if new data
             if self.serial.in_waiting:
-                if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-                    print(f"{self.name}: Data waiting to be read")
+                self.MSG_ARRIVE(f"Data waiting to be read")
 
                 msg = self.read_msg()
                 if msg is None:
@@ -196,20 +186,18 @@ class Communicator(Logger):
                     continue
                 msg_split = msg.split()
 
-                if len(msg_split) == 0 and self.verbose_level <= VerboseLevel.DEBUG:
-                    print(f"{self.name}: Empty message arrived")
+                if len(msg_split) == 0:
+                    self.DEBUG("Empty message arrived")
                     continue
 
                 if "\r\n" not in msg:
-                    if self.verbose_level <= VerboseLevel.ERROR:
-                        print(f"{self.name}: An unfinished message arrived: {msg}")
+                    self.ERROR(f"An unfinished message arrived: {msg}")
                     # raise ValueError(f"{self.name} An unfinished message arrived")
 
 
 
-                if self.verbose_level <= VerboseLevel.DEBUG: 
-                    if not "HEARTBEAT" in msg: 
-                        print(f"{self.name}: Read: {msg}", end="" if "\n" in msg else "\n")
+                if not "HEARTBEAT" in msg: 
+                    self.DEBUG(f"Read: {msg}", end="" if "\n" in msg else "\n")
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
@@ -220,12 +208,12 @@ class Communicator(Logger):
                     if self.verbose_level <= VerboseLevel.WARNING:
                         print(e)
                         traceback.print_exc()
-                        print(f"{self.name}: Invalid message type: {msg_split[0]}")
+                        self.WARNING(f"Invalid message type: {msg_split[0]}")
 
 
             else:
                 if self.verbose_level <= VerboseLevel.ALL:
-                    print(f"{self.name}: No data to read")
+                    self.ALL(f"No data to read")
             
             if not self.serial.in_waiting:
                 # Only wait once the buffer has been emptied

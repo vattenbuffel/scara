@@ -25,32 +25,36 @@ class Logger:
 
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def print(self, color, msg):
+    def print(self, color, msg, kwargs):
+        msg = f"{self.name}: " + msg
         if self.add_timestamp:
             msg += str(time.time())
-        print(termcolor.colored(msg, color)) 
 
-    def ALL(self, msg):
+        print(termcolor.colored(msg, color), **kwargs) 
+
+    def ALL(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.ALL:
-            self.print(self.logger_config['color']["ALL"], msg) 
+            self.print(self.logger_config['color']["ALL"], msg, kwargs) 
 
-    def MSG_ARRIVE(self, msg):
+    def MSG_ARRIVE(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-            self.print(self.logger_config['color']["MSG_ARRIVE"], msg) 
+            self.print(self.logger_config['color']["MSG_ARRIVE"], msg, kwargs) 
 
-    def DEBUG(self, msg):
+    def DEBUG(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            self.print(self.logger_config['color']["DEBUG"], msg) 
+            self.print(self.logger_config['color']["DEBUG"], msg, kwargs) 
 
-    def INFO(self, msg):
+    def INFO(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.INFO:
-            self.print(self.logger_config['color']["INFO"], msg) 
+            self.print(self.logger_config['color']["INFO"], msg, kwargs) 
 
-    def WARNING(self, msg):
+    def WARNING(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.WARNING:
-            self.print(self.logger_config['color']["WARNING"], msg) 
+            msg = "WARNING " + msg
+            self.print(self.logger_config['color']["WARNING"], msg, kwargs) 
     
-    def ERROR(self, msg):
+    def ERROR(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.ERROR:
-            self.print(self.logger_config['color']["ERROR"], msg) 
+            msg = "ERROR " + msg
+            self.print(self.logger_config['color']["ERROR"], msg, kwargs) 
 
