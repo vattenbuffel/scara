@@ -231,8 +231,19 @@ class CLI(cmd.Cmd, Logger):
 
         self.LOG_DEBUG(f"Done with move_xy")
     
+    def do_moveL_xyz(self,arg):
+        "Moves the robot to the coordinate (x,y,z) such that the tcp moves linearly and with the set tcp velocity:  x, y, z"
+        self.LOG_DEBUG(f"Received command moveL_xyz")
+
+        try:
+            robot.moveL_xyz(*self.parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        self.LOG_DEBUG(f"Done with moveL_xyz")
+
     def do_moveL_xy(self,arg):
-        "Moves the robot to the coordinate (x,y) such that the tcp moves linearly:  x, y"
+        "Moves the robot to the coordinate (x,y) such that the tcp moves linearly and with the set tcp velocity:  x, y"
         self.LOG_DEBUG(f"Received command moveL_xy")
 
         try:
@@ -318,6 +329,17 @@ class CLI(cmd.Cmd, Logger):
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with set_velocity")
+
+    def do_set_tcp_velocity(self,arg):
+        "Changes the tcp velocity: velocity [mm/s]"
+        self.LOG_DEBUG(f"Received command set_tcp_velocity")
+
+        try:
+            robot.set_tcp_velocity(*self.parse(arg))
+        except TypeError:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
+        self.LOG_DEBUG(f"Done with set_tcp_velocity")
 
     def do_set_acceleration(self,arg):
         "Changes the acceleration of all the joints: acceleration [0-4000]"

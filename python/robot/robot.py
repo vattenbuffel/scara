@@ -589,6 +589,11 @@ class Robot(Logger):
         self.vel = vel
         return True
 
+    def set_tcp_velocity(self, tcp_vel):
+        self.LOG_DEBUG(f"updating tcp velocity from {self.tcp_vel} to {tcp_vel}")
+        self.tcp_vel = tcp_vel
+        return True
+
     def set_acceleration(self, acc):
         self.LOG_DEBUG(f"updating acceleration from {self.acc} to {acc}")
         self.acc = acc
