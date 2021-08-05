@@ -3,6 +3,7 @@ L1: 228 #mm
 L2: 136.5 #mm
 base_speed: 500 #2000 is max
 base_acceleration: 1000  #4000 is max
+base_tcp_vel: 10 # mm/s
 imaginary_epsilon: 1.0e-5 # Due to numerical errors(I hope), J2 sometimes becomes complex when calculating inverse kinematics. This is for how much "complexity" is allowed 
 
 # Max and min values for the joints, gripper, z-axis, velocity and acceleration

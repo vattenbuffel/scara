@@ -52,6 +52,7 @@ class Robot(Logger):
 
         self.vel = self.config['base_speed']
         self.acc = self.config['base_acceleration']
+        self.tcp_vel = self.config['base_tcp_vel']
 
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
@@ -78,28 +79,27 @@ class Robot(Logger):
             J2 = np.deg2rad(J2)
             J3 = np.deg2rad(J3)
 
-        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.acc)
+        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc)
 
-    def _move_robot(self, J1, J2, J3, z, gripper_value, vel, acc):
+
+    def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc):
         self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Make sure the pos wanted are possible
-        success = self.validate_movement_data(J1, J2, J3, z, gripper_value, vel, acc)
+        success = self.validate_movement_data(J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
         if not success:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with move_J1J2J3")
+            self.LOG_WARNING(f"Failed with move_J1J2J3")
             return
 
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(J1, J2, J3, z, gripper_value, self.vel, self.acc, False, True)
+        data = self.package_data(RobotCmdTypes.MOVE, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
         
         # Add msg to queue_sender, block if needed
         success = queue_sender.send(data)
 
         if not success:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with move_J1J2J3")
+            self.LOG_WARNING(f"Failed with move_J1J2J3")
             return
 
 
@@ -115,48 +115,81 @@ class Robot(Logger):
 
         self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
-    def validate_movement_data(self, J1, J2, J3, z, gripper_value, vel, acc):
-        """Validates the input and makes sure the angle values, z-axis values, gripper values,
-            velocity and acceleration is within bounds.    
-        """
-
+    def validate_joints_z(self, J1, J2, J3, z):
         if not self.config['J1_min'] <= J1 <= self.config['J1_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: J1 out of bound")
+            self.LOG_WARNING(f"Warning: J1 out of bound")
             return False
 
         if not self.config['J2_min'] <= J2 <= self.config['J2_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: J2 out of bound")
+            self.LOG_WARNING(f"Warning: J2 out of bound")
             return False
 
         if not self.config['J3_min'] <= J3 <= self.config['J3_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: J3 out of bound")
+            self.LOG_WARNING(f"Warning: J3 out of bound")
             # return False #TODO: temp since J3 isn't with us right now
 
         if not self.config['z_min'] <= z <= self.config['z_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: z out of bound")
+            self.LOG_WARNING(f"Warning: z out of bound")
             return False
-
-        if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: gripper_value out of bound")
-            return False
-
-        if not self.config['v_min'] <= vel <= self.config['v_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: vel out of bound")
-            return False
-
         
-        if not self.config['a_min'] <= acc <= self.config['a_max']:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Warning: acc out of bound")
+        return True
+
+    def validate_joints_z_vel(self, J1_vel, J2_vel, J3_vel, z_vel):
+        if not self.config['v_min'] <= J1_vel <= self.config['v_max']:
+            self.LOG_WARNING(f"Warning: J1_vel out of bound")
+            return False
+
+        if not self.config['v_min'] <= J2_vel <= self.config['v_max']:
+            self.LOG_WARNING(f"Warning: J2_vel out of bound")
+            return False
+
+        if not self.config['v_min'] <= J3_vel <= self.config['v_max']:
+            self.LOG_WARNING(f"Warning: J3_vel out of bound")
+            return False
+        
+        if not self.config['v_min'] <= z_vel <= self.config['v_max']:
+            self.LOG_WARNING(f"Warning: z_vel out of bound")
             return False
 
         return True
+
+    def validate_joints_z_acc(self, J1_acc, J2_acc, J3_acc, z_acc):
+        if not self.config['a_min'] <= J1_acc <= self.config['a_max']:
+            self.LOG_WARNING(f"Warning: J1_acc out of bound")
+            return False
+
+        if not self.config['a_min'] <= J2_acc <= self.config['a_max']:
+            self.LOG_WARNING(f"Warning: J2_acc out of bound")
+            return False
+
+        if not self.config['a_min'] <= J3_acc <= self.config['a_max']:
+            self.LOG_WARNING(f"Warning: J3_acc out of bound")
+            return False
+
+        if not self.config['a_min'] <= z_acc <= self.config['a_max']:
+            self.LOG_WARNING(f"Warning: z_acc out of bound")
+            return False
+
+        return True
+
+
+    def validate_gripper(self, gripper_value):
+        if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
+            self.LOG_WARNING(f"Warning: gripper_value out of bound")
+            return False
+
+        return True
+
+    def validate_movement_data(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc):
+        """Validates the input and makes sure the angle values, z-axis values, gripper values,
+            velocity and acceleration is within bounds.    
+        """
+        valid = self.validate_joints_z(J1, J2, J3, z)
+        valid |= self.validate_joints_z_vel(J1_vel, J2_vel, J3_vel, z_vel)
+        valid |= self.validate_joints_z_acc(J1_acc, J2_acc, J3_acc, z_acc)
+        valid |= self.validate_gripper(gripper_value)
+
+        return valid
         
     def forward_kinematics(self,  J1, J2, in_radians=True):
         self.LOG_DEBUG(f"forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
@@ -196,8 +229,7 @@ class Robot(Logger):
 
         # If both theta2 are None then impossible position given
         if theta2[0] is None and theta2[1] is None:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: WARNING Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
+            self.LOG_WARNING(f"WARNING Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
             return None, None, None
 
         def calc_theta1(theta2):
@@ -214,29 +246,28 @@ class Robot(Logger):
 
         return theta1, theta2, phi
         
-    def package_data(self, J1, J2, J3, z, gripper_value, vel, acc, home, move, cnvrt_bool=True, in_rad=True):
+    def package_data(self, cmd_type:RobotCmdTypes, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, in_rad=True):
         """
         cnvrt_bool: The arduino has to receive 1 or 0, not True or False. If home, move and stop need to be translated to
         1 or 0 then put cnvrt_bool to True.
         
-        data[0] - STOP 
-        data[1] - HOME 
-        data[2] - MOVE 
-        data[3] - Joint 1 angle
-        data[4] - Joint 2 angle
-        data[5] - Joint 3 angle
-        data[6] - Z position
-        data[7] - Gripper value
-        data[8] - Speed value
-        data[9] - Acceleration value
+        data[0] - cmd_type [int] 
+        data[1] - Joint 1 angle
+        data[2] - Joint 2 angle
+        data[3] - Joint 3 angle
+        data[4] - Z position
+        data[5] - Gripper value
+        data[6] - J1_vel value
+        data[7] - J2_vel value
+        data[8] - J3_vel value
+        data[9] - J1_acc value
+        data[10] - J2_acc value
+        data[11] - J3_acc value
+        data[12] - accuracy, how close the arduino has to get to the position before starting to move to the next cmd
         """
         #TODO: Implement stop
     
         self.LOG_DEBUG(f"going to package data")
-        
-        if cnvrt_bool:
-            home = 1 if home else 0
-            move = 1 if move else 0   
         
         # Convert rad to deg, which the arduino understands
         if in_rad:
@@ -244,7 +275,7 @@ class Robot(Logger):
             J2 = np.rad2deg(J2)
             J3 = np.rad2deg(J3)
         
-        data = (0,home,move,J1,J2,J3,z,gripper_value,vel,acc)
+        data = (cmd_type.value,J1,J2,J3,z,gripper_value,J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, 0)
         
         self.LOG_DEBUG(f"packaged data: {data}")
 
@@ -272,8 +303,75 @@ class Robot(Logger):
             return False
 
 
-        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.acc)
+        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, 0)
         return True
+
+    def moveL_xyz(self, x, y, z):
+        """Move the robot so that the tcp moves in a line between current pos and x,y,z
+
+        Args:
+            x ([type]): [description]
+            y ([type]): [description]
+            z ([type]): [description]
+        """
+        self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y} z:{z}")
+
+        n = max(abs(x - self.x_goal), abs(y - self.y_goal))
+        n = max(n, abs(z - self.z_goal))
+        n = int(n / self.config["dx"])
+        xx = np.linspace(self.x_goal, x, n) 
+        yy = np.linspace(self.y_goal, y, n) 
+        zz = np.linspace(self.z_goal, z, n) 
+
+        self.LOG_DEBUG(f"There are {n} steps ")
+
+        for i in range(n):
+            J1,J2,J3 = self.inverse_kinematics(xx[i], yy[i])
+            if J1 is None:
+                self.LOG_DEBUG(f"Failed to go to pos: xx[i]:{xx[i]}, yy[i]:{yy[i]}, zz[i]:{zz[i]}")
+                return False
+
+            # Pick a valid solution out of the 2 possibile ones
+            good_i = None
+            for i in range(2):
+                if self.validate_joints_z(J1[i], J2[i], J3, z):
+                    good_i = i
+                    break
+            if good_i is None:
+                self.LOG_DEBUG(f"Failed to go to pos: xx[i]:{xx[i]}, yy[i]:{yy[i]}, zz[i]:{zz[i]}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
+                return False
+
+            J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc = self.calc_linear_vel_acc(xx[i], yy[i], zz[i], J1[i], J2[i], self.tcp_vel)
+            self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, J1_vel, J2_vel, self.vel, z_vel, J1_acc, J2_acc, self.acc, z_acc, 0)
+        
+        return True
+
+    def calc_linear_vel_acc(self, x, y, z, J1, J2, tcp_vel):
+        self.LOG_DEBUG(f"Going calculate linear joint velocities and accelerations so that J1 and J2 arrive at the same time to: {J1}, {J2} with tcp speed: {tcp_vel}")
+        # Doesn't calculate accelerations
+        d = np.linalg.norm([x-self.x_goal, y-self.y_goal, z-self.z_goal])
+        t = d/tcp_vel
+        # If we're already at goal return 0 vel and 0 acc
+        if t == 0:
+            return 0,0,0,0,0,0
+
+        J1_vel = np.linalg.norm(J1 - self.J1_goal) / t
+        J2_vel = np.linalg.norm(J2 - self.J2_goal) / t
+        z_vel = np.linalg.norm(z - self.z_goal) / t
+
+        J1_acc, J2_acc, z_acc = self.acc, self.acc, self.acc
+
+
+        # Clamp the velocities and accelerations
+        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), self.config["v_min"])
+        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), self.config["v_min"])
+        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), self.config["v_min"])
+        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), self.config["a_min"])
+        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), self.config["a_min"])
+        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), self.config["a_min"])
+
+        self.LOG_DEBUG(f"Resulting J1_vel: {J1_vel}, J1_acc: {J1_acc}, J2_vel: {J2_vel}, J2_acc: {J2_acc}, z_vel: {z_vel}, z_acc: {z_acc}")
+        return J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc
 
     def moveL_xy(self, x, y):
         """Move the robot so that the tcp moves in a line between current pos and x,y
@@ -282,29 +380,21 @@ class Robot(Logger):
             x ([type]): [description]
             y ([type]): [description]
         """
-        self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y} ")
+        self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y}")
+        self.moveL_xyz(x,y,self.z_goal)
 
-        n = int(max(abs(x - self.x_goal), abs(y - self.y_goal))/ self.config["dx"])
-        xx = np.linspace(self.x_goal, x, n) 
-        yy = np.linspace(self.y_goal, y, n) 
+    def add_robot_cmd(self, cmd:RobotCmd):
+        self.LOG_DEBUG(f"adding cmd: {cmd}")
         
-        self.LOG_DEBUG(f"There are {n} steps ")
-
-        for i in range(n):
-            self.move_xy(xx[i], yy[i])
-
-    def add_robot_cmd(self, type_:RobotCmdTypes, data):
-        self.LOG_DEBUG(f"adding cmd of type: {type_.name}, with data: {data}.")
-        
-        cmd = RobotCmd(type_, data)
         self.cmd_queue.put(cmd)
-        self.LOG_DEBUG(f"added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
+        self.LOG_DEBUG(f"Added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
         return True
 
     def add_home_cmd(self):
-        return self.add_robot_cmd(RobotCmdTypes.HOME, (None,))
+        cmd = RobotCmd(RobotCmdTypes.HOME, *[-1]*14)
+        return self.add_robot_cmd(cmd)
 
-    def add_move_cmd(self, J1, J2, J3, z, gripper_value, vel, acc):
+    def add_move_cmd(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
         """This adds a move cmd to the queue. It also updates goal positions.
         Args:
             data (tuple): (J1,J2,J3,z,gripper_value, vel, acc)
@@ -318,7 +408,8 @@ class Robot(Logger):
         self.J3_goal = J3 
         self.gripper_value_goal = gripper_value
 
-        return self.add_robot_cmd(RobotCmdTypes.MOVE, (J1, J2, J3, z, gripper_value, vel, acc))
+        cmd = RobotCmd(RobotCmdTypes.MOVE, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy)
+        return self.add_robot_cmd(cmd)
 
     def get_cmds(self):
         """Returns a list of all of the robot's cmds
@@ -363,12 +454,11 @@ class Robot(Logger):
         """
         self.LOG_DEBUG(f"Going home.")
         
-        data = self.package_data(0,0,0,0,0,0,0,True,False)
+        data = self.package_data(RobotCmdTypes.HOME,*[0]*13)
         success = queue_sender.send(data)
 
         if not success:
-            if self.verbose_level <= VerboseLevel.WARNING:
-                print(f"{self.name}: Failed with going home")
+            self.LOG_WARNING(f"Failed with going home")
             return
 
         
@@ -395,7 +485,7 @@ class Robot(Logger):
         self.J3_goal = J3 
         self.gripper_value_goal = gripper_value
 
-        self.LOG_WARNING(f"At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
+        self.LOG_INFO(f"At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
     
     def load_configs(self):
         fp = Path(__file__)
@@ -439,7 +529,7 @@ class Robot(Logger):
     def move_x(self, x):
         self.LOG_DEBUG(f"Going to move x to: {x}")
 
-        return self.move_xyz(x, self.y, self.z)
+        return self.move_xyz(x, self.y_goal, self.z_goal)
 
     def move_y(self, y):
         self.LOG_DEBUG(f"Going to move y to: {y}")
@@ -478,7 +568,7 @@ class Robot(Logger):
         self.LOG_DEBUG(f"going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
+        success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc)
         
 
         self.LOG_DEBUG(f"changed gripper value to: {gripper_value}")

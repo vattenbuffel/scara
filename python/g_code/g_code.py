@@ -184,7 +184,7 @@ class GCode(Logger):
         robot.set_velocity(self.config['base_speed'])
 
         for pos in self.pos_to_go:
-            robot.move_xyz(*pos) 
+            robot.moveL_xyz(*pos) 
         self.LOG_DEBUG(f"Done moving")
 
 
