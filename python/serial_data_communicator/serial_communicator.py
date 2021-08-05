@@ -35,7 +35,8 @@ class Communicator(Logger):
         
         # This thread reads messages via the serial port
         self.read_thread = threading.Thread(target=self.receive_message, name="serial_com_receive_msg_thread")
-        self.read_thread.daemon = True
+        self.kill_event = threading.Event()
+        self.kill_event.clear()
         self.read_thread.start()
 
         # Wait until the first heartbeat arrives and then put arduino_started to True
@@ -152,6 +153,8 @@ class Communicator(Logger):
     def kill(self):
         self.LOG_INFO(f" Dying")    
 
+        self.kill_event.set()
+        self.read_thread.join()
         self.serial.flush()    
         self.serial.close()
 
@@ -177,7 +180,7 @@ class Communicator(Logger):
         return msg
             
     def receive_message(self):
-        while True:
+        while not self.kill_event.is_set():
             # Check if new data
             if self.serial.in_waiting:
                 self.LOG_MSG_ARRIVE(f"Data waiting to be read")
@@ -214,13 +217,13 @@ class Communicator(Logger):
 
 
             else:
-                if self.verbose_level <= VerboseLevel.ALL:
-                    self.LOG_ALL(f"No data to read")
+                self.LOG_ALL(f"No data to read")
             
             if not self.serial.in_waiting:
                 # Only wait once the buffer has been emptied
                 time.sleep(1/self.config['read_hz'])
 
+        self.LOG_INFO(f"Killing thread: {self.read_thread.name}")
 
 
 serial_com = Communicator()
