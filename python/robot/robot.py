@@ -258,8 +258,7 @@ class Robot(Logger):
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
         if J1 is None:
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Failed to go to pos: x:{x}, y:{y}, z:{z}")
+            self.LOG_DEBUG(f"Failed to go to pos: x:{x}, y:{y}, z:{z}")
             return False
 
         # Pick a valid solution out of the 2 possibile ones
@@ -269,8 +268,7 @@ class Robot(Logger):
                 good_i = i
                 break
         if good_i is None:
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Failed to go to pos: x:{x}, y:{y}, z:{z}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
+            self.LOG_DEBUG(f"Failed to go to pos: x:{x}, y:{y}, z:{z}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
             return False
 
 
@@ -518,8 +516,7 @@ class Robot(Logger):
                     RobotCmdTypes.MOVE.name: self._move_robot}
         
         while True:
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Waiting for cmd.")
+            self.LOG_DEBUG(f"Waiting for cmd.")
 
             self.cmd_cur = self.cmd_queue.get()
             handle_fns[self.cmd_cur.type.name](*self.cmd_cur.data)
@@ -527,10 +524,7 @@ class Robot(Logger):
             # Done with cmd so put done cmd to None
             self.cmd_cur = None
 
-            
-
-            if self.verbose_level <= VerboseLevel.INFO:
-                print(f"{self.name}: Done with cmd.\n")
+            self.LOG_DEBUG(f"Done with cmd.")
 
 
 

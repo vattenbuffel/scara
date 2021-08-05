@@ -49,7 +49,7 @@ class HandyFunctions(Logger):
         Returns:
             tuple: (J1, J2, J3, z, gripper_value)
         """
-        self.LOG_DEBUG(f" going to check pose")
+        self.LOG_DEBUG(f"going to check pose")
 
         self.heartbeat_event.clear()
         self.heartbeat_event.wait()
@@ -67,7 +67,7 @@ class HandyFunctions(Logger):
                 print(f"{self.name} ERROR no heartbeat received from arduino. Stopping code.")
                 exit()
 
-        self.LOG_DEBUG(f" got pose: {pose}")
+        self.LOG_DEBUG(f"got pose: {pose}")
 
         return pose
 

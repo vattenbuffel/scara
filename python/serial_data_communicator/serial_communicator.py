@@ -151,7 +151,7 @@ class Communicator(Logger):
         return True
 
     def kill(self):
-        self.LOG_INFO(f" Dying")    
+        self.LOG_INFO(f"Dying")    
 
         self.kill_event.set()
         self.read_thread.join()

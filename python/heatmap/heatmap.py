@@ -74,8 +74,7 @@ class HeatMap(Logger):
             img = Image.open(img_name)
             self.set_heatmap(img)
         except FileNotFoundError:
-            if self.verbose_level <= VerboseLevel.INFO:
-                print(f"{self.name}: No base heatmap exist. Create one with generate_heatmap")
+            self.LOG_INFO(f"No base heatmap exist. Create one with generate_heatmap")
         
         self.LOG_DEBUG(f"Done loading base heatmap")
 
@@ -191,8 +190,7 @@ class HeatMap(Logger):
             if path is None:
                 path = f"./imgs/{self.config['img_name']}.png"
             self.heatmap.save(path)
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Saved heatmap as: {path}")
+            self.LOG_DEBUG(f"Saved heatmap as: {path}")
 
         self.LOG_DEBUG(f"Done generating heatmap")
 

@@ -69,8 +69,7 @@ class QueueSender(Logger):
     def run(self):
         while True:
             self.done_event.wait()
-            if self.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{self.name}: Robot done with data. Currently {self.n_in_queue-1} data in queue.")
+            self.LOG_DEBUG(f"Robot done with data. Currently {self.n_in_queue-1} data in queue.")
             self.done_event.clear()
             self.n_in_queue -= 1
             self.cmd_available_event.set()
