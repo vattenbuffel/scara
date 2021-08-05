@@ -251,7 +251,7 @@ void parse_msg() {
     if (index == -1 && i != n_data - 1) {
       Serial.println(F("Invalid msg received"));
     }
-    data[i] = atoi(string_received.substring(0, index).c_str());  //Extract the number from start to the ","
+    data[i] = atof(string_received.substring(0, index).c_str());  //Extract the number from start to the ","
     string_received = string_received.substring(index + 1);       //Remove the number from the string
   }
   /*
