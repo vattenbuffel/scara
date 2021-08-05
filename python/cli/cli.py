@@ -56,16 +56,16 @@ class CLI(cmd.Cmd, Logger):
         
         self.LOG_DEBUG(f"Done with command go home")
 
-    def do_pos(self, arg):
+    def do_move_xyz(self, arg):
         "Moves the robot into the position:  X Y Z"
-        self.LOG_DEBUG(f"Received command pose")
+        self.LOG_DEBUG(f"Received command move_xyz")
 
         try:
             robot.move_xyz(*self.parse(arg))
         except TypeError:
             print(f"{self.prompt} Invalid command. Type help for help")
 
-        self.LOG_DEBUG(f"Done with command pose")
+        self.LOG_DEBUG(f"Done with command move_xyz")
 
     def do_joints(self, arg):
         "Moves the joints to the angles given:  J1, J2, J3"

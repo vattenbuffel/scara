@@ -82,24 +82,24 @@ class Robot(Logger):
         self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc)
 
 
-    def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc):
+    def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
         self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Make sure the pos wanted are possible
         success = self.validate_movement_data(J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
         if not success:
-            self.LOG_WARNING(f"Failed with move_J1J2J3")
+            self.LOG_WARNING(f"Failed with move robot")
             return
 
 
         # Package the pose in the correct way for the arduino to understand
-        data = self.package_data(RobotCmdTypes.MOVE, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
+        data = self.package_data(RobotCmdTypes.MOVE, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy)
         
         # Add msg to queue_sender, block if needed
         success = queue_sender.send(data)
 
         if not success:
-            self.LOG_WARNING(f"Failed with move_J1J2J3")
+            self.LOG_WARNING(f"Failed with move robot")
             return
 
 
@@ -171,7 +171,6 @@ class Robot(Logger):
             return False
 
         return True
-
 
     def validate_gripper(self, gripper_value):
         if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
@@ -295,7 +294,7 @@ class Robot(Logger):
         # Pick a valid solution out of the 2 possibile ones
         good_i = None
         for i in range(2):
-            if self.validate_movement_data(J1[i], J2[i], J3, z, self.gripper_value, self.vel, self.acc):
+            if self.validate_joints_z(J1[i], J2[i], J3, z):
                 good_i = i
                 break
         if good_i is None:
@@ -454,7 +453,7 @@ class Robot(Logger):
         """
         self.LOG_DEBUG(f"Going home.")
         
-        data = self.package_data(RobotCmdTypes.HOME,*[0]*13)
+        data = self.package_data(RobotCmdTypes.HOME,*arg)
         success = queue_sender.send(data)
 
         if not success:
@@ -614,7 +613,7 @@ class Robot(Logger):
             self.LOG_DEBUG(f"Waiting for cmd.")
 
             self.cmd_cur = self.cmd_queue.get()
-            handle_fns[self.cmd_cur.type.name](*self.cmd_cur.data)
+            handle_fns[self.cmd_cur.type.name](*self.cmd_cur.data())
 
             # Done with cmd so put done cmd to None
             self.cmd_cur = None
