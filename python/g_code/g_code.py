@@ -1,3 +1,4 @@
+from logger.logger import Logger
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
@@ -26,7 +27,7 @@ def in_q3(theta):
             return True
     return False
 
-class GCode:
+class GCode(Logger):
     """
         Class that takes a g-code file, interprets it and moves the
         robot to the x,y and z positions set by the g-code file.
@@ -40,10 +41,12 @@ class GCode:
         # Read all the configs
         self.load_configs()
 
+        # Init the logger
+        super().__init__(self.name, self.verbose_level)
+
         self.pos_to_go = [] # List with tuples of goal positions. Populated by a self.parse function        
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited GCode.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited GCode.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
         fp = Path(__file__)
@@ -58,8 +61,7 @@ class GCode:
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def parse(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Going to parse g_code file")
+        self.LOG_INFO(f" Going to parse g_code file")
 
         x_offset = self.config['x_base_offset']
         y_offset = self.config['y_base_offset']
@@ -89,8 +91,7 @@ class GCode:
                     self.pos_to_go.append((x, y, z))
 
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Done parseing g_code file")
+        self.LOG_INFO(f" Done parseing g_code file")
 
     def G02_to_G01(self, params, cur_pos, show=False):
         start = np.array([cur_pos['X'], cur_pos['Y']])
@@ -175,8 +176,7 @@ class GCode:
 
 
     def move_parsed(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Going to move according to parsed g_code file")
+        self.LOG_INFO(f" Going to move according to parsed g_code file")
         
         # Move to 0, 0, 25 as a good starting spot
         robot.move_xyz(0,0,25)
@@ -185,8 +185,7 @@ class GCode:
 
         for pos in self.pos_to_go:
             robot.move_xyz(*pos) 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} Done moving")
+        self.LOG_INFO(f" Done moving")
 
 
 

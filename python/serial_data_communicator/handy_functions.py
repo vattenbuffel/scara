@@ -1,5 +1,6 @@
 # This file contains a few neat functions regarding communicatin with serial_com such as get pose
 
+from logger.logger import Logger
 from message.message_types import MessageTypes
 from serial_data_communicator.serial_communicator import serial_com
 import yaml
@@ -11,7 +12,7 @@ from message.message_updated import MessageUpdated
 import sys
 import numpy as np
 
-class HandyFunctions:
+class HandyFunctions(Logger):
     def __init__(self) -> None:
         # Read all the configs
         self.config = None # dict
@@ -19,7 +20,9 @@ class HandyFunctions:
         self.name = None # str
         self.verbose_level = None # misc.verbosity_level
         self.load_configs()
-
+        
+        # Init the logger
+        Logger.__init__(self, self.name, self.verbose_level)
         
         # Class that will check if new messages have arrived to serial_communicator
         self.heartbeat_event = threading.Event()
@@ -46,8 +49,7 @@ class HandyFunctions:
         Returns:
             tuple: (J1, J2, J3, z, gripper_value)
         """
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} going to check pose")
+        self.LOG_DEBUG(f" going to check pose")
 
         self.heartbeat_event.clear()
         self.heartbeat_event.wait()
@@ -65,8 +67,7 @@ class HandyFunctions:
                 print(f"{self.name} ERROR no heartbeat received from arduino. Stopping code.")
                 exit()
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name} got pose: {pose}")
+        self.LOG_DEBUG(f" got pose: {pose}")
 
         return pose
 
@@ -88,12 +89,10 @@ class HandyFunctions:
         return self.get_pose()[4]
 
     def kill(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Dying")   
+        self.LOG_DEBUG(f"Dying")   
 
         
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"{self.name}: Good bye!")
+        self.LOG_INFO(f"Good bye!")
 
 
 handy_functions = HandyFunctions()

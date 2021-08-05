@@ -1,3 +1,4 @@
+from logger.logger import Logger
 import threading
 from misc.verbosity_levels import VerboseLevel
 import yaml
@@ -7,7 +8,7 @@ import time
 from message.message_receieved import MessageReceived
 from serial_data_communicator.serial_communicator import serial_com
 
-class MessageUpdated:
+class MessageUpdated(Logger):
     """
     Class that checks if messages have been updated. It looks at the messages the 
     serial communicator has and compares it to what it has. If a message is found to 
@@ -22,6 +23,9 @@ class MessageUpdated:
         
         # Read all the configs
         self.load_configs()
+
+        # Init the logger
+        super().__init__(self.name, self.verbose_level)
 
         """
         Dict where the event and message is stored. The key is the string associated 
@@ -51,12 +55,10 @@ class MessageUpdated:
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def kill(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: will be killed")
+        self.LOG_DEBUG(f"will be killed")
         
         
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"{self.name}: Good bye!")
+        self.LOG_INFO(f"Good bye!")
     
     def loop(self):
         while True:            

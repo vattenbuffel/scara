@@ -1,3 +1,4 @@
+from logger.logger import Logger
 from message.message_types import MessageTypes
 import threading
 from serial_data_communicator.handy_functions import handy_functions
@@ -13,7 +14,7 @@ from robot.robot_cmd_types import RobotCmdTypes
 import queue
 from queue_sender.queue_sender import queue_sender
 
-class Robot:
+class Robot(Logger):
     def __init__(self):
         self.config = None # dict
         self.config_base = None # dict
@@ -22,6 +23,9 @@ class Robot:
         
         # Read all the configs
         self.load_configs()
+
+        # Init the logger
+        super().__init__(self.name, self.verbose_level)
 
         # These are the latest know position of the robot. They're updated as soon as a 
         # move cmd or home cmd is performed
@@ -57,8 +61,7 @@ class Robot:
         self.cmd_queue = queue.Queue() # No max value
         self.cmd_cur:RobotCmd = None
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
 
         self.run_thread = threading.Thread(target=self.run, name=self.name + "_thread")
         self.run_thread.daemon = True
@@ -68,8 +71,7 @@ class Robot:
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
     def move_J1J2J3(self, J1, J2, J3, in_rad=True):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
+        self.LOG_DEBUG(f"Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
         
         if not in_rad:
             J1 = np.deg2rad(J1)
@@ -79,8 +81,7 @@ class Robot:
         self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.acc)
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, vel, acc):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
+        self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Make sure the pos wanted are possible
         success = self.validate_movement_data(J1, J2, J3, z, gripper_value, vel, acc)
@@ -112,8 +113,7 @@ class Robot:
         self.J3 = J3
         self.gripper_value = gripper_value
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
+        self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
     def validate_movement_data(self, J1, J2, J3, z, gripper_value, vel, acc):
         """Validates the input and makes sure the angle values, z-axis values, gripper values,
@@ -159,8 +159,7 @@ class Robot:
         return True
         
     def forward_kinematics(self,  J1, J2, in_radians=True):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
+        self.LOG_DEBUG(f"forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
 
         L1 = self.config['L1']
         L2 = self.config['L2']
@@ -172,14 +171,12 @@ class Robot:
         x = L1 * cos(J1) + L2 * cos(J1 + J2)
         y = L1 * sin(J1) + L2 * sin(J1 + J2)
             
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: resulting positions: x:{x}, y:{y}")
+        self.LOG_DEBUG(f"resulting positions: x:{x}, y:{y}")
 
         return x, y
 
     def inverse_kinematics(self, x, y):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: inverse_kinematics on x:{x}, y:{y}")
+        self.LOG_DEBUG(f"inverse_kinematics on x:{x}, y:{y}")
 
         L1 = self.config['L1']
         L2 = self.config['L2']
@@ -213,8 +210,7 @@ class Robot:
         # Calculate "phi" angle so gripper is parallel to the X axis
         phi = pi/2 + theta1[0] + theta2[0] #TODO: not sure how correct this is
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
+        self.LOG_DEBUG(f"resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
 
         return theta1, theta2, phi
         
@@ -236,8 +232,7 @@ class Robot:
         """
         #TODO: Implement stop
     
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: going to package data")
+        self.LOG_DEBUG(f"going to package data")
         
         if cnvrt_bool:
             home = 1 if home else 0
@@ -251,8 +246,7 @@ class Robot:
         
         data = (0,home,move,J1,J2,J3,z,gripper_value,vel,acc)
         
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: packaged data: {data}")
+        self.LOG_DEBUG(f"packaged data: {data}")
 
         return data
 
@@ -260,8 +254,7 @@ class Robot:
         """
         Only changes the pos of the robot, not gripper 
         """ 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move to pos: x:{x}, y:{y}, z:{z}")
+        self.LOG_DEBUG(f"Going to move to pos: x:{x}, y:{y}, z:{z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
         if J1 is None:
@@ -291,27 +284,23 @@ class Robot:
             x ([type]): [description]
             y ([type]): [description]
         """
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move linearly to pos: x:{x}, y:{y} ")
+        self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y} ")
 
         n = int(max(abs(x - self.x_goal), abs(y - self.y_goal))/ self.config["dx"])
         xx = np.linspace(self.x_goal, x, n) 
         yy = np.linspace(self.y_goal, y, n) 
         
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: There are {n} steps ")
+        self.LOG_DEBUG(f"There are {n} steps ")
 
         for i in range(n):
             self.move_xy(xx[i], yy[i])
 
     def add_robot_cmd(self, type_:RobotCmdTypes, data):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: adding cmd of type: {type_.name}, with data: {data}.")
+        self.LOG_DEBUG(f"adding cmd of type: {type_.name}, with data: {data}.")
         
         cmd = RobotCmd(type_, data)
         self.cmd_queue.put(cmd)
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
+        self.LOG_DEBUG(f"added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
         return True
 
     def add_home_cmd(self):
@@ -362,8 +351,7 @@ class Robot:
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
 
     def home(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going home.")
+        self.LOG_DEBUG(f"Going home.")
         success = self.add_home_cmd()
 
         if not success and self.verbose_level <= VerboseLevel.WARNING:
@@ -375,8 +363,7 @@ class Robot:
         """This adds a home cmd to the robot cmd queue. 
         NOTE: No movement calls should be performed before homeing is done. As this will most likely result in unwanted positions.
         """
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going home.")
+        self.LOG_DEBUG(f"Going home.")
         
         data = self.package_data(0,0,0,0,0,0,0,True,False)
         success = queue_sender.send(data)
@@ -410,8 +397,7 @@ class Robot:
         self.J3_goal = J3 
         self.gripper_value_goal = gripper_value
 
-        if self.verbose_level <= VerboseLevel.WARNING:
-            print(f"{self.name}: At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
+        self.LOG_WARNING(f"At home, J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}")
     
     def load_configs(self):
         fp = Path(__file__)
@@ -453,93 +439,78 @@ class Robot:
         return self.acc
 
     def move_x(self, x):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move x to: {x}")
+        self.LOG_DEBUG(f"Going to move x to: {x}")
 
         return self.move_xyz(x, self.y, self.z)
 
     def move_y(self, y):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move y to: {y}")
+        self.LOG_DEBUG(f"Going to move y to: {y}")
 
         return self.move_xyz(self.x_goal, y, self.z_goal)
 
     def move_z(self, z):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move z to: {z}")
+        self.LOG_DEBUG(f"Going to move z to: {z}")
 
         return self.move_xyz(self.x_goal, self.y_goal, z)
 
     def move_xy(self, x, y):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move x to: {x} and y to: {y}")
+        self.LOG_DEBUG(f"Going to move x to: {x} and y to: {y}")
 
         return self.move_xyz(x, y, self.z_goal)
 
     def move_J1(self, J1, in_rad=True):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
+        self.LOG_DEBUG(f"Going to move J1 to: {J1}, in rad: {'True' if in_rad else 'False'}")
 
         J1 = J1 if in_rad else np.deg2rad(J1)
         return self.move_J1J2J3(J1, self.J2_goal, self.J3_goal)
     
     def move_J2(self, J2, in_rad=True):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
+        self.LOG_DEBUG(f"Going to move J2 to: {J2}, in rad: {'True' if in_rad else 'False'}")
 
         J2 = J2 if in_rad else np.deg2rad(J2)
         return self.move_J1J2J3(self.J1_goal, J2, self.J3_goal)
     
     def move_J3(self, J3, in_rad=True):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
+        self.LOG_DEBUG(f"Going to move J3 to: {J3}, in rad: {'True' if in_rad else 'False'}")
 
         J3 = J3 if in_rad else np.deg2rad(J3)
         return self.move_J1J2J3(self.J1_goal, self.J2_goal, J3)
     
     def alter_gripper(self, gripper_value):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: going to change gripper value to: {gripper_value}")
+        self.LOG_DEBUG(f"going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
         success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.acc)
         
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: changed gripper value to: {gripper_value}")
+        self.LOG_DEBUG(f"changed gripper value to: {gripper_value}")
         return success
 
     def close_gripper(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: going to close gripper")
+        self.LOG_DEBUG(f"going to close gripper")
 
         self.alter_gripper(self.config['gripper_max'])
 
     def open_gripper(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: going to open gripper")
+        self.LOG_DEBUG(f"going to open gripper")
 
         self.alter_gripper(self.config['gripper_min'])
 
     def set_velocity(self, vel):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: updating velocity from {self.vel} to {vel}")
+        self.LOG_DEBUG(f"updating velocity from {self.vel} to {vel}")
         self.vel = vel
         return True
 
     def set_acceleration(self, acc):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: updating acceleration from {self.acc} to {acc}")
+        self.LOG_DEBUG(f"updating acceleration from {self.acc} to {acc}")
         self.acc = acc
         return True
 
     def kill(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Dying")    
+        self.LOG_DEBUG(f"Dying")    
 
         
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"{self.name}: Good bye!")
+        self.LOG_INFO(f"Good bye!")
         
     def run(self):
         # A dict of functions to handle the commands

@@ -1,3 +1,4 @@
+from logger.logger import Logger
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
@@ -8,7 +9,7 @@ from message.message_updated import MessageUpdated
 from message.message_types import MessageTypes
 
 
-class QueueSender:
+class QueueSender(Logger):
     """
         Class that allows to queue up messages in the arduino. 
     """
@@ -20,6 +21,9 @@ class QueueSender:
         
         # Read all the configs
         self.load_configs()
+
+        # Init the logger
+        super().__init__(self.name, self.verbose_level)
 
         self.n_in_queue = 0
         self.cmd_available_event = threading.Event()
@@ -33,8 +37,7 @@ class QueueSender:
         self.thread.daemon = True
         self.thread.start()
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
         fp = Path(__file__)
@@ -49,8 +52,7 @@ class QueueSender:
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def send(self, data):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to send data. Currently {self.n_in_queue} data in queue.")
+        self.LOG_DEBUG(f"Going to send data. Currently {self.n_in_queue} data in queue.")
 
         if self.n_in_queue >= self.config['queue_length']:
             self.cmd_available_event.clear()
@@ -60,8 +62,7 @@ class QueueSender:
         self.n_in_queue += 1
         success = serial_com.send_data(data)
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Done sending data.")
+        self.LOG_DEBUG(f"Done sending data.")
 
         return success
 

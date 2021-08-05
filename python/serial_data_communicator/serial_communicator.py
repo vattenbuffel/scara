@@ -18,6 +18,7 @@ class Communicator(Logger):
         self.config = None # dict
         self.config_base = None # dict
         self.name = None # str
+        self.verbose_level = None # misc.verbosity_level
         self.load_configs()
 
         # Init the logger
@@ -149,7 +150,7 @@ class Communicator(Logger):
         return True
 
     def kill(self):
-        self.LOG_INFO(f"{self.name}: Dying")    
+        self.LOG_INFO(f" Dying")    
 
         self.serial.flush()    
         self.serial.close()

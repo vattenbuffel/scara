@@ -1,3 +1,4 @@
+from logger.logger import Logger
 import streamlit as st
 from robot.robot import robot
 from misc.verbosity_levels import VerboseLevel
@@ -56,6 +57,9 @@ if 'config' not in st.session_state:
     st.session_state.verbose_level = VerboseLevel.str_to_level(st.session_state.config_base['verbose_level'])
     st.session_state.name = st.session_state.config['name']
 
+if 'logger' not in st.session_state:
+    st.session_state.logger = Logger(st.session_state.name, st.session_state.verbose_level)
+
 def set_update(key):
     st.session_state[key].should_move = True
 
@@ -89,8 +93,7 @@ def heatmap_mode():
     try:
         img = Image.open(img_name)
     except FileNotFoundError:
-        if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{st.session_state.name} Couldn't find heat map with name: {img_name}, creating one")
+        st.session_state.logger.LOG_DEBUG(f"Couldn't find heat map with name: {img_name}, creating one")
         st.error("Couldn't find a heatmap. Creating it. This will take a while")
         img = heatmap.generate_heatmap()
 
@@ -132,8 +135,7 @@ def heatmap_mode():
 
         if send:
             for center in extract_circle_centers(canvas_result):
-                if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                    print(f"{st.session_state.name}: Moving robot to (x,y): {center}")
+                st.session_state.logger.LOG_DEBUG(f"Moving robot to (x,y): {center}")
                 x,y = heatmap.pixels_to_pos(*center)
                 robot.move_xy(x, y)
                         
@@ -190,12 +192,10 @@ def normal_mode():
 
     for key in st.session_state.update_fns:
         if st.session_state[key].should_move:
-            if st.session_state.verbose_level <= VerboseLevel.DEBUG:
-                print(f"{st.session_state.name}: Action: {key}, value: {st.session_state[key].val}") 
+            st.session_state.logger.LOG_DEBUG("Action: {key}, value: {st.session_state[key].val}") 
             res = st.session_state.update_fns[key](st.session_state[key].val)
             if not res:
                 error_box.error("Invalid position given")
-            print(f"res: {res}")
 
             # Since it's done moving should_move should be False
             st.session_state[key].should_move = False

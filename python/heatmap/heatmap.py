@@ -1,3 +1,4 @@
+from logger.logger import Logger
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
@@ -7,7 +8,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from misc import print_enable_disable
 
-class HeatMap:
+class HeatMap(Logger):
     """
         Class that generates a heatmap of possible x,y positions for the robot. It considers 
         the arm lengths of the robot and creates a square with sides 2*(L1+L2). Then all of 
@@ -23,6 +24,9 @@ class HeatMap:
         
         # Read all the configs
         self.load_configs()
+        
+        # Init the logger
+        super().__init__(self.name, self.verbose_level)
 
         # Params used for calculations
         self.x_max = robot.config['L1'] + robot.config['L2']
@@ -42,8 +46,7 @@ class HeatMap:
 
         self.heatmap = None
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def update_conversions(self):
         self.mm_to_px_x = self.width / (self.x_max - self.x_min) 
@@ -64,8 +67,7 @@ class HeatMap:
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def load_base_heatmap(self):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to load base heatmap")
+        self.LOG_DEBUG(f"Going to load base heatmap")
 
         img_name = f"./imgs/{self.config['img_name']}.png"
         try:
@@ -75,8 +77,7 @@ class HeatMap:
             if self.verbose_level <= VerboseLevel.INFO:
                 print(f"{self.name}: No base heatmap exist. Create one with generate_heatmap")
         
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Done loading base heatmap")
+        self.LOG_DEBUG(f"Done loading base heatmap")
 
     def add_heatmap(self, n):
         """Adds the heatmap to self.heatmap
@@ -161,15 +162,13 @@ class HeatMap:
         return x, y
 
     def set_heatmap(self, heatmap:Image):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Setting heatmap to {heatmap}")
+        self.LOG_DEBUG(f"Setting heatmap to {heatmap}")
         self.heatmap = heatmap
         self.width, self.height = heatmap.size
         self.update_conversions()
 
     def generate_heatmap(self, width=None, height=None, save=True, path=None):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to generate heatmap")
+        self.LOG_DEBUG(f"Going to generate heatmap")
 
         n = np.ceil((self.x_max - self.x_min)/self.dx).astype(int)
         self.heatmap = Image.new('RGB', (n,n), color = (0, 0, 0))
@@ -195,14 +194,12 @@ class HeatMap:
             if self.verbose_level <= VerboseLevel.DEBUG:
                 print(f"{self.name}: Saved heatmap as: {path}")
 
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Done generating heatmap")
+        self.LOG_DEBUG(f"Done generating heatmap")
 
         return self.heatmap
 
     def show_heatmap(self, heatmap=None):
-        if self.verbose_level <= VerboseLevel.DEBUG:
-            print(f"{self.name}: Going to display heatmap")
+        self.LOG_DEBUG(f"Going to display heatmap")
 
         if heatmap is not None:
             heatmap.show()
