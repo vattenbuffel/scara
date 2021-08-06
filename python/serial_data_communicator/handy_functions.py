@@ -53,19 +53,20 @@ class HandyFunctions(Logger):
 
         self.heartbeat_event.clear()
         self.heartbeat_event.wait()
+        self.heartbeat_event.clear()
 
         pose = serial_com.received_messages[MessageTypes.HEARTBEAT.name].data
         pose = [float(p) for p in pose]
 
         # Convert to rad
-        for i in range(3):
-            pose[i] = np.deg2rad(pose[i])
+        if in_rad:
+            for i in range(3):
+                pose[i] = np.deg2rad(pose[i])
 
 
         if len(pose) != 5:
-            if self.verbose_level <= VerboseLevel.ERROR:
-                print(f"{self.name} ERROR no heartbeat received from arduino. Stopping code.")
-                exit()
+            self.LOG_ERROR(f"ERROR no heartbeat received from arduino. Stopping code.")
+            exit()
 
         self.LOG_DEBUG(f"got pose: {pose}")
 
