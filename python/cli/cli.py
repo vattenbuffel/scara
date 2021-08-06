@@ -62,21 +62,21 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_xyz(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with command move_xyz")
 
     def do_joints(self, arg):
         "Moves the joints to the angles given:  J1, J2, J3"
-        self.LOG_DEBUG(f"Received command pose")
+        self.LOG_DEBUG(f"Received command joints")
 
         try:
             robot.move_J1J2J3(*self.parse(arg), in_rad=False)
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
-        self.LOG_DEBUG(f"Done with command pose")
+        self.LOG_DEBUG(f"Done with command joints")
 
     def do_send(self, arg):
         "Send the data to the robot's arduino. Probably is blocking:  DATA"
@@ -174,7 +174,7 @@ class CLI(cmd.Cmd, Logger):
     def do_get_pose(self, arg):
         """
         Prints the pose of the robot. First is the python's coordinate of the robot: x, y, z, J1, J2, J3, gripper_value.
-        Then the arduinos pose: z, J1, J2, J3, gripper_value:  None
+        Then the arduinos pose: J1, J2, J3, z, gripper_value:  None
         """
         self.LOG_DEBUG(f"Received command get_pose")
 
@@ -195,7 +195,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_x(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_x")
@@ -206,7 +206,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_y(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_y")
@@ -217,7 +217,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_z(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
     def do_move_xy(self,arg):
@@ -226,7 +226,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_xy(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_xy")
@@ -237,7 +237,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.moveL_xyz(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with moveL_xyz")
@@ -248,7 +248,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.moveL_xy(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with moveL_xy")
@@ -259,7 +259,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_J1(*self.parse(arg), in_rad=False)
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_J1")
@@ -270,7 +270,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_J2(*self.parse(arg), in_rad=False)
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_J2")
@@ -281,7 +281,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.move_J3(*self.parse(arg), in_rad=False)
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_J1")
@@ -292,7 +292,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.alter_gripper(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with move_gripper")
@@ -303,7 +303,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.open_gripper()
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with open_gripper")
@@ -314,7 +314,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.close_gripper()
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with close_gripper")
@@ -325,7 +325,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.set_velocity(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with set_velocity")
@@ -336,7 +336,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.set_tcp_velocity(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with set_tcp_velocity")
@@ -347,7 +347,7 @@ class CLI(cmd.Cmd, Logger):
 
         try:
             robot.set_acceleration(*self.parse(arg))
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with set_acceleration")
@@ -362,7 +362,7 @@ class CLI(cmd.Cmd, Logger):
             print(f"{self.prompt} There are: {len(cmds)} more waiting and they are and they are:")
             for i, cmd in enumerate(cmds):
                 print(f"{self.prompt} {i}: {cmd}")
-        except TypeError:
+        except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with get_cmds")
