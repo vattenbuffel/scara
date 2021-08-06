@@ -50,8 +50,14 @@ class Robot(Logger):
         self.gripper_value_goal = 0
 
 
-        self.vel = self.config['base_speed']
-        self.acc = self.config['base_acceleration']
+        self.J1_vel = self.config['base_vel_J1']
+        self.J1_acc = self.config['base_acc_J1']
+        self.J2_vel = self.config['base_vel_J2']
+        self.J2_acc = self.config['base_acc_J2']
+        self.J3_vel = self.config['base_vel_J3']
+        self.J3_acc = self.config['base_acc_J3']
+        self.z_vel = self.config['base_vel_z']
+        self.z_acc = self.config['base_acc_z']
         self.tcp_vel = self.config['base_tcp_vel']
         self.accuracy = self.config['base_accuracy']
 
@@ -80,7 +86,7 @@ class Robot(Logger):
             J2 = np.deg2rad(J2)
             J3 = np.deg2rad(J3)
 
-        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, self.accuracy)
+        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel, self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc, self.accuracy)
 
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
@@ -305,7 +311,7 @@ class Robot(Logger):
             return False
 
 
-        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, self.accuracy)
+        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel, self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc, self.accuracy)
         return True
 
     def moveL_xyz(self, x, y, z):
@@ -343,31 +349,9 @@ class Robot(Logger):
                 return False
 
             J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc = self.calc_linear_vel_acc(xx[i], yy[i], zz[i], J1[good_j], J2[good_j], self.tcp_vel)
-            self.add_move_cmd(J1[good_j], J2[good_j], J3, z, self.gripper_value, J1_vel, J2_vel, self.vel, z_vel, J1_acc, J2_acc, self.acc, z_acc, self.accuracy)
+            self.add_move_cmd(J1[good_j], J2[good_j], J3, z, self.gripper_value, J1_vel, J2_vel, self.J3_vel, z_vel, J1_acc, J2_acc, self.J3_acc, z_acc, self.accuracy)
         
         return True
-
-    # Function to calculate how many degrees n steps corresponds to with angle_to_steps = ang_to_steps
-    def deg_to_steps_base(self, deg, deg_to_steps, in_rad=True):
-        if in_rad:
-            deg = np.rad2deg(deg)
-        return deg * deg_to_steps
-
-    # Function to calculate deg to steps in theta1
-    def deg_to_steps_J1(self, deg, in_rad=True):
-        return self.deg_to_steps_base(deg, self.config['J1_angle_to_steps'], in_rad)
-
-    # Function to calculate deg to steps in theta2
-    def deg_to_steps_J2(self, deg, in_rad=True):
-        return self.deg_to_steps_base(deg, self.config['J2_angle_to_steps'], in_rad)
-
-    # Function to calculate deg to steps in phi
-    def deg_to_steps_J3(self, deg, in_rad=True): 
-        return self.deg_to_steps_base(deg, self.config['J3_angle_to_steps'], in_rad)
-
-    # Function to calculate how many steps n mm corresponds to in z
-    def mm_to_steps_z(self, mm):
-        return mm*self.config['z_mm_to_steps']
 
     def calc_linear_vel_acc(self, x, y, z, J1, J2, tcp_vel):
         self.LOG_DEBUG(f"Going calculate linear joint velocities and accelerations so that J1 and J2 arrive at the same time to: {J1}, {J2} with tcp speed: {tcp_vel}")
@@ -376,23 +360,24 @@ class Robot(Logger):
         t = d/tcp_vel
         # If we're already at goal return 0 vel and 0 acc
         if t == 0:
-            return 10,10,10,10,10,10
+            return 0.1,0.1,0.1,0.1,0.1,0.1 #TODO return 0 instead of 0.1, this is soley due to a bug i arduino code 
 
-        # TODO: the new velocities should be decreased by a factor which makes them still move linearly
-        J1_vel = self.deg_to_steps_J1(np.linalg.norm(J1 - self.J1_goal)) / t
-        J2_vel = self.deg_to_steps_J1(np.linalg.norm(J2 - self.J2_goal)) / t
-        z_vel = self.deg_to_steps_J1(np.linalg.norm(z - self.z_goal)) / t
+        J1_vel =  np.rad2deg(np.linalg.norm(J1 - self.J1_goal)) / t
+        J2_vel = np.rad2deg(np.linalg.norm(J2 - self.J2_goal)) / t
+        z_vel = np.linalg.norm(z - self.z_goal) / t
 
-        J1_acc, J2_acc, z_acc = self.acc, self.acc, self.acc
+        J1_acc, J2_acc, z_acc = self.J1_acc, self.J2_acc, self.J3_acc
 
 
         # Clamp the velocities and accelerations
-        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), 10 + self.config["v_min"])
-        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), 10 + self.config["v_min"])
-        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), 10 + self.config["v_min"])
-        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), 10 + self.config["a_min"])
-        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), 10 + self.config["a_min"])
-        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), 10 + self.config["a_min"])
+        # TODO: the new velocities should be decreased by a factor which makes them still move linearly
+        # TODO: Should not add 0.1! this is due to a bug in arduino code
+        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
+        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
+        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
 
         self.LOG_DEBUG(f"Resulting J1_vel: {J1_vel}, J1_acc: {J1_acc}, J2_vel: {J2_vel}, J2_acc: {J2_acc}, z_vel: {z_vel}, z_acc: {z_acc}")
         return J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc
@@ -545,10 +530,10 @@ class Robot(Logger):
         return self.gripper_value
         
     def get_vel(self):
-        return self.vel
+        return self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel
 
     def get_acc(self):
-        return self.acc
+        return self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc
 
     def move_x(self, x):
         self.LOG_DEBUG(f"Going to move x to: {x}")
@@ -592,7 +577,7 @@ class Robot(Logger):
         self.LOG_DEBUG(f"going to change gripper value to: {gripper_value}")
 
         # Package the pose in the correct way for the arduino to understand
-        success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc)
+        success = self.add_move_cmd(self.J1_goal, self.J2_goal, self.J3_goal, self.z_goal, gripper_value, self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel, self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc)
         
 
         self.LOG_DEBUG(f"changed gripper value to: {gripper_value}")
@@ -608,19 +593,22 @@ class Robot(Logger):
 
         self.alter_gripper(self.config['gripper_min'])
 
-    def set_velocity(self, vel):
-        self.LOG_DEBUG(f"updating velocity from {self.vel} to {vel}")
-        self.vel = vel
+    def set_vels(self, J1_vel, J2_vel, J3_vel, z_vel):
+        self.LOG_DEBUG(f"updating velocity from {self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel} to {J1_vel, J2_vel, J3_vel, z_vel}")
+        self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel = J1_vel, J2_vel, J3_vel, z_vel
         return True
 
-    def set_tcp_velocity(self, tcp_vel):
+    def set_tcp_vel(self, tcp_vel):
         self.LOG_DEBUG(f"updating tcp velocity from {self.tcp_vel} to {tcp_vel}")
         self.tcp_vel = tcp_vel
         return True
 
-    def set_acceleration(self, acc):
-        self.LOG_DEBUG(f"updating acceleration from {self.acc} to {acc}")
-        self.acc = acc
+    def get_tcp_vel(self):
+        return self.tcp_vel
+
+    def set_accs(self, J1_acc, J2_acc, J3_acc, z_acc):
+        self.LOG_DEBUG(f"updating acceleration from {self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc} to {J1_acc, J2_acc, J3_acc, z_acc}")
+        self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc = J1_acc, J2_acc, J3_acc, z_acc
         return True
 
     def kill(self):

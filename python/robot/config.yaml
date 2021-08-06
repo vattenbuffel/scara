@@ -1,16 +1,16 @@
 name: "Robot"
 L1: 228 #mm
 L2: 136.5 #mm
-base_speed: 500 #2000 is max
-base_acceleration: 1000  #4000 is max
+base_acc_J1: 10 # degrees/(s^2)
+base_acc_J2: 10 # degrees/(s^2)
+base_acc_J3: 10 # degrees/(s^2)
+base_acc_z: 10 # mm/(s^2)
+base_vel_J1: 10 # degrees/s
+base_vel_J2: 10 # degrees/s
+base_vel_J3: 10 # degrees/s
+base_vel_z: 10 # mm/s
 base_tcp_vel: 1 # mm/s
 base_accuracy: 0.1 # Either degrees or mm depending on the unit for the joint
-
-# How many steps one degree corresponds to in the motors, in the case of z it's mm instead of degrees.
-J1_angle_to_steps: 44.444444
-J2_angle_to_steps: 35.555555
-J3_angle_to_steps: 10
-z_mm_to_steps: 100
 
 # Max and min values for the joints, gripper, z-axis, velocity and acceleration
 z_max: 150
@@ -28,10 +28,10 @@ J3_min: -3
 gripper_max: 40
 gripper_min: 0
 
-v_max: 2000
+v_max: 100
 v_min: 0
 
-a_max: 4000
+a_max: 200
 a_min: 0
 
 limit_epsilon: 1.0e-12 # For when checking if min or max values are complied with. 

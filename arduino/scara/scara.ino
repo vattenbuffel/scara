@@ -281,14 +281,15 @@ void parse_msg() {
   cmds[cmd_end_i].msg.phi = data[3];
   cmds[cmd_end_i].msg.z = data[4];
   cmds[cmd_end_i].msg.gripper_value = (int)data[5];
-  cmds[cmd_end_i].msg.v_J1 = data[6];
-  cmds[cmd_end_i].msg.v_J2 = data[7];
-  cmds[cmd_end_i].msg.v_phi = data[8];
-  cmds[cmd_end_i].msg.v_z = data[9];
-  cmds[cmd_end_i].msg.a_J1 = data[10];
-  cmds[cmd_end_i].msg.a_J2 = data[11];
-  cmds[cmd_end_i].msg.a_phi = data[12];
-  cmds[cmd_end_i].msg.a_z = data[13];
+  // Kinda bad that the the converted velocities and not raw are stored in msg. The raw should be stored in msg and the converted should be in cmd
+  cmds[cmd_end_i].msg.v_J1 = DEG_TO_STEPS_THETA1(data[6]); // Convert the data from degrees/s to steps/s
+  cmds[cmd_end_i].msg.v_J2 = DEG_TO_STEPS_THETA2(data[7]); // Convert the data from degrees/s to steps/s
+  cmds[cmd_end_i].msg.v_phi = DEG_TO_STEPS_PHI(data[8]); // Convert the data from degrees/s to steps/s
+  cmds[cmd_end_i].msg.v_z = MM_TO_STEPS_Z(data[9]); // Convert the data from mm/s to steps/s
+  cmds[cmd_end_i].msg.a_J1 = DEG_TO_STEPS_THETA1(data[10]);
+  cmds[cmd_end_i].msg.a_J2 = DEG_TO_STEPS_THETA2(data[11]);
+  cmds[cmd_end_i].msg.a_phi = DEG_TO_STEPS_PHI(data[12]);
+  cmds[cmd_end_i].msg.a_z = MM_TO_STEPS_Z(data[13]);
   cmds[cmd_end_i].msg.accuracy = data[14];
   
   cmds[cmd_end_i].J1_goal = DEG_TO_STEPS_THETA1(cmds[cmd_end_i].msg.J1);
@@ -300,8 +301,8 @@ void parse_msg() {
   cmds[cmd_end_i].phi_accuracy = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.accuracy);
   cmds[cmd_end_i].z_accuracy = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.accuracy);
 
-  // Serial.println(F("Received cmd: "));
-  // cmd_print(&cmds[cmd_end_i]);
+  Serial.println(F("Received cmd: "));
+  cmd_print(&cmds[cmd_end_i]);
 
   n_cmd_in_storage += 1;
   cmd_end_i = CMD_END_I_INC(cmd_end_i);

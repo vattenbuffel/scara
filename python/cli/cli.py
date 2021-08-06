@@ -161,6 +161,14 @@ class CLI(cmd.Cmd, Logger):
         
         self.LOG_DEBUG(f"Done with get_acc")
 
+    def do_get_tcp_vel(self, arg):
+        "Prints the tcp vel of the robot:  None"
+        self.LOG_DEBUG(f"Received command get_tcp_vel")
+
+        print(f"{self.prompt} Tcp velocity: {robot.get_tcp_vel()}")
+        
+        self.LOG_DEBUG(f"Done with get_tcp_vel")
+
     def do_get_gripper(self, arg):
         "Prints the gripper value:  None"
         self.LOG_DEBUG(f"Received command get_gripper")
@@ -320,11 +328,11 @@ class CLI(cmd.Cmd, Logger):
         self.LOG_DEBUG(f"Done with close_gripper")
 
     def do_set_velocity(self,arg):
-        "Changes the velocity of all the joints: velocity [0-2000]"
+        "Changes the velocity of all the joints: J1_vel [deg/s], J2_vel [deg/s], J3_vel [deg/s], z_vel [mm/s]"
         self.LOG_DEBUG(f"Received command set_velocity")
 
         try:
-            robot.set_velocity(*self.parse(arg))
+            robot.set_vels(*self.parse(arg))
         except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
@@ -335,18 +343,18 @@ class CLI(cmd.Cmd, Logger):
         self.LOG_DEBUG(f"Received command set_tcp_velocity")
 
         try:
-            robot.set_tcp_velocity(*self.parse(arg))
+            robot.set_tcp_vel(*self.parse(arg))
         except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
         self.LOG_DEBUG(f"Done with set_tcp_velocity")
 
     def do_set_acceleration(self,arg):
-        "Changes the acceleration of all the joints: acceleration [0-4000]"
+        "Changes the acceleration of all the joints: J1_acc [deg/(s^2)], J2_acc [deg/(s^2)], J3_acc [deg/(s^2)], z_acc [mm/(s^2)]"
         self.LOG_DEBUG(f"Received command set_acceleration")
 
         try:
-            robot.set_acceleration(*self.parse(arg))
+            robot.set_accs(*self.parse(arg))
         except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
