@@ -53,6 +53,7 @@ class Robot(Logger):
         self.vel = self.config['base_speed']
         self.acc = self.config['base_acceleration']
         self.tcp_vel = self.config['base_tcp_vel']
+        self.accuracy = self.config['base_accuracy']
 
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
@@ -79,7 +80,7 @@ class Robot(Logger):
             J2 = np.deg2rad(J2)
             J3 = np.deg2rad(J3)
 
-        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc)
+        self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, self.accuracy)
 
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
@@ -191,7 +192,7 @@ class Robot(Logger):
         return valid
         
     def forward_kinematics(self,  J1, J2, in_radians=True):
-        self.LOG_DEBUG(f"forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
+        self.LOG_ALL(f"forward kinematics on: J1:{J1}, J2:{J2}, in radians: {in_radians}")
 
         L1 = self.config['L1']
         L2 = self.config['L2']
@@ -203,12 +204,12 @@ class Robot(Logger):
         x = L1 * cos(J1) + L2 * cos(J1 + J2)
         y = L1 * sin(J1) + L2 * sin(J1 + J2)
             
-        self.LOG_DEBUG(f"resulting positions: x:{x}, y:{y}")
+        self.LOG_ALL(f"resulting positions: x:{x}, y:{y}")
 
         return x, y
 
     def inverse_kinematics(self, x, y):
-        self.LOG_DEBUG(f"inverse_kinematics on x:{x}, y:{y}")
+        self.LOG_ALL(f"inverse_kinematics on x:{x}, y:{y}")
 
         L1 = self.config['L1']
         L2 = self.config['L2']
@@ -241,11 +242,11 @@ class Robot(Logger):
         # Calculate "phi" angle so gripper is parallel to the X axis
         phi = pi/2 + theta1[0] + theta2[0] #TODO: not sure how correct this is
 
-        self.LOG_DEBUG(f"resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
+        self.LOG_ALL(f"resulting joints: J1:{theta1}, J2:{theta2}, J3:{phi}")
 
         return theta1, theta2, phi
         
-    def package_data(self, cmd_type:RobotCmdTypes, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, in_rad=True):
+    def package_data(self, cmd_type:RobotCmdTypes, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy, in_rad=True):
         """
         cnvrt_bool: The arduino has to receive 1 or 0, not True or False. If home, move and stop need to be translated to
         1 or 0 then put cnvrt_bool to True.
@@ -259,14 +260,16 @@ class Robot(Logger):
         data[6] - J1_vel value
         data[7] - J2_vel value
         data[8] - J3_vel value
-        data[9] - J1_acc value
-        data[10] - J2_acc value
-        data[11] - J3_acc value
-        data[12] - accuracy, how close the arduino has to get to the position before starting to move to the next cmd
+        data[9] - z_vel value
+        data[10] - J1_acc value
+        data[11] - J2_acc value
+        data[12] - J3_acc value
+        data[13] - z_acc value
+        data[14] - accuracy, how close the arduino has to get to the position before starting to move to the next cmd
         """
         #TODO: Implement stop
     
-        self.LOG_DEBUG(f"going to package data")
+        self.LOG_ALL(f"going to package data")
         
         # Convert rad to deg, which the arduino understands
         if in_rad:
@@ -274,7 +277,7 @@ class Robot(Logger):
             J2 = np.rad2deg(J2)
             J3 = np.rad2deg(J3)
         
-        data = (cmd_type.value,J1,J2,J3,z,gripper_value,J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, 0)
+        data = (cmd_type.value,J1,J2,J3,z,gripper_value,J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy)
         
         self.LOG_DEBUG(f"packaged data: {data}")
 
@@ -288,7 +291,7 @@ class Robot(Logger):
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
         if J1 is None:
-            self.LOG_DEBUG(f"Failed to go to pos: x:{x}, y:{y}, z:{z}")
+            self.LOG_WARNING(f"Failed to go to pos: x:{x}, y:{y}, z:{z}")
             return False
 
         # Pick a valid solution out of the 2 possibile ones
@@ -298,11 +301,11 @@ class Robot(Logger):
                 good_i = i
                 break
         if good_i is None:
-            self.LOG_DEBUG(f"Failed to go to pos: x:{x}, y:{y}, z:{z}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
+            self.LOG_WARNING(f"Failed to go to pos: x:{x}, y:{y}, z:{z}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
             return False
 
 
-        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, 0)
+        self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, self.vel, self.vel, self.vel, self.vel, self.acc, self.acc, self.acc, self.acc, self.accuracy)
         return True
 
     def moveL_xyz(self, x, y, z):
@@ -315,14 +318,13 @@ class Robot(Logger):
         """
         self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y} z:{z}")
 
-        n = max(abs(x - self.x_goal), abs(y - self.y_goal))
-        n = max(n, abs(z - self.z_goal))
-        n = int(n / self.config["dx"])
+        d = np.linalg.norm([x-self.x_goal, y-self.y_goal, z-self.z_goal])
+        n = int(np.ceil(d / self.config["dx"]))
         xx = np.linspace(self.x_goal, x, n) 
         yy = np.linspace(self.y_goal, y, n) 
         zz = np.linspace(self.z_goal, z, n) 
 
-        self.LOG_DEBUG(f"There are {n} steps ")
+        self.LOG_DEBUG(f"The distance is: {d} mm, it will take: {n} steps to move with dx: {self.config['dx']}")
 
         for i in range(n):
             J1,J2,J3 = self.inverse_kinematics(xx[i], yy[i])
@@ -331,19 +333,41 @@ class Robot(Logger):
                 return False
 
             # Pick a valid solution out of the 2 possibile ones
-            good_i = None
-            for i in range(2):
-                if self.validate_joints_z(J1[i], J2[i], J3, z):
-                    good_i = i
+            good_j = None
+            for j in range(2):
+                if self.validate_joints_z(J1[j], J2[j], J3, z):
+                    good_j = j
                     break
-            if good_i is None:
+            if good_j is None:
                 self.LOG_DEBUG(f"Failed to go to pos: xx[i]:{xx[i]}, yy[i]:{yy[i]}, zz[i]:{zz[i]}, no possible J1 or J2 angles, J1: {J1}, J2: {J2}")
                 return False
 
-            J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc = self.calc_linear_vel_acc(xx[i], yy[i], zz[i], J1[i], J2[i], self.tcp_vel)
-            self.add_move_cmd(J1[good_i], J2[good_i], J3, z, self.gripper_value, J1_vel, J2_vel, self.vel, z_vel, J1_acc, J2_acc, self.acc, z_acc, 0)
+            J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc = self.calc_linear_vel_acc(xx[i], yy[i], zz[i], J1[good_j], J2[good_j], self.tcp_vel)
+            self.add_move_cmd(J1[good_j], J2[good_j], J3, z, self.gripper_value, J1_vel, J2_vel, self.vel, z_vel, J1_acc, J2_acc, self.acc, z_acc, self.accuracy)
         
         return True
+
+    # Function to calculate how many degrees n steps corresponds to with angle_to_steps = ang_to_steps
+    def deg_to_steps_base(self, deg, deg_to_steps, in_rad=True):
+        if in_rad:
+            deg = np.rad2deg(deg)
+        return deg * deg_to_steps
+
+    # Function to calculate deg to steps in theta1
+    def deg_to_steps_J1(self, deg, in_rad=True):
+        return self.deg_to_steps_base(deg, self.config['J1_angle_to_steps'], in_rad)
+
+    # Function to calculate deg to steps in theta2
+    def deg_to_steps_J2(self, deg, in_rad=True):
+        return self.deg_to_steps_base(deg, self.config['J2_angle_to_steps'], in_rad)
+
+    # Function to calculate deg to steps in phi
+    def deg_to_steps_J3(self, deg, in_rad=True): 
+        return self.deg_to_steps_base(deg, self.config['J3_angle_to_steps'], in_rad)
+
+    # Function to calculate how many steps n mm corresponds to in z
+    def mm_to_steps_z(self, mm):
+        return mm*self.config['z_mm_to_steps']
 
     def calc_linear_vel_acc(self, x, y, z, J1, J2, tcp_vel):
         self.LOG_DEBUG(f"Going calculate linear joint velocities and accelerations so that J1 and J2 arrive at the same time to: {J1}, {J2} with tcp speed: {tcp_vel}")
@@ -352,22 +376,23 @@ class Robot(Logger):
         t = d/tcp_vel
         # If we're already at goal return 0 vel and 0 acc
         if t == 0:
-            return 0,0,0,0,0,0
+            return 10,10,10,10,10,10
 
-        J1_vel = np.linalg.norm(J1 - self.J1_goal) / t
-        J2_vel = np.linalg.norm(J2 - self.J2_goal) / t
-        z_vel = np.linalg.norm(z - self.z_goal) / t
+        # TODO: the new velocities should be decreased by a factor which makes them still move linearly
+        J1_vel = self.deg_to_steps_J1(np.linalg.norm(J1 - self.J1_goal)) / t
+        J2_vel = self.deg_to_steps_J1(np.linalg.norm(J2 - self.J2_goal)) / t
+        z_vel = self.deg_to_steps_J1(np.linalg.norm(z - self.z_goal)) / t
 
         J1_acc, J2_acc, z_acc = self.acc, self.acc, self.acc
 
 
         # Clamp the velocities and accelerations
-        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), self.config["v_min"])
-        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), self.config["v_min"])
-        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), self.config["v_min"])
-        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), self.config["a_min"])
-        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), self.config["a_min"])
-        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), self.config["a_min"])
+        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), 10 + self.config["v_min"])
+        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), 10 + self.config["v_min"])
+        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), 10 + self.config["v_min"])
+        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), 10 + self.config["a_min"])
+        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), 10 + self.config["a_min"])
+        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), 10 + self.config["a_min"])
 
         self.LOG_DEBUG(f"Resulting J1_vel: {J1_vel}, J1_acc: {J1_acc}, J2_vel: {J2_vel}, J2_acc: {J2_acc}, z_vel: {z_vel}, z_acc: {z_acc}")
         return J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc

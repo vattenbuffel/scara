@@ -145,9 +145,6 @@ class Communicator(Logger):
             time.sleep(0.1) #TODO: THIS IS NOT GOOD. INSTEAD OF A RANDOM SLEEP DURATION THE CODE SHOULD SOMEHOW WAIT FOR A RESPONSE BEFORE SENDING
             self.serial.write(data)
 
-        
-        self.LOG_DEBUG(f"Sent data: {data_send}")
-        
         return True
 
     def kill(self):

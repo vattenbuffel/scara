@@ -49,9 +49,7 @@
 #define READ_SERIAL_INTERVAL 10000
 
 struct MSG {
-  bool stop;
-  bool home;
-  bool move;
+  int cmd;
   float J1;
   float J2;
   float phi;
@@ -74,10 +72,18 @@ struct CMD {
   int J2_goal;
   int phi_goal;
   int z_goal;
+  float J1_accuracy;
+  float J2_accuracy;
+  float phi_accuracy;
+  float z_accuracy;
 };
 
 
-
+enum cmd_types{
+  HOME_ENUM = 0,
+  MOVE_ENUM,
+  STOP_ENUM
+};
 
 
 void homeing();
@@ -155,15 +161,15 @@ void loop() {
 
   if (n_cmd_in_storage > 0) {
     // STOP
-    if (cmds[cmd_cur_i].msg.stop) {
+    if (cmds[cmd_cur_i].msg.cmd == STOP_ENUM) {
       stop();
     }
     // Home
-    else if (cmds[cmd_cur_i].msg.home) {
+    else if (cmds[cmd_cur_i].msg.cmd == HOME_ENUM) {
       homeing();
     }
     // Alter gripper, joints and z, i.e MOVE
-    else if (cmds[cmd_cur_i].msg.move) {
+    else if (cmds[cmd_cur_i].msg.cmd == MOVE_ENUM) {
       if (!moving && n_cmd_in_storage) {
         set_v_a_gripper();
       }
@@ -195,8 +201,6 @@ void set_v_a_gripper() {
   stepper1.setSpeed(cmds[cmd_cur_i].msg.v_phi * ((cmds[cmd_cur_i].msg.phi > phi) ? 1 : -1));
   stepper2.setSpeed(cmds[cmd_cur_i].msg.v_J1 * ((cmds[cmd_cur_i].msg.J1 > theta1) ? 1 : -1));
   stepper3.setSpeed(cmds[cmd_cur_i].msg.v_J2 * ((cmds[cmd_cur_i].msg.J2 > theta2) ? 1 : -1));
-  Serial.print(F("J2 vel: "));
-  Serial.println(cmds[cmd_cur_i].msg.v_J2 * ((cmds[cmd_cur_i].msg.J2 > theta2) ? 1 : -1));
   stepper4.setSpeed(cmds[cmd_cur_i].msg.v_z * ((cmds[cmd_cur_i].msg.z > z) ? 1 : -1));
 
   gripperServo.write(cmds[cmd_cur_i].msg.gripper_value);
@@ -228,14 +232,14 @@ bool read_serial() {
     string_received += c;
     // Serial.print(F("String received so far: "));
     // Serial.println(string_received);
-    // Serial.print("Char received: '");
+    // Serial.print(F("Char received: '"));
     // Serial.print(c);
-    // Serial.println("'");
+    // Serial.println(("'"));
 
     if ('\n' == c) {
       // Serial.print(F("Read end of string"));
-      Serial.print(F("Full string read: "));
-      Serial.println(string_received);
+      // Serial.print(F("Full string read: "));
+      // Serial.println(string_received);
       return true;
     }
   }
@@ -243,7 +247,7 @@ bool read_serial() {
 }
 
 void parse_msg() {
-  int n_data = 17;
+  int n_data = 15;
   float data[n_data];
   // Extract the data from the string and put into a msg
   for (int i = 0; i < n_data; i++) {
@@ -255,38 +259,46 @@ void parse_msg() {
     string_received = string_received.substring(index + 1);       //Remove the number from the string
   }
   /*
-     data[0] - STOP 
-     data[1] - HOME 
-     data[2] - MOVE 
-     data[3] - Joint 1 angle
-     data[4] - Joint 2 angle
-     data[5] - Joint 3 angle
-     data[6] - Z position
-     data[7] - Gripper value
-     data[8] - Speed value
-     data[9] - Acceleration value
-    */
-  cmds[cmd_end_i].msg.stop = (bool)data[0];
-  cmds[cmd_end_i].msg.home = (bool)data[1];
-  cmds[cmd_end_i].msg.move = (bool)data[2];
-  cmds[cmd_end_i].msg.J1 = data[3];
-  cmds[cmd_end_i].msg.J2 = data[4];
-  cmds[cmd_end_i].msg.phi = data[5];
-  cmds[cmd_end_i].msg.z = data[6];
-  cmds[cmd_end_i].msg.gripper_value = (int)data[7];
-  cmds[cmd_end_i].msg.v_J1 = data[8];
-  cmds[cmd_end_i].msg.v_J2 = data[8];
+    data[0] - cmd_type [cmd enum] 
+    data[1] - Joint 1 angle
+    data[2] - Joint 2 angle
+    data[3] - Joint 3 angle
+    data[4] - Z position
+    data[5] - Gripper value
+    data[6] - J1_vel value
+    data[7] - J2_vel value
+    data[8] - J3_vel value
+    data[9] - z_vel value
+    data[10] - J1_acc value
+    data[11] - J2_acc value
+    data[12] - J3_acc value
+    data[13] - z_acc value
+    data[14] - accuracy, how close the arduino has to get to the position before starting to move to the next cmd
+  */
+  cmds[cmd_end_i].msg.cmd = (int)data[0];
+  cmds[cmd_end_i].msg.J1 = data[1];
+  cmds[cmd_end_i].msg.J2 = data[2];
+  cmds[cmd_end_i].msg.phi = data[3];
+  cmds[cmd_end_i].msg.z = data[4];
+  cmds[cmd_end_i].msg.gripper_value = (int)data[5];
+  cmds[cmd_end_i].msg.v_J1 = data[6];
+  cmds[cmd_end_i].msg.v_J2 = data[7];
   cmds[cmd_end_i].msg.v_phi = data[8];
-  cmds[cmd_end_i].msg.v_z = data[8];
-  cmds[cmd_end_i].msg.a_J1 = data[9];
-  cmds[cmd_end_i].msg.a_J2 = data[9];
-  cmds[cmd_end_i].msg.a_phi = data[9];
-  cmds[cmd_end_i].msg.a_z = data[9];
-  // cmds[cmd_end_i].msg.accuracy = data[0];
+  cmds[cmd_end_i].msg.v_z = data[9];
+  cmds[cmd_end_i].msg.a_J1 = data[10];
+  cmds[cmd_end_i].msg.a_J2 = data[11];
+  cmds[cmd_end_i].msg.a_phi = data[12];
+  cmds[cmd_end_i].msg.a_z = data[13];
+  cmds[cmd_end_i].msg.accuracy = data[14];
+  
   cmds[cmd_end_i].J1_goal = DEG_TO_STEPS_THETA1(cmds[cmd_end_i].msg.J1);
   cmds[cmd_end_i].J2_goal = DEG_TO_STEPS_THETA2(cmds[cmd_end_i].msg.J2);
   cmds[cmd_end_i].phi_goal = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.phi);
   cmds[cmd_end_i].z_goal = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.z);
+  cmds[cmd_end_i].J1_accuracy = DEG_TO_STEPS_THETA1(cmds[cmd_end_i].msg.accuracy);
+  cmds[cmd_end_i].J2_accuracy = DEG_TO_STEPS_THETA2(cmds[cmd_end_i].msg.accuracy);
+  cmds[cmd_end_i].phi_accuracy = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.accuracy);
+  cmds[cmd_end_i].z_accuracy = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.accuracy);
 
   // Serial.println(F("Received cmd: "));
   // cmd_print(&cmds[cmd_end_i]);
@@ -304,12 +316,8 @@ void parse_msg() {
 }
 
 void msg_print(MSG *msg) {
-  Serial.print(F("msg->stop: "));
-  Serial.println(msg->stop);
-  Serial.print(F("msg->home: "));
-  Serial.println(msg->home);
-  Serial.print(F("msg->move: "));
-  Serial.println(msg->move);
+  Serial.print(F("msg->cmd: "));
+  Serial.println(msg->cmd);
   Serial.print(F("msg->J1: "));
   Serial.println(msg->J1);
   Serial.print(F("msg->J2: "));
@@ -330,7 +338,7 @@ void msg_print(MSG *msg) {
   Serial.println(msg->v_z);
   Serial.print(F("msg->a_J1: "));
   Serial.println(msg->a_J1);
-  Serial.print(F("msg->a_J2;: "));
+  Serial.print(F("msg->a_J2: "));
   Serial.println(msg->a_J2);
   Serial.print(F("msg->a_phi: "));
   Serial.println(msg->a_phi);
@@ -344,14 +352,22 @@ void cmd_print(CMD *cmd) {
   Serial.println(F("cmd->msg: {"));
   msg_print(&cmd->msg);
   Serial.println(F("}"));
-  Serial.print("cmd->J1_goa: l");
+  Serial.print(F("cmd->J1_goal: "));
   Serial.println(cmd->J1_goal);
-  Serial.print("cmd->J2_goal: ");
+  Serial.print(F("cmd->J2_goal: "));
   Serial.println(cmd->J2_goal);
-  Serial.print("cmd->phi_goal: ");
+  Serial.print(F("cmd->phi_goal: "));
   Serial.println(cmd->phi_goal);
-  Serial.print("cmd->z_goal: ");
+  Serial.print(F("cmd->z_goal: "));
   Serial.println(cmd->z_goal);
+  Serial.print(F("cmd->J1_accuracy: "));
+  Serial.println(cmd->J1_accuracy);
+  Serial.print(F("cmd->J2_accuracy: "));
+  Serial.println(cmd->J2_accuracy);
+  Serial.print(F("cmd->phi_accuracy: "));
+  Serial.println(cmd->phi_accuracy);
+  Serial.print(F("cmd->z_accuracy: "));
+  Serial.println(cmd->z_accuracy);
 }
 
 bool move() {
@@ -359,13 +375,13 @@ bool move() {
   bool done_with_cur_idx = false;
 
 
-  if (abs(stepper2.currentPosition() - cmds[cmd_cur_i].J1_goal) <= cmds[cmd_cur_i].msg.accuracy) {
+  if (abs(stepper2.currentPosition() - cmds[cmd_cur_i].J1_goal) <= cmds[cmd_cur_i].J1_accuracy) {
     // Serial.println(F("Finish with J1"));
-    if (abs(stepper3.currentPosition() - cmds[cmd_cur_i].J2_goal) <= cmds[cmd_cur_i].msg.accuracy) {
+    if (abs(stepper3.currentPosition() - cmds[cmd_cur_i].J2_goal) <= cmds[cmd_cur_i].J2_accuracy) {
       // Serial.println(F("Finish with J2"));
-      // if (abs(stepper1.currentPosition() - cmds[cmd_cur_i].phi_goal) <= DEG_TO_STEPS_PHI(cmds[cmd_cur_i].msg.accuracy)){
-      if (abs(stepper4.currentPosition() - cmds[cmd_cur_i].z_goal) <= cmds[cmd_cur_i].msg.accuracy) {
-        // Serial.println(F("Finish with z"));
+      // if (abs(stepper1.currentPosition() - cmds[cmd_cur_i].phi_goal) <= DEG_TO_STEPS_PHI(cmds[cmd_cur_i].J3_accuracy)){
+      if (abs(stepper4.currentPosition() - cmds[cmd_cur_i].z_goal) <= cmds[cmd_cur_i].z_accuracy) {
+        Serial.println(F("Finish with z"));
 
         done_with_cur_idx = true;
         // Serial.println(F("finish moving"));
@@ -392,11 +408,13 @@ bool move() {
     moving = true;
   }
 
-  theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
-  theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
-  phi = STEPS_TO_DEG_PHI(stepper1.currentPosition());
-  z = STEPS_TO_MM_Z(stepper4.currentPosition());
-
+  if (!moving || done_with_cur_idx){
+    Serial.println(F("Updating position"));
+    theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
+    theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
+    phi = STEPS_TO_DEG_PHI(stepper1.currentPosition());
+    z = STEPS_TO_MM_Z(stepper4.currentPosition());
+  }
   return done_with_cur_idx;
 }
 

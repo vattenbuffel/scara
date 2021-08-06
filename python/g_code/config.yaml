@@ -6,4 +6,4 @@ x_base_offset: 100
 y_base_offset: 0
 z_base_offset: 0
 
-dx: 0.01 # How many steps there are between two radians. Between 0 and 1 there is dx number of steps
+dtheta: 0.01 # How many steps there are between two radians. Between 0 and 1 there is dtheta number of steps

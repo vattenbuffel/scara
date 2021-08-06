@@ -112,12 +112,12 @@ class GCode(Logger):
         return xy
 
 
-    def arc(self, start, center, goal, CW):
+    def arc(self, start, center, goal):
         theta1 = np.arctan2(start[1] - center[1], start[0] - center[0])
         theta2 = np.arctan2(goal[1] - center[1], goal[0] - center[0])
         theta2 += 2*np.pi * in_q2(theta1)*in_q3(theta2)
         theta2 -= 2*np.pi * in_q2(theta2)*in_q3(theta1)
-        n = abs(int((theta2 - theta1) / self.config['dx']))
+        n = abs(int((theta2 - theta1) / self.config['dtheta']))
         
         theta = np.linspace(theta1, theta2, n)
         r = np.linalg.norm(center-start)
