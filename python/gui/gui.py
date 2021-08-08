@@ -1,3 +1,5 @@
+from io import StringIO
+import glob
 from logger.logger import Logger
 import streamlit as st
 from robot.robot import robot
@@ -10,6 +12,7 @@ import pandas as pd
 from PIL import Image, ImageDraw
 from streamlit_drawable_canvas import st_canvas
 from heatmap.heatmap import heatmap
+from g_code.g_code import g_code
 
 
 st.set_page_config(page_title="test", layout="wide")
@@ -39,6 +42,9 @@ if 'init' not in st.session_state:
         if key not in st.session_state:
             st.session_state[key] = MovementData(False, 0)
 
+    if 'mod_file_uploader' not in st.session_state:
+        st.session_state.mod_file_uploader = False
+
 if 'config' not in st.session_state:
     fp = Path(__file__)
     config_fp = os.path.join(str(fp.parent), "config.yaml")
@@ -62,6 +68,71 @@ if 'logger' not in st.session_state:
 
 def set_update(key):
     st.session_state[key].should_move = True
+
+def gcode_mode():
+    st.markdown("# G_code") # Center this somehow
+    col1, col2 = st.beta_columns(2)
+
+    paths = glob.glob(f"{g_code.config['base_path']}*.gcode")
+    # Sanitize paths
+    paths = [os.path.basename(paths[i]) for i in range(len(paths))]
+
+    with col1:
+        st.header(F"Move according to g_code file")
+        path = st.selectbox("", paths)
+        confirmed_choice = st.button("confirm")
+        # st.write(f"chosen file: {path}")
+        if path and confirmed_choice:
+            st.session_state.logger.LOG_DEBUG(f"Going to move according to {path}")
+            g_code.move_according(path)
+
+    with col2:
+        st.markdown("## Modify files")
+        def mod_file_uploader_true():
+            # print("Setting mod_file_uploader = True")
+            st.session_state.mod_file_uploader = True
+            # print(f"st.session_state.mod_file_uploader = {st.session_state.mod_file_uploader}")
+
+        st.markdown("### Upload g_code")
+        file = st.file_uploader("", type=".gcode", on_change=mod_file_uploader_true)
+        # st.write(f"mod_file_uploader: {st.session_state.mod_file_uploader}")
+        # Copy contents of file into it's proper location
+        if file is not None and st.session_state.mod_file_uploader == True:
+            # st.write(f"Going to add file: {file}")
+            # print(f"Adding file: {file}")
+            stringio = StringIO(file.getvalue().decode("utf-8"))
+            # st.write(stringio)
+            # st.write(file)
+
+            # Make sure file is not duplicate
+            if file.name in paths:
+                st.warning(f"{file.name} already exists")
+                st.session_state.logger.LOG_WARNING(f"Tried to upload file: {file.name} to dir: {g_code.config['base_path']}, but that file already exists there")
+            else:
+                st.session_state.logger.LOG_INFO(f"Going to upload file: {file.name} to dir: {g_code.config['base_path']}")
+                f = open(f"{g_code.config['base_path']}{file.name}", "w")
+                for line in file:
+                    f.write(stringio.readline().strip('\n')) # Why loop over line when readline anyways? If it ain't broke, don't fix it
+                f.close()
+                st.session_state.logger.LOG_INFO(f"Successfully uploaded file: {file.name} to dir: {g_code.config['base_path']}")
+                st.success("Uploaded file")
+
+            st.session_state.mod_file_uploader = False
+
+        # Delete a file
+        st.markdown("### Delete a file")
+        path = st.selectbox("", paths, key="DELETE_GCODE_FILE_SELECTBOX")
+        confirmed_delete = st.button("confirm", key="DELETE_GCODE_FILE_BUTTON")
+        # st.write(f"chosen file: {path}")
+        if path and confirmed_delete:
+            st.session_state.logger.LOG_DEBUG(f"Going to delete file: {path}")
+            os.remove(f"{g_code.config['base_path']}{path}")
+            st.session_state.logger.LOG_INFO(f"Successfully deleted file: {path} from dir: {g_code.config['base_path']}")
+            st.success("Deleted file")
+                
+
+
+
 
 
 
@@ -166,7 +237,7 @@ def normal_mode():
         st.session_state['update_x'].val = st.slider("x", -x_max, x_max, 1, 1, on_change=lambda: set_update('update_x'))
         st.session_state['update_y'].val = st.slider("y", -x_max, x_max, 1, 1, on_change=lambda: set_update('update_y'))
         st.session_state['update_z'].val = st.slider("z", st.session_state.config_robot['z_min'], st.session_state.config_robot['z_max'], 1, 1, on_change=lambda: set_update('update_z'))
-        st.session_state['update_vel'].val = st.slider("velocity", st.session_state.config_robot['v_min'], st.session_state.config_robot['v_max'], st.session_state.config_robot['base_speed'], 1, on_change=lambda: set_update('update_vel'))
+        st.session_state['update_vel'].val = st.slider("velocity", st.session_state.config_robot['v_min'], st.session_state.config_robot['v_max'], st.session_state.config_robot['base_vel_J1'], 1, on_change=lambda: set_update('update_vel'))
 
     with col2:
         st.subheader('Forward kinematics')
@@ -180,7 +251,7 @@ def normal_mode():
         st.session_state['update_J1'].val = st.slider("J1", J1_min, J1_max, 0, 1, on_change=lambda: set_update('update_J1'))
         st.session_state['update_J2'].val = st.slider("J2", J2_min, J2_max, 0, 1, on_change=lambda: set_update('update_J2'))
         st.session_state['update_J3'].val = st.slider("J3", J3_min, J3_max, 0, 1, on_change=lambda: set_update('update_J3'))
-        st.session_state['update_acc'].val = st.slider("acceleration", st.session_state.config_robot['a_min'], st.session_state.config_robot['a_max'], st.session_state.config_robot['base_acceleration'], 1, on_change=lambda: set_update('update_acc'))
+        st.session_state['update_acc'].val = st.slider("acceleration", st.session_state.config_robot['a_min'], st.session_state.config_robot['a_max'], st.session_state.config_robot['base_acc_J1'], 1, on_change=lambda: set_update('update_acc'))
 
     st.subheader('Gripper')
     st.session_state['update_gripper'].val = st.slider("gripper", st.session_state.config_robot['gripper_min'], st.session_state.config_robot['gripper_max'], 0, 1, on_change=lambda: set_update('update_gripper'))
@@ -202,10 +273,12 @@ def normal_mode():
 
 def loop():
     # Enable normal mode of heatmap mode
-    mode = st.sidebar.radio("Mode", ("Normal", "Heatmap"))
+    mode = st.sidebar.radio("Mode", ("Normal", "Heatmap", "G-code"))
 
     if mode == "Normal":
         normal_mode()
     elif mode == "Heatmap":
         heatmap_mode()
+    elif mode == "G-code":
+        gcode_mode()
     
