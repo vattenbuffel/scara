@@ -16,6 +16,7 @@ from g_code.g_code import g_code
 
 
 st.set_page_config(page_title="test", layout="wide")
+print("start of gui")
 
 class MovementData:
     def __init__(self, should_move, val):
@@ -42,8 +43,10 @@ if 'init' not in st.session_state:
         if key not in st.session_state:
             st.session_state[key] = MovementData(False, 0)
 
-    if 'mod_file_uploader' not in st.session_state:
-        st.session_state.mod_file_uploader = False
+if 'delete_file' not in st.session_state:
+    st.session_state.delete_file = False
+if 'mod_file_uploader' not in st.session_state:
+    st.session_state.mod_file_uploader = False
 
 if 'config' not in st.session_state:
     fp = Path(__file__)
@@ -70,16 +73,19 @@ def set_update(key):
     st.session_state[key].should_move = True
 
 def gcode_mode():
-    st.markdown("# G_code") # Center this somehow
     col1, col2 = st.beta_columns(2)
 
-    paths = glob.glob(f"{g_code.config['base_path']}*.gcode")
-    # Sanitize paths
-    paths = [os.path.basename(paths[i]) for i in range(len(paths))]
+    def get_paths():
+        paths = glob.glob(f"{g_code.config['base_path']}*.gcode")
+        # Sanitize paths
+        paths = [os.path.basename(paths[i]) for i in range(len(paths))]
+        st.session_state.logger.LOG_DEBUG(f"g_code files found: {paths}")
+        return paths
+    paths = get_paths()
 
     with col1:
         st.header(F"Move according to g_code file")
-        path = st.selectbox("", paths)
+        path = st.selectbox(" ", paths)
         confirmed_choice = st.button("confirm")
         # st.write(f"chosen file: {path}")
         if path and confirmed_choice:
@@ -121,16 +127,21 @@ def gcode_mode():
 
         # Delete a file
         st.markdown("### Delete a file")
-        path = st.selectbox("", paths, key="DELETE_GCODE_FILE_SELECTBOX")
-        confirmed_delete = st.button("confirm", key="DELETE_GCODE_FILE_BUTTON")
+        def delete_file_true():
+            st.session_state.delete_file = True
+
+        path_to_delete = st.selectbox("", paths)
+        confirm_delete = st.button("confirm", key="DELETE_GCODE_FILE_BUTTON", on_click=delete_file_true)
         # st.write(f"chosen file: {path}")
-        if path and confirmed_delete:
-            st.session_state.logger.LOG_DEBUG(f"Going to delete file: {path}")
-            os.remove(f"{g_code.config['base_path']}{path}")
-            st.session_state.logger.LOG_INFO(f"Successfully deleted file: {path} from dir: {g_code.config['base_path']}")
+        if path_to_delete and st.session_state.delete_file:
+            st.session_state.logger.LOG_DEBUG(f"Going to delete file: {path_to_delete}")
+            os.remove(f"{g_code.config['base_path']}{path_to_delete}")
+            st.session_state.logger.LOG_INFO(f"Successfully deleted file: {path_to_delete} from dir: {g_code.config['base_path']}")
             st.success("Deleted file")
+            st.session_state.delete_file = False
                 
 
+    st.button("Update")
 
 
 
