@@ -1,4 +1,5 @@
 from logger.logger import Logger
+import glob
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
@@ -60,7 +61,32 @@ class GCode(Logger):
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def parse(self):
+    def get_path(self, prompt):
+        print(f"{prompt}What g_code file would you like to parse?")
+        # All files ending with .gcode
+        paths = glob.glob(self.config['base_path'] + "*" + ".gcode")
+        for i, path in enumerate(paths):
+            print(f"{prompt}[{i}]: {path}")
+
+
+        chosen_i = input(f"{prompt}File nr: ") 
+        try:        
+            chosen_i = int(chosen_i)
+        except ValueError:
+            self.LOG_ERROR(f"Invalid input. A number must be input and you input: {chosen_i}")
+            return False
+
+        try:
+            if chosen_i < 0:
+                raise IndexError
+            path = paths[chosen_i]
+        except IndexError:
+            self.LOG_ERROR(f"Invalid file chosen. Max index: {len(paths)}, min index: 0, chosen index: {chosen_i}")
+            return False
+        
+        return path
+
+    def parse(self, prompt=""):
         self.LOG_DEBUG(f"Going to parse g_code file")
 
         x_offset = self.config['x_base_offset']
@@ -73,7 +99,10 @@ class GCode(Logger):
         machine.abs_pos.values['Y'] = robot.get_y
         machine.abs_pos.values['Z'] = robot.get_z
 
-        with open("./g_code/g_code.gcode",'r') as gcode:
+        # What file to load
+        path = self.get_path(prompt)
+
+        with open(path,'r') as gcode:
             for line_txt in gcode:
                 line = Line(line_txt) 
                 if line.block.gcodes:   
@@ -97,7 +126,7 @@ class GCode(Logger):
         start = np.array([cur_pos['X'], cur_pos['Y']])
         center = np.array([params['I'].value, params['J'].value]) + start
         goal = np.array((params['X'].value, params['Y'].value))
-        xy = self.arc(start, center, goal, True)
+        xy = self.arc(start, center, goal)
         if show:
             self.show_arc(xy, start, goal, center, True)
         return xy
@@ -106,7 +135,7 @@ class GCode(Logger):
         start = np.array([cur_pos['X'], cur_pos['Y']])
         center = np.array([params['I'].value, params['J'].value]) + start
         goal = np.array((params['X'].value, params['Y'].value))
-        xy = self.arc(start, center, goal, True)
+        xy = self.arc(start, center, goal)
         if show:
             self.show_arc(xy, start, goal, center, False)
         return xy
@@ -178,14 +207,19 @@ class GCode(Logger):
     def move_parsed(self):
         self.LOG_DEBUG(f"Going to move according to parsed g_code file")
         
-        # Move to 0, 0, 25 as a good starting spot
-        robot.move_xyz(0,0,25)
+        # Move to 100, 0, 25 as a good starting spot
+        res = robot.move_xyz(100,0,25)
+        if not res:
+            self.LOG_ERROR("Failed to move according to g-code")
+
         # Set the velocity to something nice and slow
-        robot.set_velocity(self.config['base_speed'])
+        robot.set_tcp_vel(self.config['tcp_vel'])
 
         for pos in self.pos_to_go:
-            robot.moveL_xyz(*pos) 
-        self.LOG_DEBUG(f"Done moving")
+            res = robot.moveL_xyz(*pos)             
+            if not res:
+                self.LOG_ERROR("Failed to move according to g-code")
+        self.LOG_INFO(f"Done moving according to g-code file")
 
 
 
