@@ -593,6 +593,22 @@ class Robot(Logger):
 
         self.alter_gripper(self.config['gripper_min'])
 
+    def set_velocity(self, vel):
+        """A dumb function used with gui to set 1 velocity for all joints       
+
+        Args:
+            vel ([type]): [description]
+        """
+        self.set_vels(vel, vel, vel, vel)
+
+    def set_acceleration(self, acc):
+        """A dumb function used with gui to set 1 acceleration for all joints       
+
+        Args:
+            acc ([type]): [description]
+        """
+        self.set_accs(acc, acc, acc, acc)
+
     def set_vels(self, J1_vel, J2_vel, J3_vel, z_vel):
         self.LOG_DEBUG(f"updating velocity from {self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel} to {J1_vel, J2_vel, J3_vel, z_vel}")
         self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel = J1_vel, J2_vel, J3_vel, z_vel
