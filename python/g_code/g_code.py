@@ -74,7 +74,7 @@ class GCode(Logger):
             chosen_i = int(chosen_i)
         except ValueError:
             self.LOG_ERROR(f"Invalid input. A number must be input and you input: {chosen_i}")
-            return False
+            return None
 
         try:
             if chosen_i < 0:
@@ -82,7 +82,7 @@ class GCode(Logger):
             path = paths[chosen_i]
         except IndexError:
             self.LOG_ERROR(f"Invalid file chosen. Max index: {len(paths)}, min index: 0, chosen index: {chosen_i}")
-            return False
+            return None
         
         return path
 
@@ -101,6 +101,8 @@ class GCode(Logger):
 
         # What file to load
         path = self.get_path(prompt)
+        if path is None:
+            return False
 
         with open(path,'r') as gcode:
             for line_txt in gcode:
