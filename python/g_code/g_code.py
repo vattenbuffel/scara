@@ -65,9 +65,13 @@ class GCode(Logger):
         print(f"{prompt}What g_code file would you like to parse?")
         # All files ending with .gcode
         paths = glob.glob(self.config['base_path'] + "*" + ".gcode")
+
+        if len(paths) == 0:
+            print(f"{prompt}There are no gcode files to load. If you know that you have files, make sure they're in: {self.config['base_path']}")
+            return None
+
         for i, path in enumerate(paths):
             print(f"{prompt}[{i}]: {path}")
-
 
         chosen_i = input(f"{prompt}File nr: ") 
         try:        
