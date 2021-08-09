@@ -122,66 +122,75 @@ class Robot(Logger):
 
         self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}, J3: {J3}, x:{x}, y:{y}, z:{z}, gripper_value:{gripper_value}")
  
+    def validate_pos(self, x, y, z):
+        J1,J2,J3 = self.inverse_kinematics(x, y)
+        if J1 is None:
+            return False
+        res = True
+        res &= self.validate_joints_z(J1[0], J2[0], J3, z)
+        res &= self.validate_joints_z(J1[1], J2[1], J3, z)
+        return res 
+
     def validate_joints_z(self, J1, J2, J3, z):
         if not self.config['J1_min'] <= J1 <= self.config['J1_max']:
-            self.LOG_WARNING(f"Warning: J1 out of bound")
+            self.LOG_WARNING(f"J1 out of bound")
             return False
 
         if not self.config['J2_min'] <= J2 <= self.config['J2_max']:
-            self.LOG_WARNING(f"Warning: J2 out of bound")
+            self.LOG_WARNING(f"J2 out of bound")
             return False
 
         if not self.config['J3_min'] <= J3 <= self.config['J3_max']:
-            self.LOG_WARNING(f"Warning: J3 out of bound")
+            self.LOG_WARNING(f"J3 out of bound")
             # return False #TODO: temp since J3 isn't with us right now
 
         if not self.config['z_min'] <= z <= self.config['z_max']:
-            self.LOG_WARNING(f"Warning: z out of bound")
+            self.LOG_WARNING(f"z out of bound")
             return False
         
         return True
 
     def validate_joints_z_vel(self, J1_vel, J2_vel, J3_vel, z_vel):
         if not self.config['v_min'] <= J1_vel <= self.config['v_max']:
-            self.LOG_WARNING(f"Warning: J1_vel out of bound")
+            self.LOG_WARNING(f"J1_vel out of bound")
             return False
 
         if not self.config['v_min'] <= J2_vel <= self.config['v_max']:
-            self.LOG_WARNING(f"Warning: J2_vel out of bound")
+            self.LOG_WARNING(f"J2_vel out of bound")
             return False
 
         if not self.config['v_min'] <= J3_vel <= self.config['v_max']:
-            self.LOG_WARNING(f"Warning: J3_vel out of bound")
+            self.LOG_WARNING(f"J3_vel out of bound")
             return False
         
         if not self.config['v_min'] <= z_vel <= self.config['v_max']:
-            self.LOG_WARNING(f"Warning: z_vel out of bound")
+            self.LOG_WARNING(f"z_vel out of bound")
             return False
 
         return True
 
     def validate_joints_z_acc(self, J1_acc, J2_acc, J3_acc, z_acc):
         if not self.config['a_min'] <= J1_acc <= self.config['a_max']:
-            self.LOG_WARNING(f"Warning: J1_acc out of bound")
+            self.LOG_WARNING(f"J1_acc out of bound")
             return False
 
         if not self.config['a_min'] <= J2_acc <= self.config['a_max']:
-            self.LOG_WARNING(f"Warning: J2_acc out of bound")
+            self.LOG_WARNING(f"J2_acc out of bound")
             return False
 
         if not self.config['a_min'] <= J3_acc <= self.config['a_max']:
-            self.LOG_WARNING(f"Warning: J3_acc out of bound")
+            self.LOG_WARNING(f"J3_acc out of bound")
             return False
 
         if not self.config['a_min'] <= z_acc <= self.config['a_max']:
-            self.LOG_WARNING(f"Warning: z_acc out of bound")
+            self.LOG_WARNING(f"z_acc out of bound")
             return False
 
         return True
 
     def validate_gripper(self, gripper_value):
         if not self.config['gripper_min'] <= gripper_value <= self.config['gripper_max']:
-            self.LOG_WARNING(f"Warning: gripper_value out of bound")
+            self.LOG_WARNING(f"gripper_value out of bound")
             return False
 
         return True
@@ -235,7 +244,7 @@ class Robot(Logger):
 
         # If both theta2 are None then impossible position given
         if theta2[0] is None and theta2[1] is None:
-            self.LOG_WARNING(f"WARNING Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
+            self.LOG_WARNING(f" Invalid position given. Variables were x: {x}, y: {y}, L1: {L1}, L2: {L2}")
             return None, None, None
 
         def calc_theta1(theta2):

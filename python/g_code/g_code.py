@@ -237,6 +237,13 @@ class GCode(Logger):
                         self.pos_to_go.append((x, y, z))
 
 
+        # Verify that all the positions are valid
+        for pos in self.pos_to_go:
+            if not robot.validate_pos(*pos):
+                self.LOG_ERROR(f"Invalid position in gcode file. Resetting gcode module.")
+                self.reset()
+                return False
+
         self.LOG_DEBUG(f"Done parsing g_code file")
         return True
 
