@@ -237,7 +237,7 @@ bool read_serial() {
     // Serial.println(("'"));
 
     if ('\n' == c) {
-      // Serial.print(F("Read end of string"));
+      // Serial.print(F("Read end of string. "));
       // Serial.print(F("Full string read: "));
       // Serial.println(string_received);
       return true;
@@ -285,6 +285,10 @@ void parse_msg() {
   cmds[cmd_end_i].msg.v_J1 = DEG_TO_STEPS_THETA1(data[6]); // Convert the data from degrees/s to steps/s
   cmds[cmd_end_i].msg.v_J2 = DEG_TO_STEPS_THETA2(data[7]); // Convert the data from degrees/s to steps/s
   cmds[cmd_end_i].msg.v_phi = DEG_TO_STEPS_PHI(data[8]); // Convert the data from degrees/s to steps/s
+  // Serial.print("v_z: ");
+  // Serial.print(data[9]);
+  // Serial.print(", MM_TO_STEPS_Z(data[9]): ");
+  // Serial.println(MM_TO_STEPS_Z(data[9]));
   cmds[cmd_end_i].msg.v_z = MM_TO_STEPS_Z(data[9]); // Convert the data from mm/s to steps/s
   cmds[cmd_end_i].msg.a_J1 = DEG_TO_STEPS_THETA1(data[10]);
   cmds[cmd_end_i].msg.a_J2 = DEG_TO_STEPS_THETA2(data[11]);
@@ -303,6 +307,14 @@ void parse_msg() {
 
   Serial.println(F("Received cmd: "));
   cmd_print(&cmds[cmd_end_i]);
+  Serial.print(F("Currently located at J1: "));
+  Serial.print(STEPS_TO_DEG_THETA1(stepper2.currentPosition()));
+  Serial.print(F(", J2: "));
+  Serial.print(STEPS_TO_DEG_THETA2(stepper3.currentPosition()));
+  Serial.print(F(", J3: "));
+  Serial.print(STEPS_TO_DEG_PHI(stepper1.currentPosition()));
+  Serial.print(F(", z: "));
+  Serial.println(STEPS_TO_MM_Z(stepper4.currentPosition()));
 
   n_cmd_in_storage += 1;
   cmd_end_i = CMD_END_I_INC(cmd_end_i);

@@ -146,6 +146,13 @@ class GCode(Logger):
         """
         return len(self.pos_to_go) > 0
 
+    def reset(self):
+        """Clears all loaded file names and positions, essentially reseting the g_code module
+        """
+
+        self.gcode_file_path = None
+        self.pos_to_go = []
+
     def show(self):
         """Creates an image of what the gcode will result in and shows it
         """
@@ -220,12 +227,14 @@ class GCode(Logger):
                     elif line.gcodes[0].word.value == 3 and line.gcodes[0].word.letter == "G":
                         self.G03_to_G01(line.block.gcodes[0].params, machine.abs_pos.values)
 
-                    # Move the virtual machine and then move it's position
-                    machine.process_gcodes(line.block.gcodes[0]) 
-                    x = x_offset + machine.abs_pos.values['X']
-                    y = y_offset + machine.abs_pos.values['Y']
-                    z = z_offset + machine.abs_pos.values['Z']
-                    self.pos_to_go.append((x, y, z))
+                    # Only move if an accepted g_code
+                    if line.block.gcodes[0].word.letter == "G" and 0<=line.block.gcodes[0].word.value<=4:
+                        # Move the virtual machine and then move it's position
+                        machine.process_gcodes(line.block.gcodes[0]) 
+                        x = x_offset + machine.abs_pos.values['X']
+                        y = y_offset + machine.abs_pos.values['Y']
+                        z = z_offset + machine.abs_pos.values['Z']
+                        self.pos_to_go.append((x, y, z))
 
 
         self.LOG_DEBUG(f"Done parsing g_code file")
@@ -342,7 +351,7 @@ class GCode(Logger):
         self.LOG_INFO(f"Added all g-code movements")
 
         # Now gcode file has been used so set the current file to None
-        self.gcode_file_path = None
+        self.reset()
 
         return True
 

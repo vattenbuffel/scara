@@ -390,9 +390,18 @@ class CLI(cmd.Cmd, Logger):
         "Shows the resulting image as defined by the gcode file"
         g_code.show()
 
-    def do_get_loaded_gcode_file(self, arg):
+    def do_gcode_loaded(self, arg):
         "Prints the loaded gcode file"
         print(f"{self.prompt}Loaded gcode file: {g_code.get_loaded_gcode_path()}") 
+
+    def do_gcode_parsed(self, arg):
+        "Prints True if a gcode has been parsed"
+        print(f"{self.prompt}Gcode has been parsed: {g_code.gcode_is_parsed()}") 
+    
+    def do_gcode_reset(self, arg):
+        "Reset the gcode module"
+        g_code.reset()
+        print(f"{self.prompt}Gcode has been reset") 
 
     def do_heatmap_generate(self, arg):
         "Generate a heatmap showing possible x,y coordinates: Show[0 or 1] Save[0 or 1]"
