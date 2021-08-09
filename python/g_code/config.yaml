@@ -6,6 +6,8 @@ base_path: "./g_code/g_codes/"
 # Robot params
 tcp_vel: 3
 accuracy: 0.1
+draw_height: 1 # mm, should be set in inkscape
+move_height: 10 # mm, should be set in inkscape
 
 
 x_base_offset: 100

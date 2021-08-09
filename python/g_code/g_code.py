@@ -1,4 +1,5 @@
 from logger.logger import Logger
+from PIL import Image, ImageDraw, ImageOps
 import glob
 from misc.verbosity_levels import VerboseLevel
 import yaml
@@ -150,11 +151,45 @@ class GCode(Logger):
         """
         self.LOG_DEBUG(f"show with file: {self.gcode_file_path}")
 
-        if self.gcode_file_path is None:
-            self.LOG_WARNING(f"No gcode file has been loaded")
+        if not self.gcode_is_parsed:
+            self.LOG_WARNING(f"No gcode file has been parsed")
             return False
 
-        #TODO: ACtually create img
+        pos_to_go = np.array(self.pos_to_go)
+        good_pos = pos_to_go[np.logical_or(pos_to_go[:,2] == self.config['draw_height'], pos_to_go[:,2] == self.config['move_height'])]
+
+        width = good_pos[:,0].max() - good_pos[:,0].min()
+        x_offset = width*0.05
+        width += 2*x_offset
+        width = int(width)
+        x_offset -= good_pos[:,0].min()
+
+        height = good_pos[:,1].max() - good_pos[:,1].min()
+        y_offset = height*0.05
+        height += 2*y_offset
+        height = int(height)
+        y_offset -= good_pos[:,1].min()
+        offset = np.array([x_offset, y_offset])
+
+        white = (255,255,255)
+        black = (0,0,0)
+        img = Image.new('RGB', (width,height), color = white)
+        draw = ImageDraw.Draw(img)
+        
+        cur_pos = good_pos[0]
+
+        for pos in good_pos:
+            if pos[2] == self.config['draw_height'] and cur_pos[2] == self.config['draw_height']:
+                start = cur_pos[:2] + offset
+                end = pos[:2] + offset
+                draw.line([tuple(start), tuple(end)], fill=black, width=3)
+
+            cur_pos = pos
+
+        # Flip the img to correct for the inverted y coordinates
+        img = ImageOps.flip(img)
+
+        img.show()
 
         return True
 
