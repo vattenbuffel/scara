@@ -349,7 +349,7 @@ class Robot(Logger):
                 return False
 
             J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc = self.calc_linear_vel_acc(xx[i], yy[i], zz[i], J1[good_j], J2[good_j], self.tcp_vel)
-            self.add_move_cmd(J1[good_j], J2[good_j], J3, z, self.gripper_value, J1_vel, J2_vel, self.J3_vel, z_vel, J1_acc, J2_acc, self.J3_acc, z_acc, self.accuracy)
+            self.add_move_cmd(J1[good_j], J2[good_j], J3, zz[i], self.gripper_value, J1_vel, J2_vel, self.J3_vel, z_vel, J1_acc, J2_acc, self.J3_acc, z_acc, self.accuracy)
         
         return True
 
@@ -360,7 +360,7 @@ class Robot(Logger):
         t = d/tcp_vel
         # If we're already at goal return 0 vel and 0 acc
         if t == 0:
-            return 0.1,0.1,0.1,0.1,0.1,0.1 #TODO return 0 instead of 0.1, this is soley due to a bug i arduino code 
+            return 0.1,10,0.1,10,0.1,10 #TODO return 0 instead of 0.1, this is soley due to a bug i arduino code 
 
         J1_vel =  np.rad2deg(np.linalg.norm(J1 - self.J1_goal)) / t
         J2_vel = np.rad2deg(np.linalg.norm(J2 - self.J2_goal)) / t
@@ -395,7 +395,7 @@ class Robot(Logger):
     def add_robot_cmd(self, cmd:RobotCmd):
         self.LOG_DEBUG(f"adding cmd: {cmd}")
         
-        self.cmd_queue.put(cmd)
+        self.cmd_queue.put(cmd, block=True)
         self.LOG_DEBUG(f"Added cmd, there are {self.cmd_queue.qsize()} cmds in the queue")
         return True
 
