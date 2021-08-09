@@ -45,6 +45,8 @@ class GCode(Logger):
         # Init the logger
         super().__init__(self.name, self.verbose_level)
 
+        self.gcode_file_path = None # Str with name of parsed file
+
         self.pos_to_go = [] # List with tuples of goal positions. Populated by a self.parse function        
 
         self.LOG_INFO(f"Inited GCode.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -61,15 +63,20 @@ class GCode(Logger):
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def get_path(self, prompt):
-        print(f"{prompt}What g_code file would you like to parse?")
-        # All files ending with .gcode
-        paths = glob.glob(self.config['base_path'] + "*" + ".gcode")
+    def chose_file(self, paths, prompt=""):
+        """Given a list of paths, will prompt the user for which to chose and then return that
 
-        if len(paths) == 0:
-            print(f"{prompt}There are no gcode files to load. If you know that you have files, make sure they're in: {self.config['base_path']}")
-            return None
+        Args:
+            paths ([type]): [description]
+            prompt (str, optional): [description]. Defaults to "".
 
+        Raises:
+            IndexError: [description]
+
+        Returns:
+            [type]: [description]
+        """
+        print(f"{prompt}What g_code file would you like to chose?")
         for i, path in enumerate(paths):
             print(f"{prompt}[{i}]: {path}")
 
@@ -90,8 +97,73 @@ class GCode(Logger):
         
         return path
 
-    def parse(self, prompt=""):
-        self.LOG_DEBUG(f"Going to parse g_code file")
+    def get_possible_paths(self, prompt=""):
+        """Returns a list of all possible gcode file names
+
+        Args:
+            prompt (str, optional): [description]. Defaults to "".
+        """
+        # All files ending with .gcode
+        paths = glob.glob(self.config['base_path'] + "*" + ".gcode")
+
+        if len(paths) == 0:
+            print(f"{prompt}There are no gcode files to load. If you know that you have files, make sure they're in: {self.config['base_path']}")
+            return None
+        
+        return paths
+
+    def load_gcode(self, prompt=""):
+        self.LOG_DEBUG(f"load_gcode")
+
+        paths = self.get_possible_paths(prompt=prompt)
+        if paths is None:
+            return False
+
+        path = self.chose_file(paths, prompt=prompt)
+        if path is None:
+            return False
+
+        self.set_gcode_file(path)
+        if self.gcode_file_path is False:
+            return False
+        return True
+
+    def set_gcode_file(self, path):
+        """Sets the g_code file which then can be parsed
+
+        Args:
+            path ([type]): [description]
+        """
+        self.LOG_DEBUG(f"Setting gcode file to: {path}")
+        self.gcode_file_path = path
+
+    def get_loaded_gcode_path(self):
+        return self.gcode_file_path
+
+    def gcode_is_parsed(self):
+        """Returns True if a gocde file has been parsed, ie there are stored movements or false if not
+        """
+        return len(self.pos_to_go) > 0
+
+    def show(self):
+        """Creates an image of what the gcode will result in and shows it
+        """
+        self.LOG_DEBUG(f"show with file: {self.gcode_file_path}")
+
+        if self.gcode_file_path is None:
+            self.LOG_WARNING(f"No gcode file has been loaded")
+            return False
+
+        #TODO: ACtually create img
+
+        return True
+
+    def parse(self):
+        self.LOG_DEBUG(f"Going to parse g_code with name: {self.gcode_file_path}")
+
+        if self.gcode_file_path is None:
+            self.LOG_WARNING(f"No gcode file has been loaded")
+            return False
 
         x_offset = self.config['x_base_offset']
         y_offset = self.config['y_base_offset']
@@ -103,12 +175,7 @@ class GCode(Logger):
         machine.abs_pos.values['Y'] = robot.get_y
         machine.abs_pos.values['Z'] = robot.get_z
 
-        # What file to load
-        path = self.get_path(prompt)
-        if path is None:
-            return False
-
-        with open(path,'r') as gcode:
+        with open(self.gcode_file_path,'r') as gcode:
             for line_txt in gcode:
                 line = Line(line_txt) 
                 if line.block.gcodes:   
@@ -126,7 +193,8 @@ class GCode(Logger):
                     self.pos_to_go.append((x, y, z))
 
 
-        self.LOG_DEBUG(f"Done parseing g_code file")
+        self.LOG_DEBUG(f"Done parsing g_code file")
+        return True
 
     def G02_to_G01(self, params, cur_pos, show=False):
         start = np.array([cur_pos['X'], cur_pos['Y']])
@@ -212,11 +280,16 @@ class GCode(Logger):
 
     def move_parsed(self):
         self.LOG_DEBUG(f"Going to move according to parsed g_code file")
+
+        if not self.gcode_is_parsed():
+            self.LOG_WARNING(f"move_parsed no movements stored")
+            return False
         
         # Move to 100, 0, 25 as a good starting spot
         res = robot.move_xyz(100,0,25)
         if not res:
             self.LOG_ERROR("Failed to move according to g-code")
+            return False
 
         # Set the velocity to something nice and slow
         robot.set_tcp_vel(self.config['tcp_vel'])
@@ -225,8 +298,18 @@ class GCode(Logger):
             res = robot.moveL_xyz(*pos)             
             if not res:
                 self.LOG_ERROR("Failed to move according to g-code")
-        self.LOG_INFO(f"Done moving according to g-code file")
+                return False
 
+                
+        
+        # Move to 100, 0, 25 as a good ending spot
+        res = robot.move_xyz(100,0,25)
+        self.LOG_INFO(f"Added all g-code movements")
+
+        # Now gcode file has been used so set the current file to None
+        self.gcode_file_path = None
+
+        return True
 
 
 
