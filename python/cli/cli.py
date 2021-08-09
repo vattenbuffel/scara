@@ -374,13 +374,25 @@ class CLI(cmd.Cmd, Logger):
 
         self.LOG_DEBUG(f"Done with get_cmds")
 
-    def do_parse(self, arg):
-        "Parses a g_code file"
-        g_code.parse(self.prompt)
+    def do_gcode_load(self, arg):
+        "Loads a g_code file"
+        g_code.load_gcode(self.prompt)
         
-    def do_move_parse(self, arg):
-        "Moves according to self.parsed g_code file"
+    def do_gcode_parse(self, arg):
+        "Parses a g_code file"
+        g_code.parse()
+
+    def do_gcode_move(self, arg):
+        "Moves according to parsed g_code file"
         g_code.move_parsed()
+
+    def do_gcode_show(self, arg):
+        "Shows the resulting image as defined by the gcode file"
+        g_code.show()
+
+    def do_get_loaded_gcode_file(self, arg):
+        "Prints the loaded gcode file"
+        print(f"{self.prompt}Loaded gcode file: {g_code.get_loaded_gcode_path()}") 
 
     def do_heatmap_generate(self, arg):
         "Generate a heatmap showing possible x,y coordinates: Show[0 or 1] Save[0 or 1]"
