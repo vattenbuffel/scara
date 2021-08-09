@@ -438,8 +438,7 @@ class Robot(Logger):
             J3 ([type]): [description]
             z ([type]): [description]
         """
-        if self.verbose_level <= VerboseLevel.DEBUG:            
-            print(f"{self.name}: Going to move to pose: J1:{J1}, J2:{J2}, J3:{J3}, z:{z}")
+        self.LOG_DEBUG(f"Going to move to pose: J1:{J1}, J2:{J2}, J3:{J3}, z:{z}")
 
         #TODO: Check if this function is correct. Shouldn't it add a move cmd?
         print(f"{self.name} This function is probably wrong")
@@ -452,8 +451,10 @@ class Robot(Logger):
         self.LOG_DEBUG(f"Going home.")
         success = self.add_home_cmd()
 
-        if not success and self.verbose_level <= VerboseLevel.WARNING:
-            print(f"{self.name}: WARNING Failed to home.")
+        if not success:
+            self.LOG_WARNING(f"Failed to home.")
+
+
         
         return success
 

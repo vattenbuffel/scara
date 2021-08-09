@@ -110,7 +110,7 @@ class HeatMap(Logger):
                     self.heatmap.putpixel((x_i,y_i), (255,255,255,255))
             
             # Print progress
-            if self.verbose_level <= VerboseLevel.INFO:
+            if self.verbose_level <= VerboseLevel.DEBUG:
                 print_enable_disable.print_enable()
                 print(f"{self.name}: Done with {100*x_i/n:.3f} % of the image")
                 print_enable_disable.print_disable()
@@ -203,8 +203,7 @@ class HeatMap(Logger):
             heatmap.show()
         else:
             if self.heatmap is None:
-                if self.verbose_level <= VerboseLevel.ERROR:
-                    print(f"{self.name}: No heatmap loaded. Load one via either load_base_heatmap or set_heatmap")
+               self.LOG_ERROR(f"No heatmap loaded. Load one via either load_base_heatmap or set_heatmap")
                 return
 
 

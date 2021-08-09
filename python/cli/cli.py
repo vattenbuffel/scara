@@ -34,8 +34,7 @@ class CLI(cmd.Cmd, Logger):
         # Init the logger
         Logger.__init__(self, self.name, self.verbose_level)
 
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"Inited CLI.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited CLI.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
         fp = Path(__file__)
@@ -377,11 +376,11 @@ class CLI(cmd.Cmd, Logger):
 
     def do_parse(self, arg):
         "Parses a g_code file"
-        g_code.self.parse()
+        g_code.parse(self.prompt)
         
     def do_move_parse(self, arg):
         "Moves according to self.parsed g_code file"
-        g_code.move_self.parsed()
+        g_code.move_parsed()
 
     def do_heatmap_generate(self, arg):
         "Generate a heatmap showing possible x,y coordinates: Show[0 or 1] Save[0 or 1]"

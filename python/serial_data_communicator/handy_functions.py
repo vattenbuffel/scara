@@ -28,8 +28,7 @@ class HandyFunctions(Logger):
         self.heartbeat_event = threading.Event()
         self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event}, self.name)
        
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
     def load_configs(self):
         fp = Path(__file__)

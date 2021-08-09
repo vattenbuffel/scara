@@ -38,8 +38,7 @@ class MessageUpdated(Logger):
         self.check_thread.daemon = True
         self.check_thread.start()
 
-        if self.verbose_level <= VerboseLevel.INFO:
-            print(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+        self.LOG_INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
 
     def load_configs(self):
@@ -62,22 +61,19 @@ class MessageUpdated(Logger):
     
     def loop(self):
         while True:            
-            if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-                print(f"{self.name}: Checking for new messages")
+            self.LOG_MSG_ARRIVE(f"Checking for new messages")
 
             for key in self.updated_dict:
                 event, msg = self.updated_dict[key]
                 # Check if a newer message has arrived, if so set the associated event
                 if msg.timestamp < serial_com.received_messages[key].timestamp:
-                    if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-                        print(f"{self.name}: new message arrived of type: {key}")
+                    self.LOG_MSG_ARRIVE(f"new message arrived of type: {key}")
 
                     event.set()
                     msg.update(serial_com.received_messages[key].data) # update this class's message
 
                 else:
-                    if self.verbose_level <= VerboseLevel.ALL:
-                        print(f"{self.name}: no new message of type: {key}")
+                    self.LOG_ALL(f"no new message of type: {key}")
 
 
             time.sleep(1/self.config['message_update_check_hz'])
