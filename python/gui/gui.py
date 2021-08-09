@@ -134,8 +134,9 @@ def gcode_mode():
             st.success("Deleted file")
             st.session_state.delete_file = False
                 
-
-    st.button("Update")
+    _, col2, _ = st.beta_columns(3)
+    with col2:
+        st.button("Update")
 
 
 
