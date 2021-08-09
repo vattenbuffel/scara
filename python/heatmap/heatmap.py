@@ -201,12 +201,11 @@ class HeatMap(Logger):
 
         if heatmap is not None:
             heatmap.show()
-        else:
-            if self.heatmap is None:
-               self.LOG_ERROR(f"No heatmap loaded. Load one via either load_base_heatmap or set_heatmap")
-                return
+        elif self.heatmap is None:
+            self.LOG_ERROR(f"No heatmap loaded. Load one via either load_base_heatmap or set_heatmap")
+            return
 
 
-            self.heatmap.show()
+        self.heatmap.show()
 
 heatmap = HeatMap()
