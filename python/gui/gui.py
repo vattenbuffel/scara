@@ -45,8 +45,9 @@ if 'init' not in st.session_state:
 
 if 'delete_file' not in st.session_state:
     st.session_state.delete_file = False
-if 'mod_file_uploader' not in st.session_state:
-    st.session_state.mod_file_uploader = False
+if 'upload_file_button' not in st.session_state:
+    st.session_state.upload_file_button = False
+
 
 if 'config' not in st.session_state:
     fp = Path(__file__)
@@ -86,29 +87,23 @@ def gcode_mode():
     with col1:
         st.header(F"Move according to g_code file")
         path = st.selectbox(" ", paths)
-        confirmed_choice = st.button("confirm")
+        confirmed_choice = st.button("Move")
         # st.write(f"chosen file: {path}")
         if path and confirmed_choice:
             st.session_state.logger.LOG_DEBUG(f"Going to move according to {path}")
-            g_code.move_according(path)
+            g_code.move_according_to_path(path)
 
     with col2:
         st.markdown("## Modify files")
-        def mod_file_uploader_true():
-            # print("Setting mod_file_uploader = True")
-            st.session_state.mod_file_uploader = True
-            # print(f"st.session_state.mod_file_uploader = {st.session_state.mod_file_uploader}")
+        def upload_file_button_true():
+            st.session_state.upload_file_button = True
 
         st.markdown("### Upload g_code")
-        file = st.file_uploader("", type=".gcode", on_change=mod_file_uploader_true)
-        # st.write(f"mod_file_uploader: {st.session_state.mod_file_uploader}")
+        file = st.file_uploader("", type=".gcode")
+        st.button("Upload", on_click=upload_file_button_true)
         # Copy contents of file into it's proper location
-        if file is not None and st.session_state.mod_file_uploader == True:
-            # st.write(f"Going to add file: {file}")
-            # print(f"Adding file: {file}")
+        if file is not None and st.session_state.upload_file_button == True:
             stringio = StringIO(file.getvalue().decode("utf-8"))
-            # st.write(stringio)
-            # st.write(file)
 
             # Make sure file is not duplicate
             if file.name in paths:
@@ -123,7 +118,7 @@ def gcode_mode():
                 st.session_state.logger.LOG_INFO(f"Successfully uploaded file: {file.name} to dir: {g_code.config['base_path']}")
                 st.success("Uploaded file")
 
-            st.session_state.mod_file_uploader = False
+            st.session_state.upload_file_button = False
 
         # Delete a file
         st.markdown("### Delete a file")
@@ -131,8 +126,7 @@ def gcode_mode():
             st.session_state.delete_file = True
 
         path_to_delete = st.selectbox("", paths)
-        confirm_delete = st.button("confirm", key="DELETE_GCODE_FILE_BUTTON", on_click=delete_file_true)
-        # st.write(f"chosen file: {path}")
+        st.button("Delete", key="DELETE_GCODE_FILE_BUTTON", on_click=delete_file_true)
         if path_to_delete and st.session_state.delete_file:
             st.session_state.logger.LOG_DEBUG(f"Going to delete file: {path_to_delete}")
             os.remove(f"{g_code.config['base_path']}{path_to_delete}")
