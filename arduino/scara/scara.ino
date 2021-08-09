@@ -305,16 +305,16 @@ void parse_msg() {
   cmds[cmd_end_i].phi_accuracy = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.accuracy);
   cmds[cmd_end_i].z_accuracy = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.accuracy);
 
-  Serial.println(F("Received cmd: "));
-  cmd_print(&cmds[cmd_end_i]);
-  Serial.print(F("Currently located at J1: "));
-  Serial.print(STEPS_TO_DEG_THETA1(stepper2.currentPosition()));
-  Serial.print(F(", J2: "));
-  Serial.print(STEPS_TO_DEG_THETA2(stepper3.currentPosition()));
-  Serial.print(F(", J3: "));
-  Serial.print(STEPS_TO_DEG_PHI(stepper1.currentPosition()));
-  Serial.print(F(", z: "));
-  Serial.println(STEPS_TO_MM_Z(stepper4.currentPosition()));
+  // Serial.println(F("Received cmd: "));
+  // cmd_print(&cmds[cmd_end_i]);
+  // Serial.print(F("Currently located at J1: "));
+  // Serial.print(STEPS_TO_DEG_THETA1(stepper2.currentPosition()));
+  // Serial.print(F(", J2: "));
+  // Serial.print(STEPS_TO_DEG_THETA2(stepper3.currentPosition()));
+  // Serial.print(F(", J3: "));
+  // Serial.print(STEPS_TO_DEG_PHI(stepper1.currentPosition()));
+  // Serial.print(F(", z: "));
+  // Serial.println(STEPS_TO_MM_Z(stepper4.currentPosition()));
 
   n_cmd_in_storage += 1;
   cmd_end_i = CMD_END_I_INC(cmd_end_i);
@@ -422,7 +422,7 @@ bool move() {
   }
 
   if (!moving || done_with_cur_idx){
-    Serial.println(F("Updating position"));
+    // Serial.println(F("Updating position"));
     theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
     theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
     phi = STEPS_TO_DEG_PHI(stepper1.currentPosition());
