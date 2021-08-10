@@ -1,3 +1,7 @@
+# Gcode
+*.gcode
+!star.gcode
+
 # Fusion 360 files
 *.step
 
