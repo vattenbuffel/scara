@@ -161,8 +161,8 @@ class Communicator(Logger):
             msg = ""
             char = ""
             while char  != "\n":
-                while not self.serial.in_waiting: # Busy wait loop. Not neat but the characters should arrive quickly and therefor not block for much
-                    pass
+                while not self.serial.in_waiting: 
+                    time.sleep(1/10000)
                 data = self.serial.read()
                 char = data.decode()
                 msg += char
