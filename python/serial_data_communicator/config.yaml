@@ -4,6 +4,7 @@ port: "COM5" #"dev/ttyUSB0"
 timeout_s: 1
 read_hz: 100
 serial_buffer_size: 64 # The arduino serial buffer can only store up to 64 bytes
+ready_to_read_str: <r> # String sent by arduino to signal it's serial buffer is available
 
 # Handy functions
 handy_functions_name: "Handy_functions"

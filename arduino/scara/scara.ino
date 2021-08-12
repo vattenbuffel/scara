@@ -7,8 +7,10 @@
 #define limitSwitch3 9
 #define limitSwitch4 A3
 
+#define READY_TO_RECEIVE_STR F("<r>\n")
+
 // How many messages that should be stored
-#define N_CMD_STORE_MAX 10
+#define N_CMD_STORE_MAX 5
 
 // With gripper
 // #define z_height_start_mm 155
@@ -45,8 +47,6 @@
 
 // How often to send heartbeat, measured in loop iterations
 #define HEARTBEAT_INTERVAL 100000
-// How often to read data, measured in loop iterations
-#define READ_SERIAL_INTERVAL 10000
 
 struct MSG {
   int cmd;
@@ -113,6 +113,8 @@ const float zDistanceToSteps = 100;
 bool moving = false;
 
 String string_received;
+String string_send = "";
+int string_send_size = 0;
 
 
 CMD cmds[N_CMD_STORE_MAX];
@@ -123,7 +125,9 @@ int cmd_end_i = 0;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("Hello world!"));
+  while (!Serial){;}
+  add_data_to_send(F("Hello world!\n"));
+  send_ready_to_receive();
 
   pinMode(limitSwitch1, INPUT_PULLUP);
   pinMode(limitSwitch2, INPUT_PULLUP);
@@ -151,13 +155,14 @@ void setup() {
   // homeing();
   // delay(10000000);
 }
-unsigned long t_start = micros();
+
 void loop() {
 
-  // Serial.println(F("should publish heartbeat");
+  // add_data_to_send(F("should publish heartbeat"));
   publish_heartbeat();
 
   read_msg();
+  send_data();
 
   if (n_cmd_in_storage > 0) {
     // STOP
@@ -206,44 +211,65 @@ void set_v_a_gripper() {
   gripperServo.write(cmds[cmd_cur_i].msg.gripper_value);
 }
 
-void read_msg() {
-  // Only read at set intervals
-  static long counter = 0;
-  counter += 1;
-  if (counter > READ_SERIAL_INTERVAL){ 
-    counter = 0;
-    return;
-  }
-  
+void read_msg() {  
+  static unsigned long counter = 0;
+  counter++;
+  if (counter < 1000)
+    return
+  counter = 0;
+
   // Read the message from the serial and parse it into a cmd
   bool full_msg = false;
   if (n_cmd_in_storage < N_CMD_STORE_MAX)
     full_msg = read_serial();
   if (full_msg) {
+    // debug_print("Received string: ");
+    // for (int i = 0; i < string_received.length(); i++)
+    //   debug_print(String(string_received.charAt(i)));
+    // Serial.println();
+    // unsigned long start_time = micros();
     parse_msg();
+    // unsigned long end_time = micros();
+    // debug_print(F("It took: "));
+    // debug_print(String((end_time - start_time)/1000));
+    // debug_print(F(" ms to parse\n"));
     string_received = "";
+    // debug_print(F("String length after finish parsing and string_received = '': "));
+    // debug_print(String(string_received.length()));
+    // debug_print(F("\n"));
+    // debug_print("Finish parse msg\n");
   }
 }
 
 bool read_serial() {
-  char c;
-  while (Serial.available()) {
-    c = Serial.read();
+  // Only read 1 char per call
+  static char n_read = 0;
+  bool done = false;
+  if (Serial.available()) {
+    char c = Serial.read();
     string_received += c;
-    // Serial.print(F("String received so far: "));
+    n_read++;
+    // add_data_to_send(F("String received so far: "));
     // Serial.println(string_received);
-    // Serial.print(F("Char received: '"));
+    // add_data_to_send(F("Char received: '"));
     // Serial.print(c);
     // Serial.println(("'"));
 
     if ('\n' == c) {
-      // Serial.print(F("Read end of string. "));
-      // Serial.print(F("Full string read: "));
+      // add_data_to_send(F("Read end of string. "));
+      // add_data_to_send(F("Full string read: "));
       // Serial.println(string_received);
-      return true;
+      done = true;
+      n_read = 0;
     }
   }
-  return false;
+  // if 64 chars have been read or '\n' has been found then all possible data has been read and should signal that more can be read
+  if (done || n_read == 64){
+    send_ready_to_receive();
+    n_read = 0;
+  }
+
+  return done;
 }
 
 void parse_msg() {
@@ -253,10 +279,19 @@ void parse_msg() {
   for (int i = 0; i < n_data; i++) {
     int index = string_received.indexOf(",");  // locate the first ","
     if (index == -1 && i != n_data - 1) {
-      Serial.println(F("Invalid msg received"));
+      debug_print(F("Invalid msg received\n"));
     }
     data[i] = atof(string_received.substring(0, index).c_str());  //Extract the number from start to the ","
     string_received = string_received.substring(index + 1);       //Remove the number from the string
+    // debug_print(F("Data["));
+    // debug_print(String(i));
+    // debug_print(F("]: "));
+    // debug_print(String(data[i]));
+    // debug_print(F("\n"));
+    
+    // debug_print(F("String left: "));
+    // for (int i = 0; i < string_received.length(); i++)
+    //     debug_print(String(string_received.charAt(i)));
   }
   /*
     data[0] - cmd_type [cmd enum] 
@@ -285,10 +320,6 @@ void parse_msg() {
   cmds[cmd_end_i].msg.v_J1 = DEG_TO_STEPS_THETA1(data[6]); // Convert the data from degrees/s to steps/s
   cmds[cmd_end_i].msg.v_J2 = DEG_TO_STEPS_THETA2(data[7]); // Convert the data from degrees/s to steps/s
   cmds[cmd_end_i].msg.v_phi = DEG_TO_STEPS_PHI(data[8]); // Convert the data from degrees/s to steps/s
-  // Serial.print("v_z: ");
-  // Serial.print(data[9]);
-  // Serial.print(", MM_TO_STEPS_Z(data[9]): ");
-  // Serial.println(MM_TO_STEPS_Z(data[9]));
   cmds[cmd_end_i].msg.v_z = MM_TO_STEPS_Z(data[9]); // Convert the data from mm/s to steps/s
   cmds[cmd_end_i].msg.a_J1 = DEG_TO_STEPS_THETA1(data[10]);
   cmds[cmd_end_i].msg.a_J2 = DEG_TO_STEPS_THETA2(data[11]);
@@ -305,82 +336,68 @@ void parse_msg() {
   cmds[cmd_end_i].phi_accuracy = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.accuracy);
   cmds[cmd_end_i].z_accuracy = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.accuracy);
 
-  // Serial.println(F("Received cmd: "));
+  // add_data_to_send(F("Received cmd: ");
   // cmd_print(&cmds[cmd_end_i]);
-  // Serial.print(F("Currently located at J1: "));
-  // Serial.print(STEPS_TO_DEG_THETA1(stepper2.currentPosition()));
-  // Serial.print(F(", J2: "));
-  // Serial.print(STEPS_TO_DEG_THETA2(stepper3.currentPosition()));
-  // Serial.print(F(", J3: "));
-  // Serial.print(STEPS_TO_DEG_PHI(stepper1.currentPosition()));
-  // Serial.print(F(", z: "));
-  // Serial.println(STEPS_TO_MM_Z(stepper4.currentPosition()));
 
   n_cmd_in_storage += 1;
   cmd_end_i = CMD_END_I_INC(cmd_end_i);
-
-  // Serial.print(F("Currently: "));
-  // Serial.print(n_cmd_in_storage);
-  // Serial.print(F(" cmds in storage"));
-  // Serial.print(F(". Cmd_cur_i: "));
-  // Serial.print(cmd_cur_i);
-  // Serial.print(F(". Cmd_end_i: "));
-  // Serial.println(cmd_end_i);
 }
 
 void msg_print(MSG *msg) {
-  Serial.print(F("msg->cmd: "));
-  Serial.println(msg->cmd);
-  Serial.print(F("msg->J1: "));
-  Serial.println(msg->J1);
-  Serial.print(F("msg->J2: "));
-  Serial.println(msg->J2);
-  Serial.print(F("msg->phi: "));
-  Serial.println(msg->phi);
-  Serial.print(F("msg->z: "));
-  Serial.println(msg->z);
-  Serial.print(F("msg->gripper_value: "));
-  Serial.println(msg->gripper_value);
-  Serial.print(F("msg->v_J1: "));
-  Serial.println(msg->v_J1);
-  Serial.print(F("msg->v_J2: "));
-  Serial.println(msg->v_J2);
-  Serial.print(F("msg->v_phi: "));
-  Serial.println(msg->v_phi);
-  Serial.print(F("msg->v_z: "));
-  Serial.println(msg->v_z);
-  Serial.print(F("msg->a_J1: "));
-  Serial.println(msg->a_J1);
-  Serial.print(F("msg->a_J2: "));
-  Serial.println(msg->a_J2);
-  Serial.print(F("msg->a_phi: "));
-  Serial.println(msg->a_phi);
-  Serial.print(F("msg->a_z: "));
-  Serial.println(msg->a_z);
-  Serial.print(F("msg->accuracy: "));
-  Serial.println(msg->accuracy);
+  add_data_to_send(F("msg->cmd: "));
+  add_data_to_send(String(msg->cmd));
+  add_data_to_send(F("\nmsg->J1: "));
+  add_data_to_send(String(msg->J1));
+  add_data_to_send(F("\nmsg->J2: "));
+  add_data_to_send(String(msg->J2));
+  add_data_to_send(F("\nmsg->phi: "));
+  add_data_to_send(String(msg->phi));
+  add_data_to_send(F("\nmsg->z: "));
+  add_data_to_send(String(msg->z));
+  add_data_to_send(F("\nmsg->gripper_value: "));
+  add_data_to_send(String(msg->gripper_value));
+  add_data_to_send(F("\nmsg->v_J1: "));
+  add_data_to_send(String(msg->v_J1));
+  add_data_to_send(F("\nmsg->v_J2: "));
+  add_data_to_send(String(msg->v_J2));
+  add_data_to_send(F("\nmsg->v_phi: "));
+  add_data_to_send(String(msg->v_phi));
+  add_data_to_send(F("\nmsg->v_z: "));
+  add_data_to_send(String(msg->v_z));
+  add_data_to_send(F("\nmsg->a_J1: "));
+  add_data_to_send(String(msg->a_J1));
+  add_data_to_send(F("\nmsg->a_J2: "));
+  add_data_to_send(String(msg->a_J2));
+  add_data_to_send(F("\nmsg->a_phi: "));
+  add_data_to_send(String(msg->a_phi));
+  add_data_to_send(F("\nmsg->a_z: "));
+  add_data_to_send(String(msg->a_z));
+  add_data_to_send(F("\nmsg->accuracy: "));
+  add_data_to_send(String(msg->accuracy));
+  add_data_to_send(F("\n"));
 }
 
 void cmd_print(CMD *cmd) {
-  Serial.println(F("cmd->msg: {"));
+  add_data_to_send(F("cmd->msg: {\n"));
   msg_print(&cmd->msg);
-  Serial.println(F("}"));
-  Serial.print(F("cmd->J1_goal: "));
-  Serial.println(cmd->J1_goal);
-  Serial.print(F("cmd->J2_goal: "));
-  Serial.println(cmd->J2_goal);
-  Serial.print(F("cmd->phi_goal: "));
-  Serial.println(cmd->phi_goal);
-  Serial.print(F("cmd->z_goal: "));
-  Serial.println(cmd->z_goal);
-  Serial.print(F("cmd->J1_accuracy: "));
-  Serial.println(cmd->J1_accuracy);
-  Serial.print(F("cmd->J2_accuracy: "));
-  Serial.println(cmd->J2_accuracy);
-  Serial.print(F("cmd->phi_accuracy: "));
-  Serial.println(cmd->phi_accuracy);
-  Serial.print(F("cmd->z_accuracy: "));
-  Serial.println(cmd->z_accuracy);
+  add_data_to_send(F("}\n"));
+  add_data_to_send(F("\ncmd->J1_goal: "));
+  add_data_to_send(String(cmd->J1_goal));
+  add_data_to_send(F("\ncmd->J2_goal: "));
+  add_data_to_send(String(cmd->J2_goal));
+  add_data_to_send(F("\ncmd->phi_goal: "));
+  add_data_to_send(String(cmd->phi_goal));
+  add_data_to_send(F("\ncmd->z_goal: "));
+  add_data_to_send(String(cmd->z_goal));
+  add_data_to_send(F("\ncmd->J1_accuracy: "));
+  add_data_to_send(String(cmd->J1_accuracy));
+  add_data_to_send(F("\ncmd->J2_accuracy: "));
+  add_data_to_send(String(cmd->J2_accuracy));
+  add_data_to_send(F("\ncmd->phi_accuracy: "));
+  add_data_to_send(String(cmd->phi_accuracy));
+  add_data_to_send(F("\ncmd->z_accuracy: "));
+  add_data_to_send(String(cmd->z_accuracy));
+  add_data_to_send(F("\n"));
 }
 
 bool move() {
@@ -389,16 +406,16 @@ bool move() {
 
 
   if (abs(stepper2.currentPosition() - cmds[cmd_cur_i].J1_goal) <= cmds[cmd_cur_i].J1_accuracy) {
-    // Serial.println(F("Finish with J1"));
+    // add_data_to_send(F("Finish with J1"));
     if (abs(stepper3.currentPosition() - cmds[cmd_cur_i].J2_goal) <= cmds[cmd_cur_i].J2_accuracy) {
-      // Serial.println(F("Finish with J2"));
+      // add_data_to_send(F("Finish with J2"));
       // if (abs(stepper1.currentPosition() - cmds[cmd_cur_i].phi_goal) <= DEG_TO_STEPS_PHI(cmds[cmd_cur_i].J3_accuracy)){
       if (abs(stepper4.currentPosition() - cmds[cmd_cur_i].z_goal) <= cmds[cmd_cur_i].z_accuracy) {
-        Serial.println(F("Finish with z"));
+        // add_data_to_send(F("Finish with z\n"));
 
         done_with_cur_idx = true;
-        // Serial.println(F("finish moving"));
-        done_with_msg();
+        // add_data_to_send(F("finish moving"));
+        done_with_cmd();
       }
       // }
     }
@@ -412,7 +429,7 @@ bool move() {
     moving = true;
   }
   if (stepper3.currentPosition() != cmds[cmd_cur_i].J2_goal) {
-    // Serial.println(F("Stepping J2"));
+    // add_data_to_send(F("Stepping J2"));
     stepper3.runSpeed();
     moving = true;
   }
@@ -422,7 +439,7 @@ bool move() {
   }
 
   if (!moving || done_with_cur_idx){
-    // Serial.println(F("Updating position"));
+    // add_data_to_send(F("Updating position"));
     theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
     theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
     phi = STEPS_TO_DEG_PHI(stepper1.currentPosition());
@@ -438,41 +455,82 @@ void serialFlush() {
 }
 
 void publish_heartbeat() {
-  static long counter = -1;
+  static unsigned long counter = HEARTBEAT_INTERVAL-1;
   counter++;
   if (counter>HEARTBEAT_INTERVAL) {
     counter = 0;
-    Serial.print(F("HEARTBEAT "));
-    Serial.print(theta1);
-    Serial.print(F(" "));
-    Serial.print(theta2);
-    Serial.print(F(" "));
-    Serial.print(phi);
-    Serial.print(F(" "));
-    Serial.print(z);
-    Serial.print(F(" "));
-    Serial.println(gripper_value);
+    add_data_to_send(F("HEARTBEAT "));
+    add_data_to_send(String(theta1));
+    add_data_to_send(F(" "));
+    add_data_to_send(String(theta2));
+    add_data_to_send(F(" "));
+    add_data_to_send(String(phi));
+    add_data_to_send(F(" "));
+    add_data_to_send(String(z));
+    add_data_to_send(F(" "));
+    add_data_to_send(String(gripper_value));
+    add_data_to_send(F("\n"));
   }
 }
 
 void publish_done() {
-  Serial.println(F("DONE"));
+  add_data_to_send(F("DONE\n"));
 }
 
 void stop() {
-  Serial.println(F("Stop not implemented"));
+  add_data_to_send(F("Stop not implemented\n"));
 }
 
-void done_with_msg() {
+void send_ready_to_receive(){
+  add_data_to_send(READY_TO_RECEIVE_STR);
+}
+
+void add_data_to_send(String s){
+  // Serial.print("string to add to string_send: ");
+  // Serial.println(s);
+  string_send_size += s.length();
+  string_send += s;
+  // Serial.print("string_send: ");
+  // Serial.println(string_send);
+}
+
+void send_data(){
+  static unsigned long counter = 0;
+  counter++;
+  if (counter < 250)
+    return
+
+  counter = 0;
+  if (string_send_size){    
+    char c = string_send.charAt(0);
+    string_send.remove(0, 1);
+    if (c == '\n')
+      Serial.println();
+    else
+      Serial.print(c);
+    string_send_size--;
+  }
+}
+
+void debug_print(String s){
+  // Print all of string_send and print the debug string
+  add_data_to_send(s);
+  while (string_send_size){
+    send_data();
+  }
+}
+
+void done_with_cmd() {
   cmd_cur_i = CMD_CUR_I_INC(cmd_cur_i);
   n_cmd_in_storage -= 1;
-  Serial.print(F("Finish msg. Currently: "));
-  Serial.print(n_cmd_in_storage);
-  Serial.print(F(" cmds in storage"));
-  Serial.print(F(". Cmd_cur_i: "));
-  Serial.print(cmd_cur_i);
-  Serial.print(F(". Cmd_end_i: "));
-  Serial.println(cmd_end_i);
+  // add_data_to_send(F("Finish cmd. Currently: "));
+  // add_data_to_send(String(n_cmd_in_storage));
+  // add_data_to_send(F(" cmds in storage"));
+  // add_data_to_send(F(". Cmd_cur_i: "));
+  // add_data_to_send(String(cmd_cur_i));
+  // add_data_to_send(F(". Cmd_end_i: "));
+  // add_data_to_send(String(cmd_end_i));
+  // add_data_to_send(F("\n"));
   publish_done();
 }
 
@@ -481,7 +539,7 @@ void homeing() {
   // TODO: Actually do the above
 
 
-  Serial.println(F("Gonna home stepper 4"));
+  add_data_to_send(F("Gonna home stepper 4\n"));
   // Homing Stepper4
   for (int i=0; i < 2; i++){
     while (digitalRead(limitSwitch4) != 1) {
@@ -499,12 +557,12 @@ void homeing() {
     delay(100);
   }
   z = STEPS_TO_MM_Z(stepper4.currentPosition());
-  Serial.println(F("Finish homing stepper 4"));
+  add_data_to_send(F("Finish homing stepper 4\n"));
 
 
 
   // Homing Stepper3
-  Serial.println(F("Gonna home stepper 3"));
+  add_data_to_send(F("Gonna home stepper 3\n"));
   for (int i = 0; i < 2; i++) {
     while (digitalRead(limitSwitch3) != 1) {
       stepper3.setSpeed(-1100);
@@ -521,10 +579,10 @@ void homeing() {
     delay(100);
   }
   theta2 = STEPS_TO_DEG_THETA2(stepper3.currentPosition());
-  Serial.println(F("Finish homing stepper 3"));
+  add_data_to_send(F("Finish homing stepper 3\n"));
 
   // Homing Stepper2
-  Serial.println(F("Gonna home stepper 2"));
+  add_data_to_send(F("Gonna home stepper 2\n"));
   for (int i=0; i < 2; i++){
     while (digitalRead(limitSwitch2) != 1) {
       stepper2.setSpeed(-1300);
@@ -541,11 +599,11 @@ void homeing() {
     delay(100);
   }
   theta1 = STEPS_TO_DEG_THETA1(stepper2.currentPosition());
-  Serial.println(F("Finish homing stepper 2"));
+  add_data_to_send(F("Finish homing stepper 2\n"));
 
 
   // Homing Stepper1
-  // Serial.println(F("Gonna home stepper 1"));
+  // add_data_to_send(F("Gonna home stepper 1\n"));
   // while (digitalRead(limitSwitch1) != 1) {
   //   stepper1.setSpeed(-1200);
   //   stepper1.runSpeed();
@@ -556,7 +614,7 @@ void homeing() {
   // while (stepper1.currentPosition() != 0) {
   //   stepper1.run();
   // }
-  // Serial.println(F("Finish homing stepper 1"));
-  Serial.println(F("At home"));
-  done_with_msg();
+  // add_data_to_send(F("Finish homing stepper 1\n"));
+  add_data_to_send(F("At home\n"));
+  done_with_cmd();
 }

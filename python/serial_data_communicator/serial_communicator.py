@@ -37,6 +37,8 @@ class Communicator(Logger):
         self.read_thread = threading.Thread(target=self.receive_message, name="serial_com_receive_msg_thread")
         self.kill_event = threading.Event()
         self.kill_event.clear()
+        self.arduino_ready_lock = threading.Lock() # Event that's set when arduino is ready to receive data, when it sends self.config["ready_to_read_str"]
+        self.arduino_ready_event = threading.Event() # Lock to keep the reading and writing thread from being fucky wucky with the above event
         self.read_thread.start()
 
         # Wait until the first heartbeat arrives and then put arduino_started to True
@@ -107,9 +109,7 @@ class Communicator(Logger):
             [type]: [description]
         """
         
-        self.LOG_DEBUG(f"Going to send data: {data}")
-        self.LOG_DEBUG(f"Add ending: {add_ending}")
-        self.LOG_DEBUG(f"convert_to_bytes: {convert_to_bytes}")
+        self.LOG_DEBUG(f"Going to send data: {data}, add ending: {add_ending}, convert_to_bytes: {convert_to_bytes}")
         
         if not self.arduino_started:
             print(f"Warning: Arduino not started")
@@ -134,16 +134,19 @@ class Communicator(Logger):
         # Split the data into smaller chunks if too big
         data_ = []
         while len(data_send) != 0:
-            self.LOG_DEBUG(f"Splitting data into smaller chunks")
+            self.LOG_ALL(f"Splitting data into smaller chunks")
             data_.append(data_send[:self.config["serial_buffer_size"]])
             data_send = data_send[self.config["serial_buffer_size"]:]
 
 
         # Write the data
         for data in data_:
+            self.arduino_ready_event.wait()
             self.LOG_DEBUG(f"Sending data: {data}")
-            time.sleep(0.1) #TODO: THIS IS NOT GOOD. INSTEAD OF A RANDOM SLEEP DURATION THE CODE SHOULD SOMEHOW WAIT FOR A RESPONSE BEFORE SENDING
+            self.arduino_ready_lock.acquire()
             self.serial.write(data)
+            self.arduino_ready_event.clear()
+            self.arduino_ready_lock.release()
 
         return True
 
@@ -196,10 +199,14 @@ class Communicator(Logger):
                     self.LOG_ERROR(f"An unfinished message arrived: {msg}")
                     # raise ValueError(f"{self.name} An unfinished message arrived")
 
-
-
                 if not "HEARTBEAT" in msg: 
                     self.LOG_DEBUG(f"Read: {msg}", end="" if "\n" in msg else "\n")
+
+                # See if the arduino is ready to receive
+                if self.config["ready_to_read_str"] == msg.strip("\r\n"):
+                    self.arduino_ready_lock.acquire()
+                    self.arduino_ready_event.set()
+                    self.arduino_ready_lock.release()
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
