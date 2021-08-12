@@ -5,13 +5,13 @@ base_path: "./g_code/g_codes/"
 
 # Robot params
 tcp_vel: 3
-accuracy: 1
+accuracy: 0.1
 draw_height: 1 # mm, should be set in inkscape
 move_height: 10 # mm, should be set in inkscape
 
 
 x_base_offset: 100
 y_base_offset: 0
-z_base_offset: 50
+z_base_offset: 0
 
 dtheta: 0.01 # How many steps there are between two radians. Between 0 and 1 there is dtheta number of steps

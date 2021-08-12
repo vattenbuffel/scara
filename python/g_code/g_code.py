@@ -196,6 +196,9 @@ class GCode(Logger):
         # Flip the img to correct for the inverted y coordinates
         img = ImageOps.flip(img)
 
+        # Rescale the img so it's visible
+        img = img.resize((width*5, height*5))
+
         img.show()
 
         return True
