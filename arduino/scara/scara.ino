@@ -336,7 +336,7 @@ void parse_msg() {
   cmds[cmd_end_i].phi_accuracy = DEG_TO_STEPS_PHI(cmds[cmd_end_i].msg.accuracy);
   cmds[cmd_end_i].z_accuracy = MM_TO_STEPS_Z(cmds[cmd_end_i].msg.accuracy);
 
-  // add_data_to_send(F("Received cmd: ");
+  // add_data_to_send(F("Received cmd: \n"));
   // cmd_print(&cmds[cmd_end_i]);
 
   n_cmd_in_storage += 1;
@@ -344,60 +344,60 @@ void parse_msg() {
 }
 
 void msg_print(MSG *msg) {
-  add_data_to_send(F("msg->cmd: "));
-  add_data_to_send(String(msg->cmd));
-  add_data_to_send(F("\nmsg->J1: "));
-  add_data_to_send(String(msg->J1));
-  add_data_to_send(F("\nmsg->J2: "));
-  add_data_to_send(String(msg->J2));
-  add_data_to_send(F("\nmsg->phi: "));
-  add_data_to_send(String(msg->phi));
-  add_data_to_send(F("\nmsg->z: "));
-  add_data_to_send(String(msg->z));
-  add_data_to_send(F("\nmsg->gripper_value: "));
-  add_data_to_send(String(msg->gripper_value));
-  add_data_to_send(F("\nmsg->v_J1: "));
-  add_data_to_send(String(msg->v_J1));
-  add_data_to_send(F("\nmsg->v_J2: "));
-  add_data_to_send(String(msg->v_J2));
-  add_data_to_send(F("\nmsg->v_phi: "));
-  add_data_to_send(String(msg->v_phi));
-  add_data_to_send(F("\nmsg->v_z: "));
-  add_data_to_send(String(msg->v_z));
-  add_data_to_send(F("\nmsg->a_J1: "));
-  add_data_to_send(String(msg->a_J1));
-  add_data_to_send(F("\nmsg->a_J2: "));
-  add_data_to_send(String(msg->a_J2));
-  add_data_to_send(F("\nmsg->a_phi: "));
-  add_data_to_send(String(msg->a_phi));
-  add_data_to_send(F("\nmsg->a_z: "));
-  add_data_to_send(String(msg->a_z));
-  add_data_to_send(F("\nmsg->accuracy: "));
-  add_data_to_send(String(msg->accuracy));
-  add_data_to_send(F("\n"));
+  debug_print(F("msg->cmd: "));
+  debug_print(String(msg->cmd));
+  debug_print(F("\nmsg->J1: "));
+  debug_print(String(msg->J1));
+  debug_print(F("\nmsg->J2: "));
+  debug_print(String(msg->J2));
+  debug_print(F("\nmsg->phi: "));
+  debug_print(String(msg->phi));
+  debug_print(F("\nmsg->z: "));
+  debug_print(String(msg->z));
+  debug_print(F("\nmsg->gripper_value: "));
+  debug_print(String(msg->gripper_value));
+  debug_print(F("\nmsg->v_J1: "));
+  debug_print(String(msg->v_J1));
+  debug_print(F("\nmsg->v_J2: "));
+  debug_print(String(msg->v_J2));
+  debug_print(F("\nmsg->v_phi: "));
+  debug_print(String(msg->v_phi));
+  debug_print(F("\nmsg->v_z: "));
+  debug_print(String(msg->v_z));
+  debug_print(F("\nmsg->a_J1: "));
+  debug_print(String(msg->a_J1));
+  debug_print(F("\nmsg->a_J2: "));
+  debug_print(String(msg->a_J2));
+  debug_print(F("\nmsg->a_phi: "));
+  debug_print(String(msg->a_phi));
+  debug_print(F("\nmsg->a_z: "));
+  debug_print(String(msg->a_z));
+  debug_print(F("\nmsg->accuracy: "));
+  debug_print(String(msg->accuracy));
+  debug_print(F("\n"));
 }
 
 void cmd_print(CMD *cmd) {
-  add_data_to_send(F("cmd->msg: {\n"));
+  debug_print(F("cmd->msg: {\n"));
   msg_print(&cmd->msg);
-  add_data_to_send(F("}\n"));
-  add_data_to_send(F("\ncmd->J1_goal: "));
-  add_data_to_send(String(cmd->J1_goal));
-  add_data_to_send(F("\ncmd->J2_goal: "));
-  add_data_to_send(String(cmd->J2_goal));
-  add_data_to_send(F("\ncmd->phi_goal: "));
-  add_data_to_send(String(cmd->phi_goal));
-  add_data_to_send(F("\ncmd->z_goal: "));
-  add_data_to_send(String(cmd->z_goal));
-  add_data_to_send(F("\ncmd->J1_accuracy: "));
-  add_data_to_send(String(cmd->J1_accuracy));
-  add_data_to_send(F("\ncmd->J2_accuracy: "));
-  add_data_to_send(String(cmd->J2_accuracy));
-  add_data_to_send(F("\ncmd->phi_accuracy: "));
-  add_data_to_send(String(cmd->phi_accuracy));
-  add_data_to_send(F("\ncmd->z_accuracy: "));
-  add_data_to_send(String(cmd->z_accuracy));
-  add_data_to_send(F("\n"));
+  debug_print(F("}\n"));
+  debug_print(F("\ncmd->J1_goal: "));
+  debug_print(String(cmd->J1_goal));
+  debug_print(F("\ncmd->J2_goal: "));
+  debug_print(String(cmd->J2_goal));
+  debug_print(F("\ncmd->phi_goal: "));
+  debug_print(String(cmd->phi_goal));
+  debug_print(F("\ncmd->z_goal: "));
+  debug_print(String(cmd->z_goal));
+  debug_print(F("\ncmd->J1_accuracy: "));
+  debug_print(String(cmd->J1_accuracy));
+  debug_print(F("\ncmd->J2_accuracy: "));
+  debug_print(String(cmd->J2_accuracy));
+  debug_print(F("\ncmd->phi_accuracy: "));
+  debug_print(String(cmd->phi_accuracy));
+  debug_print(F("\ncmd->z_accuracy: "));
+  debug_print(String(cmd->z_accuracy));
+  debug_print(F("\n"));
 }
 
 bool move() {

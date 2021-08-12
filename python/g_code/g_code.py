@@ -345,11 +345,17 @@ class GCode(Logger):
         # Set the velocity to something nice and slow
         robot.set_tcp_vel(self.config['tcp_vel'])
 
+        z_cur = 25
         for pos in self.pos_to_go:
-            res = robot.moveL_xyz(*pos)             
-            if not res:
+            # Move in z
+            success = True
+            if pos[2] != z_cur:
+                success |= robot.move_z(pos[2])
+            success |= robot.moveL_xy(*pos[:2])             
+            if not success:
                 self.LOG_ERROR("Failed to move according to g-code")
                 return False
+
 
                 
         

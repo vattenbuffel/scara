@@ -399,7 +399,7 @@ class Robot(Logger):
             y ([type]): [description]
         """
         self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y}")
-        self.moveL_xyz(x,y,self.z_goal)
+        return self.moveL_xyz(x,y,self.z_goal)
 
     def add_robot_cmd(self, cmd:RobotCmd):
         self.LOG_DEBUG(f"adding cmd: {cmd}")
