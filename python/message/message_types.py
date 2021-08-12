@@ -16,6 +16,7 @@ class MessageTypes(Enum):
     DONE = 1
     HOME = 2
     HEARTBEAT = 3 # This message will be sent at regular intervals by the arduino and contains all information about it
+    READY = 4 # Sent by the arduino when it's ready to receive more data
 
     def str_to_type(string):
         for type in MessageTypes:

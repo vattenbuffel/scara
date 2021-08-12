@@ -1,4 +1,5 @@
 import cmd
+from queue_sender.queue_sender import queue_sender
 from logger.logger import Logger
 from serial_data_communicator.handy_functions import handy_functions
 import threading
@@ -438,6 +439,15 @@ class CLI(cmd.Cmd, Logger):
         heatmap.show_heatmap()
         
         self.LOG_DEBUG(f"Done with heatmap_show")
+
+    def do_queue_n(self, arg):
+        "Prints the number of movement commands currently in arduino's queue"
+        self.cli_print(f"N cmds in arduino's queue: {queue_sender.get_n_in_queue()}")
+
+        
+    def cli_print(self, data, kwargs): 
+        data = self.prompt + data
+        print(data, **kwargs) 
 
     def do_kill(self, arg):
         "Stops the program and kills all threads but the gui: kill"

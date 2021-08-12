@@ -26,12 +26,16 @@ class QueueSender(Logger):
         super().__init__(self.name, self.verbose_level)
 
         self.n_in_queue = 0
+        self.n_in_queue_lock = threading.Lock()
         self.cmd_available_event = threading.Event()
         self.cmd_available_event.set()
 
-        # Class that will check if new messages have arrived to serial_communicator
+        # Whenever the arduino is done, a callback should be called to increase done_counter to ensure no dones are missed
+        serial_com.add_done_callback(self.done_callback)
+        self.done_lock = threading.Lock()
+        self.done_counter = 0
+
         self.done_event = threading.Event()
-        self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name)
 
         self.thread = threading.Thread(target=self.run, name=self.name + "_run_thread")
         self.thread.daemon = True
@@ -51,6 +55,13 @@ class QueueSender(Logger):
         self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
+    def done_callback(self):
+        """Whenever done has been received by serial com, this function should be called
+        """
+        with self.done_lock:
+            self.done_counter+=1
+            self.done_event.set()
+
     def send(self, data):
         self.LOG_DEBUG(f"Going to send data. Currently {self.n_in_queue} data in queue.")
 
@@ -59,20 +70,32 @@ class QueueSender(Logger):
        
        # Check if data can be sent
         self.cmd_available_event.wait()
-        self.n_in_queue += 1
+        with self.n_in_queue_lock:
+            self.n_in_queue += 1
         success = serial_com.send_data(data)
 
         self.LOG_DEBUG(f"Done sending data.")
 
         return success
 
+    def get_n_in_queue(self):
+        with self.n_in_queue_lock:
+            return self.n_in_queue
+
     def run(self):
         while True:
             self.done_event.wait()
             self.LOG_DEBUG(f"Robot done with data. Currently {self.n_in_queue-1} data in queue.")
-            self.done_event.clear()
-            self.n_in_queue -= 1
+            with self.n_in_queue_lock:
+                self.n_in_queue -= 1
             self.cmd_available_event.set()
+            
+            with self.done_lock:
+                self.done_counter-=1
+                
+                # If all of the dones have been processed
+                if self.done_counter == 0:
+                    self.done_event.clear()
 
 
 queue_sender = QueueSender()

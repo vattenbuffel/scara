@@ -32,6 +32,8 @@ class Communicator(Logger):
         # Create a dictionary of received messages where the key is the string associated in messages types
         self.received_messages = {type_.name:MessageReceived(type_, "") for type_ in MessageTypes}
 
+        # When a done message arrives a callback can be performed. This is the list of callbacks
+        self.done_callbacks = [] # List of callback functions
         
         # This thread reads messages via the serial port
         self.read_thread = threading.Thread(target=self.receive_message, name="serial_com_receive_msg_thread")
@@ -45,6 +47,9 @@ class Communicator(Logger):
         self.wait_first_heartbeat(self.received_messages[MessageTypes.HEARTBEAT.name])
 
         self.LOG_INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+    
+    def add_done_callback(self, fn):
+        self.done_callbacks.append(fn)
 
     def wait_first_heartbeat(self, prev_heartbeat):
         """Busy wait loop until a heartbeat has arrived, then put arduino_started to True"""
@@ -179,6 +184,32 @@ class Communicator(Logger):
 
         return msg
             
+    def process_received_msg(self, msg):
+        if msg is None:
+            # Invalid char read. Often happens while the arduino is starting
+            return False
+        msg_split = msg.split()
+
+        if len(msg_split) == 0:
+            self.LOG_DEBUG("Empty message arrived")
+            return False
+
+        if "\r\n" not in msg:
+            self.LOG_ERROR(f"An unfinished message arrived: {msg}")
+            # raise ValueError(f"{self.name} An unfinished message arrived")
+            return False
+
+        if not "HEARTBEAT" in msg: 
+            self.LOG_DEBUG(f"Read: {msg}", end="" if "\n" in msg else "\n")
+
+        # See if the arduino is ready to receive
+        if self.config["ready_to_read_str"] == msg.strip("\r\n"):
+            self.arduino_ready_lock.acquire()
+            self.arduino_ready_event.set()
+            self.arduino_ready_lock.release()
+
+        return msg_split
+
     def receive_message(self):
         while not self.kill_event.is_set():
             # Check if new data
@@ -186,39 +217,23 @@ class Communicator(Logger):
                 self.LOG_MSG_ARRIVE(f"Data waiting to be read")
 
                 msg = self.read_msg()
-                if msg is None:
-                    # Invalid char read. Often happens while the arduino is starting
-                    continue
-                msg_split = msg.split()
-
-                if len(msg_split) == 0:
-                    self.LOG_DEBUG("Empty message arrived")
-                    continue
-
-                if "\r\n" not in msg:
-                    self.LOG_ERROR(f"An unfinished message arrived: {msg}")
-                    # raise ValueError(f"{self.name} An unfinished message arrived")
-
-                if not "HEARTBEAT" in msg: 
-                    self.LOG_DEBUG(f"Read: {msg}", end="" if "\n" in msg else "\n")
-
-                # See if the arduino is ready to receive
-                if self.config["ready_to_read_str"] == msg.strip("\r\n"):
-                    self.arduino_ready_lock.acquire()
-                    self.arduino_ready_event.set()
-                    self.arduino_ready_lock.release()
+                msg_split = self.process_received_msg(msg)
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:
                     type_ = MessageTypes.str_to_type(msg_split[0])
                     self.received_messages[msg_split[0].upper()] = MessageReceived(type_, msg_split[1:])
 
+                    # If the message signals that the arduino is done, call all callbacks
+                    if type_ is not None and type_ == MessageTypes.DONE:
+                        for fn in self.done_callbacks:
+                            fn()
+
                 except ValueError as e:
                     if self.verbose_level <= VerboseLevel.WARNING:
                         print(e)
                         traceback.print_exc()
                         self.LOG_WARNING(f"Invalid message type: {msg_split[0]}")
-
 
             else:
                 self.LOG_ALL(f"No data to read")
