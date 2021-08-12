@@ -20,7 +20,7 @@ class Logger:
         with open(config_fp) as f:
             self.logger_config = yaml.load(f, Loader=yaml.FullLoader)
             
-    def print(self, color, msg, kwargs):
+    def LOG(self, color, msg, kwargs):
         msg = f"{self.name}: " + msg
         if self.add_timestamp:
             msg += str(time.time())
@@ -29,27 +29,27 @@ class Logger:
 
     def LOG_ALL(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.ALL:
-            self.print(self.logger_config['color']["ALL"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["ALL"], msg, kwargs) 
 
     def LOG_MSG_ARRIVE(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.MSG_ARRIVE:
-            self.print(self.logger_config['color']["MSG_ARRIVE"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["MSG_ARRIVE"], msg, kwargs) 
 
     def LOG_DEBUG(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.DEBUG:
-            self.print(self.logger_config['color']["DEBUG"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["DEBUG"], msg, kwargs) 
 
     def LOG_INFO(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.INFO:
-            self.print(self.logger_config['color']["INFO"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["INFO"], msg, kwargs) 
 
     def LOG_WARNING(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.WARNING:
             msg = "WARNING " + msg
-            self.print(self.logger_config['color']["WARNING"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["WARNING"], msg, kwargs) 
     
     def LOG_ERROR(self, msg, **kwargs):
         if self.verbose_level <= VerboseLevel.ERROR:
             msg = "ERROR " + msg
-            self.print(self.logger_config['color']["ERROR"], msg, kwargs) 
+            self.LOG(self.logger_config['color']["ERROR"], msg, kwargs) 
 
