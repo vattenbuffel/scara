@@ -114,10 +114,9 @@ def gcode_mode():
             g_code.set_gcode_file(path)
             g_code.parse()
 
-            img = g_code.generate_img()
-            width, height = img.size
-            # rescale the img so it's visible
-            img = img.resize((width*5, height*5))
+            img = g_code.generate_img(scale=5)
+            # Resize the image so that it's not too big for streamlit
+            img = img.resize((heatmap.config['img_width'], heatmap.config['img_height']))
             set_gcode_preview(img)
         
         gcode_preview()

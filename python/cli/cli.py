@@ -389,7 +389,7 @@ class CLI(cmd.Cmd, Logger):
 
     def do_gcode_show(self, arg):
         "Shows the resulting image as defined by the gcode file"
-        g_code.show()
+        g_code.show(scale=5)
 
     def do_gcode_loaded(self, arg):
         "Prints the loaded gcode file"
