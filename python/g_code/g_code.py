@@ -153,30 +153,32 @@ class GCode(Logger):
         self.gcode_file_path = None
         self.pos_to_go = []
 
-    def generate_img(self):
+    def generate_img(self, scale):
         """Generates an image of what the gcode will result in
         """
         self.LOG_DEBUG(f"Generate_img with file: {self.gcode_file_path}")
 
-        if not self.gcode_is_parsed:
+        if not self.gcode_is_parsed():
             self.LOG_WARNING(f"No gcode file has been parsed")
             return False
 
         pos_to_go = np.array(self.pos_to_go)
         good_pos = pos_to_go[np.logical_or(pos_to_go[:,2] == self.config['draw_height'], pos_to_go[:,2] == self.config['move_height'])]
+        good_pos*=scale
 
         width = good_pos[:,0].max() - good_pos[:,0].min()
         x_offset = width*0.05
         width += 2*x_offset
         width = int(width)
         x_offset -= good_pos[:,0].min()
+        good_pos[:,0] += x_offset 
 
         height = good_pos[:,1].max() - good_pos[:,1].min()
         y_offset = height*0.05
         height += 2*y_offset
         height = int(height)
         y_offset -= good_pos[:,1].min()
-        offset = np.array([x_offset, y_offset])
+        good_pos[:,1] += y_offset 
 
         white = (255,255,255)
         black = (0,0,0)
@@ -186,9 +188,9 @@ class GCode(Logger):
         cur_pos = good_pos[0]
 
         for pos in good_pos:
-            if pos[2] == self.config['draw_height'] and cur_pos[2] == self.config['draw_height']:
-                start = cur_pos[:2] + offset
-                end = pos[:2] + offset
+            if pos[2] == self.config['draw_height']*scale and cur_pos[2] == self.config['draw_height']*scale:
+                start = cur_pos[:2]
+                end = pos[:2]
                 draw.line([tuple(start), tuple(end)], fill=black, width=3)
 
             cur_pos = pos
@@ -199,14 +201,10 @@ class GCode(Logger):
         return img
 
 
-    def show(self):
+    def show(self, scale=1):
         """creates an image of what the gcode will result in and shows it
         """
-        img = self.generate_img()
-        width, height = img.size
-        # Rescale the img so it's visible
-        img = img.resize((width*5, height*5))
-
+        img = self.generate_img(scale)
         img.show()
 
         return True
