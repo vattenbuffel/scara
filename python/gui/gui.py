@@ -1,4 +1,5 @@
 from io import StringIO
+import time
 import glob
 from logger.logger import Logger
 import streamlit as st
@@ -116,8 +117,28 @@ def gcode_mode():
 
             img = g_code.generate_img(scale=5)
             # Resize the image so that it's not too big for streamlit
-            img = img.resize((heatmap.config['img_width'], heatmap.config['img_height']))
+            scale = heatmap.config['img_width']/max(img.size)
+            img = img.resize((int(img.size[0]*scale), int(img.size[1]*scale)))
+            # Add an outline to the img
+            img1 = ImageDraw.Draw(img)
+            end_points = tuple(np.array(img.size) - np.array([1,1]))
+            img1.rectangle([(0,0), end_points], outline="grey")
             set_gcode_preview(img)
+            gcode_preview()
+
+            # Start the movements
+            g_code.move_parsed()
+            n_cmds = len(robot.get_cmds()[1])
+
+            # Show a progress bar
+            progress_bar = st.progress(0)
+            progress_text = st.empty()
+            while len(robot.get_cmds()[1]):
+                progress = (n_cmds - len(robot.get_cmds()[1]))/n_cmds
+                progress_text.text(f"Progress: {100*progress:.3f} %")
+                progress_bar.progress(progress)
+                time.sleep(0.1)
+
         
         gcode_preview()
 
