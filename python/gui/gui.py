@@ -70,8 +70,22 @@ if 'config' not in st.session_state:
 if 'logger' not in st.session_state:
     st.session_state.logger = Logger(st.session_state.name, st.session_state.verbose_level)
 
+if 'gcode_preview' not in st.session_state:
+    st.session_state.gcode_preview = False
+    st.session_state.gcode_preview_img = None
+
 def set_update(key):
     st.session_state[key].should_move = True
+
+def gcode_preview():
+    if st.session_state.gcode_preview:
+        st.markdown("## Preview")
+        st.image(st.session_state.gcode_preview_img)
+
+def set_gcode_preview(img):
+    st.session_state.gcode_preview = True
+    st.session_state.gcode_preview_img = img
+
 
 def gcode_mode():
     col1, col2 = st.beta_columns(2)
@@ -79,19 +93,36 @@ def gcode_mode():
     def get_paths():
         paths = glob.glob(f"{g_code.config['base_path']}*.gcode")
         # Sanitize paths
-        paths = [os.path.basename(paths[i]) for i in range(len(paths))]
+        paths_clean = [os.path.basename(paths[i]) for i in range(len(paths))]
         st.session_state.logger.LOG_DEBUG(f"g_code files found: {paths}")
-        return paths
-    paths = get_paths()
+        return paths, paths_clean
+    paths, paths_clean = get_paths()
 
     with col1:
         st.header(F"Move according to g_code file")
-        path = st.selectbox(" ", paths)
+        path_clean = st.selectbox(" ", paths_clean)
+        st.session_state.logger.LOG_DEBUG(f"Selected file: {path_clean}")
         confirmed_choice = st.button("Move")
-        # st.write(f"chosen file: {path}")
-        if path and confirmed_choice:
-            st.session_state.logger.LOG_DEBUG(f"Going to move according to {path}")
-            g_code.move_according_to_path(path)
+        st.write(f"chosen file: {path_clean}")
+        if path_clean and confirmed_choice:
+            st.session_state.logger.LOG_DEBUG(f"Going to move according to {path_clean}")
+
+            for path in paths:
+                if path_clean in path:
+                    break
+
+            g_code.set_gcode_file(path)
+            g_code.parse()
+
+            img = g_code.generate_img()
+            width, height = img.size
+            # rescale the img so it's visible
+            img = img.resize((width*5, height*5))
+            set_gcode_preview(img)
+        
+        gcode_preview()
+
+
 
     with col2:
         st.markdown("## Modify files")
