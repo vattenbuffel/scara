@@ -153,10 +153,10 @@ class GCode(Logger):
         self.gcode_file_path = None
         self.pos_to_go = []
 
-    def show(self):
-        """Creates an image of what the gcode will result in and shows it
+    def generate_img(self):
+        """Generates an image of what the gcode will result in
         """
-        self.LOG_DEBUG(f"show with file: {self.gcode_file_path}")
+        self.LOG_DEBUG(f"Generate_img with file: {self.gcode_file_path}")
 
         if not self.gcode_is_parsed:
             self.LOG_WARNING(f"No gcode file has been parsed")
@@ -196,6 +196,14 @@ class GCode(Logger):
         # Flip the img to correct for the inverted y coordinates
         img = ImageOps.flip(img)
 
+        return img
+
+
+    def show(self):
+        """creates an image of what the gcode will result in and shows it
+        """
+        img = self.generate_img()
+        width, height = img.size
         # Rescale the img so it's visible
         img = img.resize((width*5, height*5))
 
