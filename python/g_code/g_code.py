@@ -205,6 +205,8 @@ class GCode(Logger):
         """creates an image of what the gcode will result in and shows it
         """
         img = self.generate_img(scale)
+        if img == False:
+            return False
         img.show()
 
         return True
