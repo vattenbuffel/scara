@@ -12,5 +12,7 @@ if __name__ == '__main__':
         loop()
 
     simulator.plot_start()
+    simulator.home()
+    simulator.move_xy(200, 0)
 
     print(f"Done in main\n{cli.prompt}", end="")

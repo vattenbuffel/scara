@@ -1,1 +1,2 @@
 name: "Simulator"
+speed_factor: 1 # 1 for normal speed, 2 for double speed, 0.5 for half speed

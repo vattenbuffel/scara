@@ -120,16 +120,21 @@ class Simulator(Robot):
             self.LOG_WARNING(f"Failed with move robot")
             return
 
-        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False)
+        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor']
         J1_prev_ns = time.time_ns()
         J1_epsilon = self.steps_to_deg_J1(1)
         J1_vel_sign = 1 if J1 > self.J1 else -1
 
-        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False)
+        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor']
         J2_prev_ns = time.time_ns()
         J2_epsilon = self.steps_to_deg_J2(1)
         J2_vel_sign = 1 if J2 > self.J2 else -1
 
+        sim_start_ns = time.time_ns()
+        J1_end_time_ns = -1
+        J2_end_time_ns = -1
+        J1_start = self.J1
+        J2_start = self.J2
         while True:
             J1_done = J1_epsilon >= np.abs(J1 - self.J1)
             J2_done = J2_epsilon >= np.abs(J2 - self.J2)
@@ -139,15 +144,30 @@ class Simulator(Robot):
             if not J1_done and J1_prev_ns + J1_dt_ns < time.time_ns():
                 J1_prev_ns = time.time_ns()
                 self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
+                J1_end_time_ns = time.time_ns()
 
             if not J2_done and J2_prev_ns + J2_dt_ns < time.time_ns():
                 J2_prev_ns = time.time_ns()
                 self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
+                J2_end_time_ns = time.time_ns()
 
-            # Update position. 
-            self.x, self.y = self.forward_kinematics(self.J1, self.J2)
-            self.feed_plot()
+            self.feed_plot(overwrite=False)
 
+        sim_end_ns = time.time_ns()
+        sim_time = (sim_end_ns - sim_start_ns)/1e9
+
+        J1_time = (J1_end_time_ns - sim_start_ns)/1e9
+        J1_vel_step = self.deg_to_steps_J1(J1_start - J1) / J1_time
+        J1_vel_deg = np.rad2deg(J1_start - J1) / J1_time
+
+        J2_time = (J2_end_time_ns - sim_start_ns)/1e9
+        J2_vel_step = self.deg_to_steps_J1(J2_start - J2) / J2_time
+        J2_vel_deg = np.rad2deg(J2_start - J2) / J2_time
+        
+        self.LOG_DEBUG(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.sim_config['speed_factor']:.2f}")
+        self.LOG_DEBUG(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.2f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.2f} deg/s")
+        # Update position. 
+        self.x, self.y = self.forward_kinematics(self.J1, self.J2)
         self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}")
 
     def plot_start(self):

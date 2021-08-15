@@ -12,7 +12,7 @@ class PauseAnimation:
         self.ax.set_title('Simulation')
         self.p, = self.ax.plot(0, 0)
 
-        self.animation = FuncAnimation(fig, self.plot_fn, interval=1)
+        self.animation = FuncAnimation(fig, self.plot_fn, interval=0)
         self.paused = False
 
         self.pos_queue:multiprocessing.Queue = pos_queue # Should be populated by simulator module. Will contain the pos of J1 end and J2 end: [(x1,y1), (x2,y2)]
