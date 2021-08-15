@@ -453,6 +453,14 @@ class CLI(cmd.Cmd, Logger):
         except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
+    def do_sim_home(self, arg):
+        "Simulates the robot to the home position:  None"
+        self.LOG_DEBUG(f"Received command sim go home")
+
+        simulator.home()
+        
+        self.LOG_DEBUG(f"Done with command sim go home")
+
 
     def do_queue_n(self, arg):
         "Prints the number of movement commands currently in arduino's queue"

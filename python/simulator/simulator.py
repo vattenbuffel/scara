@@ -1,3 +1,4 @@
+from queue import Empty
 import time
 import numpy as np
 import yaml
@@ -72,17 +73,23 @@ class Simulator(Robot):
         self.J3_goal = 0 
         self.gripper_value_goal = 0
 
-        self.feed_plot()
+        self.feed_plot(overwrite=False)
 
         self.LOG_INFO(f"At home, J1: {0}, J2: {0}, J3: {0}, x:{x}, y:{y}, z:{0}")
 
-    def feed_plot(self):
+    def feed_plot(self, overwrite=True):
         """Add the correct data to the pos_queue used for plotting
         """
         x1 = self.config['L1']*np.cos(self.J1)
         y1 = self.config['L1']*np.sin(self.J1)
-        x2 = self.config['L2']*np.cos(self.J1 + self.J2)
-        y2 = self.config['L2']*np.sin(self.J1 + self.J2)
+        x2 = x1 + self.config['L2']*np.cos(self.J1 + self.J2)
+        y2 = y1 + self.config['L2']*np.sin(self.J1 + self.J2)
+
+        if overwrite:
+            try:
+                self.pos_queue.get_nowait()
+            except Empty:
+                pass
 
         self.pos_queue.put([(x1, y1), (x2, y2)])
 
@@ -113,19 +120,29 @@ class Simulator(Robot):
             self.LOG_WARNING(f"Failed with move robot")
             return
 
-        J1_dt = self.deg_to_steps_J1(J1_vel)
+        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False)
         J1_prev_ns = time.time_ns()
-        J2_dt = self.deg_to_steps_J2(J2_vel)
-        J2_prev_ns = time.time_ns()
+        J1_epsilon = self.steps_to_deg_J1(1)
+        J1_vel_sign = 1 if J1 > self.J1 else -1
 
-        while J1 != self.J1 and J2 != self.J2:
-            if J1 != self.J1 and J1_prev_ns + J1_dt < time.time_ns():
+        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False)
+        J2_prev_ns = time.time_ns()
+        J2_epsilon = self.steps_to_deg_J2(1)
+        J2_vel_sign = 1 if J2 > self.J2 else -1
+
+        while True:
+            J1_done = J1_epsilon >= np.abs(J1 - self.J1)
+            J2_done = J2_epsilon >= np.abs(J2 - self.J2)
+            if J1_done and J2_done:
+                break
+
+            if not J1_done and J1_prev_ns + J1_dt_ns < time.time_ns():
                 J1_prev_ns = time.time_ns()
-                self.J1 += self.steps_to_deg_J1(1)
-                
-            if J2 != self.J2 and J2_prev_ns + J2_dt < time.time_ns():
+                self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
+
+            if not J2_done and J2_prev_ns + J2_dt_ns < time.time_ns():
                 J2_prev_ns = time.time_ns()
-                self.J2 += self.steps_to_deg_J2(1)
+                self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
 
             # Update position. 
             self.x, self.y = self.forward_kinematics(self.J1, self.J2)

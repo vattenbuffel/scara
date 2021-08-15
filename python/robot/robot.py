@@ -264,6 +264,8 @@ class Robot(Logger):
         """
         cnvrt_bool: The arduino has to receive 1 or 0, not True or False. If home, move and stop need to be translated to
         1 or 0 then put cnvrt_bool to True.
+
+        NOTE: For some reason this function only expects J1, J2 and J3 to be in rad,  not J1_vel etc. They should instead be in deg...
         
         data[0] - cmd_type [int] 
         data[1] - Joint 1 angle
@@ -452,17 +454,30 @@ class Robot(Logger):
         print(f"{self.name} This function is probably wrong")
         self._move_robot(J1, J2, J3, z, self.gripper_value)
 
-    def deg_to_steps_J1(self, deg):
+    def deg_to_steps_J1(self, deg, in_rad=True):
+        if in_rad:
+            deg = np.rad2deg(deg)
+
         return self.config['J1_deg_to_steps']*deg
 
-    def deg_to_steps_J2(self, deg):
+    def deg_to_steps_J2(self, deg, in_rad=True):
+        if in_rad:
+            deg = np.rad2deg(deg)
         return self.config['J2_deg_to_steps']*deg
 
-    def steps_to_deg_J1(self, steps):
-        return steps/self.config['J1_deg_to_steps']
+    def steps_to_deg_J1(self, steps, in_rad=True):
+        deg = steps/self.config['J1_deg_to_steps']
+        if in_rad:
+            return np.deg2rad(deg)
 
-    def steps_to_deg_J2(self, steps):
-        return steps/self.config['J2_deg_to_steps']
+        return deg
+
+    def steps_to_deg_J2(self, steps, in_rad=True):
+        deg = steps/self.config['J2_deg_to_steps']
+        if in_rad:
+            return np.deg2rad(deg)
+
+        return deg
 
     def get_pose(self):
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)
