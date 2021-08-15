@@ -1,4 +1,5 @@
 import cmd
+from simulator.simulator import simulator
 from queue_sender.queue_sender import queue_sender
 from logger.logger import Logger
 from serial_data_communicator.handy_functions import handy_functions
@@ -439,6 +440,19 @@ class CLI(cmd.Cmd, Logger):
         heatmap.show_heatmap()
         
         self.LOG_DEBUG(f"Done with heatmap_show")
+    
+    def do_sim_start(self, arg):
+        "Starts the simulation animation"
+        simulator.plot_start()
+
+    def do_sim_move_xy(self,arg):
+        "Simulates the robot to the coordinate (x,y):  x, y"
+
+        try:
+            simulator.move_xy(*self.parse(arg))
+        except TypeError as e:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
 
     def do_queue_n(self, arg):
         "Prints the number of movement commands currently in arduino's queue"

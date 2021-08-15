@@ -88,7 +88,6 @@ class Robot(Logger):
 
         self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel, self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc, self.accuracy)
 
-
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
         self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
@@ -452,6 +451,18 @@ class Robot(Logger):
         #TODO: Check if this function is correct. Shouldn't it add a move cmd?
         print(f"{self.name} This function is probably wrong")
         self._move_robot(J1, J2, J3, z, self.gripper_value)
+
+    def deg_to_steps_J1(self, deg):
+        return self.config['J1_deg_to_steps']*deg
+
+    def deg_to_steps_J2(self, deg):
+        return self.config['J2_deg_to_steps']*deg
+
+    def steps_to_deg_J1(self, steps):
+        return steps/self.config['J1_deg_to_steps']
+
+    def steps_to_deg_J2(self, steps):
+        return steps/self.config['J2_deg_to_steps']
 
     def get_pose(self):
         return (self.x, self.y, self.z, self.J1, self.J2, self.J3, self.gripper_value)

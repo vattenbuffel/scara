@@ -218,6 +218,8 @@ class Communicator(Logger):
 
                 msg = self.read_msg()
                 msg_split = self.process_received_msg(msg)
+                if msg_split == False:
+                    continue
 
                 # See if it is a valid message. A valid message should start with pos or done for example
                 try:

@@ -41,3 +41,6 @@ imaginary_epsilon: 1.0e-5 # Due to numerical errors(I hope), J2 sometimes become
 base_radius: 60 # The radius of the part of the robot base that turns
 
 dx: 1 # How fine to linear interpolate. with x0 = 0 and x1 = 1, there will be dx steps between x0 and x1.
+
+J1_deg_to_steps: 44.444444
+J2_deg_to_steps: 35.555555
