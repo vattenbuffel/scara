@@ -37,8 +37,9 @@ class QueueSender(Logger):
 
         self.done_event = threading.Event()
 
+        self.kill_event = threading.Event()
+        self.kill_event.clear()
         self.thread = threading.Thread(target=self.run, name=self.name + "_run_thread")
-        self.thread.daemon = True
         self.thread.start()
 
         self.LOG_INFO(f"Inited HeatMap.\nConfig: {self.config},\nand base config: {self.config_base}")
@@ -82,8 +83,13 @@ class QueueSender(Logger):
         with self.n_in_queue_lock:
             return self.n_in_queue
 
+    def kill(self):
+        self.LOG_DEBUG(f"Dying")
+        self.kill_event.set()
+        self.LOG_INFO(f"Good bye!")
+
     def run(self):
-        while True:
+        while not self.kill_event.is_set:
             self.done_event.wait()
             self.LOG_DEBUG(f"Robot done with data. Currently {self.n_in_queue-1} data in queue.")
             with self.n_in_queue_lock:
