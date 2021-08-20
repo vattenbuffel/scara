@@ -1,4 +1,4 @@
-# This file contains a few neat functions regarding communicatin with serial_com such as get pose
+# This file contains a few neat functions regarding communication with serial_com such as get pose
 
 from logger.logger import Logger
 from message.message_types import MessageTypes
@@ -9,7 +9,6 @@ from misc.verbosity_levels import VerboseLevel
 import os
 import threading
 from message.message_updated import MessageUpdated
-import sys
 import numpy as np
 
 class HandyFunctions(Logger):
@@ -23,10 +22,14 @@ class HandyFunctions(Logger):
         
         # Init the logger
         Logger.__init__(self, self.name, self.verbose_level)
+
+        # Event used for killing spawned threads
+        self.kill_event = threading.Event()
+        self.kill_event.clear()
         
         # Class that will check if new messages have arrived to serial_communicator
         self.heartbeat_event = threading.Event()
-        self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event}, self.name)
+        self.message_update = MessageUpdated({MessageTypes.HEARTBEAT.name: self.heartbeat_event}, self.name, self.kill_event)
        
         self.LOG_INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
@@ -90,8 +93,7 @@ class HandyFunctions(Logger):
 
     def kill(self):
         self.LOG_DEBUG(f"Dying")   
-
-        
+        self.kill_event.set() 
         self.LOG_INFO(f"Good bye!")
 
 
