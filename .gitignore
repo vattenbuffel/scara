@@ -2,6 +2,9 @@
 *.gcode
 !star.gcode
 
+# snakeviz
+*.prof
+
 # Fusion 360 files
 *.step
 
