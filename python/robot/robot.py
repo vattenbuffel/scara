@@ -61,9 +61,13 @@ class Robot(Logger):
         self.tcp_vel = self.config['base_tcp_vel']
         self.accuracy = self.config['base_accuracy']
 
+        # Event used for killing spawned threads
+        self.kill_event = threading.Event()
+        self.kill_event.clear()
+
         # Class that will check if new messages have arrived to serial_communicator
         self.done_event = threading.Event()
-        self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name)
+        self.message_update = MessageUpdated({MessageTypes.DONE.name: self.done_event}, self.name, self.kill_event)
 
         # Queue of helper RobotCmd, a class that helps when robot should be altered
         self.cmd_queue = queue.Queue() # No max value
@@ -72,7 +76,6 @@ class Robot(Logger):
         self.LOG_INFO(f"Inited robot.\nConfig: {self.config},\nand base config: {self.config_base}")
 
         self.run_thread = threading.Thread(target=self.run, name=self.name + "_thread")
-        self.run_thread.daemon = True
         self.run_thread.start()
 
     def print_pos(self):
@@ -666,7 +669,10 @@ class Robot(Logger):
     def kill(self):
         self.LOG_DEBUG(f"Dying")    
 
-        
+        self.LOG_DEBUG(f"Killing thread with name: {self.run_thread.name}")
+        self.LOG_DEBUG(f"Killing thread with name: {self.message_update.check_thread.name}")
+        self.kill_event.set()  
+              
         self.LOG_INFO(f"Good bye!")
         
     def run(self):
@@ -674,7 +680,7 @@ class Robot(Logger):
         handle_fns = {RobotCmdTypes.HOME.name: self._home, 
                     RobotCmdTypes.MOVE.name: self._move_robot}
         
-        while True:
+        while not self.kill_event.is_set:
             self.LOG_DEBUG(f"Waiting for cmd.")
 
             self.cmd_cur = self.cmd_queue.get()
