@@ -14,18 +14,21 @@ class MessageUpdated(Logger):
     serial communicator has and compares it to what it has. If a message is found to 
     be never then an event is set. This event is given as an input to this class.
     """
-    def __init__(self, events_dict:dict, name):
-        # Read all the configs
+    def __init__(self, events_dict:dict, name, kill_event:threading.Event):
         self.config_base = None # dict
         self.config = None # dict
         self.name = name # str
         self.verbose_level = None # misc.verbosity_level
-        
+        self._kill_event = None
+
         # Read all the configs
         self.load_configs()
-
+        
         # Init the logger
         super().__init__(self.name, self.verbose_level)
+        
+        self.kill_event = kill_event # Event that will be set when self should be killed
+
 
         """
         Dict where the event and message is stored. The key is the string associated 
@@ -35,10 +38,32 @@ class MessageUpdated(Logger):
 
         # Thread that checks if a newer message has been added to serial com
         self.check_thread = threading.Thread(target=self.loop, name=self.name + "_thread")
-        self.check_thread.daemon = True
         self.check_thread.start()
 
         self.LOG_INFO(f"Inited serial data communicator.\nConfig: {self.config},\nand base config: {self.config_base}")
+
+    @property
+    def temperature(self):
+        print("Getting value...")
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, value):
+        print("Setting value...")
+        if value < -273.15:
+            raise ValueError("Temperature below -273 is not possible")
+        self._temperature = value
+
+    @property
+    def kill_event(self):
+        return self._kill_event
+
+    @kill_event.setter
+    def kill_event(self, event):
+        self.LOG_WARNING(f"setting kill event to one with id: {id(event)}")
+        if not self._kill_event is None:
+            self.LOG_ERROR(f"KILL EVENT ALREADY SET")
+        self._kill_event = event
 
 
     def load_configs(self):
@@ -53,14 +78,8 @@ class MessageUpdated(Logger):
         self.name += '_' + self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
-    def kill(self):
-        self.LOG_DEBUG(f"will be killed")
-        
-        
-        self.LOG_INFO(f"Good bye!")
-    
     def loop(self):
-        while True:            
+        while not self.kill_event.is_set():            
             self.LOG_MSG_ARRIVE(f"Checking for new messages")
 
             for key in self.updated_dict:
