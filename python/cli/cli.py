@@ -15,6 +15,8 @@ import sys
 import numpy as np
 from g_code.g_code import g_code
 from heatmap.heatmap import heatmap
+import inputimeout
+from misc.kill import kill
 
 class CLI(cmd.Cmd, Logger):
     intro = "Welcome to the Noa's scara robot cli.   Type help or ? to list commands.\n"
@@ -35,6 +37,12 @@ class CLI(cmd.Cmd, Logger):
         
         # Init the logger
         Logger.__init__(self, self.name, self.verbose_level)
+
+
+        # Thread used for handling inputs
+        self.run_thread = threading.Thread(target=self.loop, name=self.name + "_thread")
+        self.run_thread.setDaemon(True)
+        self.run_thread.start()
 
         self.LOG_INFO(f"Inited CLI.\nConfig: {self.config},\nand base config: {self.config_base}")
 
@@ -479,6 +487,11 @@ class CLI(cmd.Cmd, Logger):
         "Stops the program and kills all threads: ctrl+c"
         self.do_kill(arg)
 
+    def kill(self):
+        self.LOG_DEBUG(f"Killing everything")
+              
+        self.LOG_INFO(f"Good bye!")
+    
     def loop(self, intro=None):
         # Just a copy of cmd.cmdloop() but with a sleep added
         
@@ -502,6 +515,7 @@ class CLI(cmd.Cmd, Logger):
                     line = self.cmdqueue.pop(0)
                 else:
                     time.sleep(1/self.config['read_hz'])
+
                     if self.use_rawinput:
                         try:
                             line = input(self.prompt)
@@ -538,20 +552,7 @@ class CLI(cmd.Cmd, Logger):
             print(f"{self.prompt} Invalid command. Type help for help")
             
 
-def kill():
-    if cli.verbose_level <= VerboseLevel.DEBUG:
-        print(f"{cli.name}: Killing everything")
-    robot.kill()
-    serial_com.kill()
-    # gui.kill()
-    handy_functions.kill()
-        
-    if cli.verbose_level <= VerboseLevel.INFO:
-        print(f"{cli.name}: Good bye!")
-    sys.exit()
+
 
 
 cli = CLI()
-
-cli_thread = threading.Thread(target=cli.loop, name=cli.name + "_thread")
-cli_thread.start()
