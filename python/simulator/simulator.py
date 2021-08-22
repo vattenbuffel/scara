@@ -1,4 +1,5 @@
 from queue import Empty
+from misc.rolling_average import RollingAverage
 import time
 import numpy as np
 import yaml
@@ -120,6 +121,8 @@ class Simulator(Robot):
             self.LOG_WARNING(f"Failed with move robot")
             return
 
+        avg_J1 = RollingAverage()
+
         J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor']
         J1_prev_ns = time.time_ns()
         J1_epsilon = self.steps_to_deg_J1(1)
@@ -141,17 +144,27 @@ class Simulator(Robot):
             if J1_done and J2_done:
                 break
 
-            if not J1_done and J1_prev_ns + J1_dt_ns < time.time_ns():
+            if not J1_done and (J1_dt_ns - (time.time_ns() - J1_prev_ns)) < 0:
+                avg_J1.update(self.deg_to_steps_J1((time.time_ns() - J1_prev_ns)/1e9)) # Update the average velocity of J1
                 J1_prev_ns = time.time_ns()
                 self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
                 J1_end_time_ns = time.time_ns()
 
-            if not J2_done and J2_prev_ns + J2_dt_ns < time.time_ns():
+            if not J2_done and (J2_dt_ns - (time.time_ns() - J2_prev_ns)) < 0:
                 J2_prev_ns = time.time_ns()
                 self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
                 J2_end_time_ns = time.time_ns()
 
-            self.feed_plot(overwrite=False)
+            self.feed_plot()
+
+            # Wait until it's time to go again
+            J1_wait_ns = J1_dt_ns - (time.time_ns() - J1_prev_ns) if not J1_done else 1e19
+            J2_wait_ns = J2_dt_ns - (time.time_ns() - J2_prev_ns) if not J2_done else 1e19
+            wait_s = max(0, min(J1_wait_ns, J2_wait_ns)) / 1e9
+            print(f"Wait time: {wait_s} s, J1_vel_avg: {avg_J1.get_avg()}")
+            before_wait_ns = time.time_ns()
+            time.sleep(wait_s)
+            print(f"wait time was: {(time.time_ns() - before_wait_ns)/1e9}")
 
         sim_end_ns = time.time_ns()
         sim_time = (sim_end_ns - sim_start_ns)/1e9
@@ -177,8 +190,13 @@ class Simulator(Robot):
     def kill(self):
         self.LOG_INFO(f"Dying")    
 
+        self.LOG_DEBUG(f"Killing process: {self.plot_process.name}")
+        self.plot_process.kill()
+
+        self.LOG_DEBUG(f"Killing thread: {self.run_thread.name}")
         self.kill_event.set()
-        self.plot_process.join()
+
+        # self.plot_process.join()
 
 
 

@@ -1,3 +1,6 @@
+import time
+
+
 if __name__ == '__main__':
     from cli.cli import cli
     from robot.robot import robot
@@ -6,6 +9,7 @@ if __name__ == '__main__':
     from heatmap.heatmap import heatmap
     from g_code.g_code import g_code
     from simulator.simulator import simulator
+    from misc.kill import kill
 
     if st._is_running_with_streamlit:
         from gui.gui import loop
@@ -13,6 +17,9 @@ if __name__ == '__main__':
 
     simulator.plot_start()
     simulator.home()
-    simulator.move_xy(200, 0)
+    simulator.move_xy(300, 0)
 
     print(f"Done in main\n{cli.prompt}", end="")
+    while not simulator.is_idle():
+        time.sleep(1)
+    kill()

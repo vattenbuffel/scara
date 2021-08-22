@@ -86,11 +86,15 @@ class QueueSender(Logger):
     def kill(self):
         self.LOG_DEBUG(f"Dying")
         self.kill_event.set()
+        self.thread.join()
         self.LOG_INFO(f"Good bye!")
 
     def run(self):
-        while not self.kill_event.is_set:
-            self.done_event.wait()
+        while not self.kill_event.is_set():
+            # Wait for a done event to be set to signal that a cmd has been processed by the arduino
+            # Don't block though, this would stop this thread from being killed
+            if not self.done_event.wait(timeout=1):
+                continue
             self.LOG_DEBUG(f"Robot done with data. Currently {self.n_in_queue-1} data in queue.")
             with self.n_in_queue_lock:
                 self.n_in_queue -= 1
