@@ -11,11 +11,9 @@ import os
 from robot.robot import robot
 from serial_data_communicator.serial_communicator import serial_com
 import time
-import sys
 import numpy as np
 from g_code.g_code import g_code
 from heatmap.heatmap import heatmap
-import inputimeout
 from misc.kill import kill
 
 class CLI(cmd.Cmd, Logger):

@@ -666,12 +666,18 @@ class Robot(Logger):
         self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc = J1_acc, J2_acc, J3_acc, z_acc
         return True
 
+    def is_idle(self):
+        """Returns true if idle, ie not having any cmds to perform. This is based on if self.cmd_queue is empty
+        """
+        return not (self.cmd_queue.qsize()  or self.cmd_cur is not None)
+
     def kill(self):
         self.LOG_DEBUG(f"Dying")    
 
         self.LOG_DEBUG(f"Killing thread with name: {self.run_thread.name}")
         self.LOG_DEBUG(f"Killing thread with name: {self.message_update.check_thread.name}")
         self.kill_event.set()  
+        self.run_thread.join()
               
         self.LOG_INFO(f"Good bye!")
         
@@ -679,12 +685,19 @@ class Robot(Logger):
         # A dict of functions to handle the commands
         handle_fns = {RobotCmdTypes.HOME.name: self._home, 
                     RobotCmdTypes.MOVE.name: self._move_robot}
-        
-        while not self.kill_event.is_set:
-            self.LOG_DEBUG(f"Waiting for cmd.")
 
-            self.cmd_cur = self.cmd_queue.get()
+        should_print = True # This is just to keep it from printing waiting for cmd every loop. It should only be printed once a cmd has been performed     
+        while not self.kill_event.is_set():
+            if should_print:
+                self.LOG_DEBUG(f"Waiting for cmd.")
+                should_print = False
+
+            try:
+                self.cmd_cur = self.cmd_queue.get(timeout=1)
+            except queue.Empty:
+                continue
             handle_fns[self.cmd_cur.type.name](*self.cmd_cur.data())
+            should_print = True
 
             # Done with cmd so put done cmd to None
             self.cmd_cur = None
