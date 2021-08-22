@@ -2,7 +2,7 @@ from collections import deque
 class RollingAverage:
     def __init__(self, n=10) -> None:
        self.vals = deque(maxlen=n) 
-       self.n = 10
+       self.n = n
 
     def update(self, data):
         self.vals.append(data)
