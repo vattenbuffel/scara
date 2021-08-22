@@ -17,9 +17,8 @@ if __name__ == '__main__':
 
     simulator.plot_start()
     simulator.home()
-    simulator.move_xy(300, 0)
+    simulator.move_xy(200, 0)
 
     print(f"Done in main\n{cli.prompt}", end="")
     while not simulator.is_idle():
         time.sleep(1)
-    kill()

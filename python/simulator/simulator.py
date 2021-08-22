@@ -5,7 +5,6 @@ import numpy as np
 import yaml
 from pathlib import Path
 import os
-from serial_data_communicator.serial_communicator import serial_com
 from robot.robot import Robot
 import multiprocessing
 from simulator import simulator_process
@@ -28,7 +27,7 @@ class Simulator(Robot):
         # Init the robot
         super().__init__()
 
-        self.start_event = multiprocessing.Event() # Event that dictates if the plotting thread should be killed
+        self.start_event = multiprocessing.Event() 
         self.pos_queue = multiprocessing.Queue()
         size = (self.config['L1'] + self.config['L2'])*1.1
         self.plot_process = multiprocessing.Process(name=self.config['name']+"_process", target=simulator_process.plot, args=(self.start_event, self.pos_queue, -size, -size, size, size))
@@ -123,50 +122,45 @@ class Simulator(Robot):
 
         avg_J1 = RollingAverage()
 
-        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor']
-        J1_prev_ns = time.time_ns()
+        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor'] * self.sim_config['dt_factor']
+        J1_prev_ns = time.perf_counter_ns()
         J1_epsilon = self.steps_to_deg_J1(1)
         J1_vel_sign = 1 if J1 > self.J1 else -1
+        J1_offset_ns = 0 # If one step takes too long to perform this reduces the time until the next step should be performed
 
-        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor']
-        J2_prev_ns = time.time_ns()
+        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor'] * self.sim_config['dt_factor']
+        J2_prev_ns = time.perf_counter_ns()
         J2_epsilon = self.steps_to_deg_J2(1)
         J2_vel_sign = 1 if J2 > self.J2 else -1
+        J2_offset_ns = 0
 
-        sim_start_ns = time.time_ns()
+        sim_start_ns = time.perf_counter_ns()
         J1_end_time_ns = -1
         J2_end_time_ns = -1
         J1_start = self.J1
         J2_start = self.J2
-        while True:
+        while not self.kill_event.is_set():
             J1_done = J1_epsilon >= np.abs(J1 - self.J1)
             J2_done = J2_epsilon >= np.abs(J2 - self.J2)
             if J1_done and J2_done:
                 break
 
-            if not J1_done and (J1_dt_ns - (time.time_ns() - J1_prev_ns)) < 0:
-                avg_J1.update(self.deg_to_steps_J1((time.time_ns() - J1_prev_ns)/1e9)) # Update the average velocity of J1
-                J1_prev_ns = time.time_ns()
+            if  (time.perf_counter_ns() - J1_prev_ns) >= J1_dt_ns + J1_offset_ns and not J1_done:
+                # avg_J1.update(self.deg_to_steps_J1((time.perf_counter_ns() - J1_prev_ns)/1e9)) # Update the average velocity of J1
+                J1_offset_ns = J1_dt_ns - (time.perf_counter_ns() - J1_prev_ns)  
+                J1_prev_ns = time.perf_counter_ns()
                 self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
-                J1_end_time_ns = time.time_ns()
+                J1_end_time_ns = time.perf_counter_ns()
 
-            if not J2_done and (J2_dt_ns - (time.time_ns() - J2_prev_ns)) < 0:
-                J2_prev_ns = time.time_ns()
+            if  (time.perf_counter_ns() - J2_prev_ns) >= J2_dt_ns + J2_offset_ns and not J2_done:
+                J2_prev_ns = time.perf_counter_ns()
                 self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
-                J2_end_time_ns = time.time_ns()
+                J2_end_time_ns = time.perf_counter_ns()
 
             self.feed_plot()
 
-            # Wait until it's time to go again
-            J1_wait_ns = J1_dt_ns - (time.time_ns() - J1_prev_ns) if not J1_done else 1e19
-            J2_wait_ns = J2_dt_ns - (time.time_ns() - J2_prev_ns) if not J2_done else 1e19
-            wait_s = max(0, min(J1_wait_ns, J2_wait_ns)) / 1e9
-            print(f"Wait time: {wait_s} s, J1_vel_avg: {avg_J1.get_avg()}")
-            before_wait_ns = time.time_ns()
-            time.sleep(wait_s)
-            print(f"wait time was: {(time.time_ns() - before_wait_ns)/1e9}")
 
-        sim_end_ns = time.time_ns()
+        sim_end_ns = time.perf_counter_ns()
         sim_time = (sim_end_ns - sim_start_ns)/1e9
 
         J1_time = (J1_end_time_ns - sim_start_ns)/1e9
@@ -193,10 +187,8 @@ class Simulator(Robot):
         self.LOG_DEBUG(f"Killing process: {self.plot_process.name}")
         self.plot_process.kill()
 
-        self.LOG_DEBUG(f"Killing thread: {self.run_thread.name}")
-        self.kill_event.set()
+        super().kill()
 
-        # self.plot_process.join()
 
 
 

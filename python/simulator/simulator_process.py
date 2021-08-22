@@ -1,7 +1,6 @@
 import multiprocessing
 from queue import Empty
 from matplotlib.animation import FuncAnimation
-import numpy as np
 import matplotlib.pyplot as plt
 
 class PauseAnimation:
