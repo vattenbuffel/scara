@@ -14,10 +14,10 @@ from misc.verbosity_levels import VerboseLevel
 
 class Simulator(Robot):
     """
-        Class used for simulating 2D movements. It ignores the z-axis all together and only bother with x and y.
+        Class used for simulating 2D movements. It ignores the z-axis all together and only bothers with x and y.
         As a result only J1 and J2 are interesting. It inherits robot and overrides _home and _move to not send 
-        data via queue_sender to the arduino but instead plots them. The main use for this is to ensure that 
-        tcp movements are linear. 
+        data via queue_sender to the arduino but instead plots them. The main use for this is to verify that the
+        path planner works so that that tcp movements are linear. 
     """
     def __init__(self):
         self.sim_config = None # dict

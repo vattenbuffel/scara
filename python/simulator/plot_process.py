@@ -1,11 +1,9 @@
 from simulator.plot_params import PlotParam
 from collections import deque
-import numpy
 from misc.verbosity_levels import VerboseLevel
 import yaml
 from pathlib import Path
 import os
-import multiprocessing
 from queue import Empty
 from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
@@ -107,7 +105,4 @@ def plot(plot_params:PlotParam):
 
 
 
-    # while pause_event.wait():
-    #     if kill_event.is_set():
-    #         break
 
