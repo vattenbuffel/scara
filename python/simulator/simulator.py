@@ -7,7 +7,8 @@ from pathlib import Path
 import os
 from robot.robot import Robot
 import multiprocessing
-from simulator import simulator_process
+from simulator.plot_params import PlotParam
+from simulator import plot_process
 from misc.verbosity_levels import VerboseLevel
 
 
@@ -23,19 +24,29 @@ class Simulator(Robot):
         self.config_base = None # dict
         self.name = None # str
         self.verbose_level = None # misc.verbosity_level
+
+        # Read all the configs
+        self.sim_load_configs()
+
+        # self.J1_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
+        self.J1_ravg_vel= RollingAverage(100)
+        self.J2_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
+        self.tcp_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
         
         # Init the robot
         super().__init__()
 
         self.start_event = multiprocessing.Event() 
         self.pos_queue = multiprocessing.Queue()
+        self.vel_queue = multiprocessing.Queue()
         size = (self.config['L1'] + self.config['L2'])*1.1
-        self.plot_process = multiprocessing.Process(name=self.config['name']+"_process", target=simulator_process.plot, args=(self.start_event, self.pos_queue, -size, -size, size, size))
+        v_min = -self.config['v_max']*1.1
+        v_max = self.config['v_max']*1.1
+        plot_params = PlotParam(self.start_event, self.pos_queue, -size, -size, size, size, self.vel_queue, v_min, v_max)
+        self.plot_process = multiprocessing.Process(name=self.config['name']+"_process", target=plot_process.plot, args=(plot_params,))
         self.plot_process.start()
 
 
-        # Read all the configs
-        self.sim_load_configs()
 
         self.LOG_INFO(f"Inited Simulator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
@@ -85,13 +96,20 @@ class Simulator(Robot):
         x2 = x1 + self.config['L2']*np.cos(self.J1 + self.J2)
         y2 = y1 + self.config['L2']*np.sin(self.J1 + self.J2)
 
+        J1_vel = self.J1_ravg_vel.get_avg()
+        # print(f"J1_vel_avg: {J1_vel}")
+        J2_vel = 0# self.J1_ravg_vel.get_avg()
+        tcp_vel = 0# self.J1_ravg_vel.get_avg()
+
         if overwrite:
             try:
                 self.pos_queue.get_nowait()
+                self.vel_queue.get_nowait()
             except Empty:
                 pass
 
         self.pos_queue.put([(x1, y1), (x2, y2)])
+        self.vel_queue.put((J1_vel, J2_vel, tcp_vel))
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
         """Simulates the movements of the robot. Ignores acc
@@ -120,19 +138,20 @@ class Simulator(Robot):
             self.LOG_WARNING(f"Failed with move robot")
             return
 
-        avg_J1 = RollingAverage()
 
-        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor'] * self.sim_config['dt_factor']
+        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor'] 
         J1_prev_ns = time.perf_counter_ns()
         J1_epsilon = self.steps_to_deg_J1(1)
         J1_vel_sign = 1 if J1 > self.J1 else -1
-        J1_offset_ns = 0 # If one step takes too long to perform this reduces the time until the next step should be performed
+        J1_offset_ns = 0 # Keeps track of how much timing error there are between steps and corrects it so that the resulting velocity is correct
+        J1_done = False
 
-        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor'] * self.sim_config['dt_factor']
+        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor'] 
         J2_prev_ns = time.perf_counter_ns()
         J2_epsilon = self.steps_to_deg_J2(1)
         J2_vel_sign = 1 if J2 > self.J2 else -1
         J2_offset_ns = 0
+        J2_done = False
 
         sim_start_ns = time.perf_counter_ns()
         J1_end_time_ns = -1
@@ -140,22 +159,42 @@ class Simulator(Robot):
         J1_start = self.J1
         J2_start = self.J2
         while not self.kill_event.is_set():
-            J1_done = J1_epsilon >= np.abs(J1 - self.J1)
-            J2_done = J2_epsilon >= np.abs(J2 - self.J2)
             if J1_done and J2_done:
                 break
 
-            if  (time.perf_counter_ns() - J1_prev_ns) >= J1_dt_ns + J1_offset_ns and not J1_done:
-                # avg_J1.update(self.deg_to_steps_J1((time.perf_counter_ns() - J1_prev_ns)/1e9)) # Update the average velocity of J1
-                J1_offset_ns = J1_dt_ns - (time.perf_counter_ns() - J1_prev_ns)  
-                J1_prev_ns = time.perf_counter_ns()
-                self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
-                J1_end_time_ns = time.perf_counter_ns()
+            # J1
+            now_ns = time.perf_counter_ns()
+            if  now_ns  >=  J1_prev_ns + J1_dt_ns + J1_offset_ns and not J1_done:
+                J1_done = J1_epsilon >= np.abs(J1 - self.J1)
+                if not J1_done:
+                    self.J1_ravg_vel.update(self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)) # Update the average velocity of J1
+                    self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
+                    J1_offset_ns += J1_dt_ns - (now_ns - J1_prev_ns)
+                    J1_prev_ns = now_ns 
 
-            if  (time.perf_counter_ns() - J2_prev_ns) >= J2_dt_ns + J2_offset_ns and not J2_done:
-                J2_prev_ns = time.perf_counter_ns()
-                self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
-                J2_end_time_ns = time.perf_counter_ns()
+
+                if J1_done: 
+                    J1_end_time_ns = now_ns
+                    # Set avg vel to 0
+                    for i in range(self.J1_ravg_vel.n):
+                        self.J1_ravg_vel.update(0)
+
+            # J2
+            if  now_ns  >=  J2_prev_ns + J2_dt_ns + J2_offset_ns and not J2_done:
+                J2_done = J2_epsilon >= np.abs(J2 - self.J2)
+                if not J2_done:
+                    self.J2_ravg_vel.update(self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False)) # Update the average velocity of J2
+                    self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
+                    J2_offset_ns += J2_dt_ns - (now_ns - J2_prev_ns)
+                    J2_prev_ns = now_ns 
+
+
+                if J2_done: 
+                    J2_end_time_ns = now_ns
+                    # Set avg vel to 0
+                    for i in range(self.J2_ravg_vel.n):
+                        self.J2_ravg_vel.update(0)
+
 
             self.feed_plot()
 

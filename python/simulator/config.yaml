@@ -1,3 +1,4 @@
 name: "Simulator"
 speed_factor: 1 # 1 for normal speed, 2 for double speed, 0.5 for half speed
-dt_factor: 0.96 # Factor to multiply the delay time between steps with
+
+vel_plot_n: 100
