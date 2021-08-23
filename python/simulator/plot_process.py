@@ -77,9 +77,11 @@ class PauseAnimation:
             # Update vel plot
             J1_vel, J2_vel, tcp_vel = self.plot_params.vel_queue.get() # This should not be able to be empty since pos_queue wasn't empty
             self.vel_J1_deque.append(J1_vel)
+            self.vel_J2_deque.append(J2_vel)
+            self.vel_tcp_deque.append(tcp_vel)
             self.plot_J1_vel.set_ydata(self.vel_J1_deque)
-            # self.plot_J2_vel.set_ydata(numpy.random.rand(100))
-            # self.plot_tcp_vel.set_ydata(numpy.random.rand(10))
+            self.plot_J2_vel.set_ydata(self.vel_J2_deque)
+            self.plot_tcp_vel.set_ydata(self.vel_tcp_deque)
 
 
         except Empty:

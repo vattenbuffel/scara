@@ -28,10 +28,9 @@ class Simulator(Robot):
         # Read all the configs
         self.sim_load_configs()
 
-        # self.J1_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
-        self.J1_ravg_vel= RollingAverage(100)
-        self.J2_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
-        self.tcp_ravg_vel= RollingAverage(self.sim_config['vel_plot_n'])
+        self.J1_ravg_vel = RollingAverage(10)
+        self.J2_ravg_vel = RollingAverage(10)
+        self.tcp_ravg_vel = RollingAverage(10)
         
         # Init the robot
         super().__init__()
@@ -97,9 +96,8 @@ class Simulator(Robot):
         y2 = y1 + self.config['L2']*np.sin(self.J1 + self.J2)
 
         J1_vel = self.J1_ravg_vel.get_avg()
-        # print(f"J1_vel_avg: {J1_vel}")
-        J2_vel = 0# self.J1_ravg_vel.get_avg()
-        tcp_vel = 0# self.J1_ravg_vel.get_avg()
+        J2_vel = self.J2_ravg_vel.get_avg()
+        tcp_vel = self.tcp_ravg_vel.get_avg()
 
         if overwrite:
             try:
@@ -145,6 +143,7 @@ class Simulator(Robot):
         J1_vel_sign = 1 if J1 > self.J1 else -1
         J1_offset_ns = 0 # Keeps track of how much timing error there are between steps and corrects it so that the resulting velocity is correct
         J1_done = False
+        J1_vel = 0
 
         J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor'] 
         J2_prev_ns = time.perf_counter_ns()
@@ -152,6 +151,7 @@ class Simulator(Robot):
         J2_vel_sign = 1 if J2 > self.J2 else -1
         J2_offset_ns = 0
         J2_done = False
+        J2_vel = 0
 
         sim_start_ns = time.perf_counter_ns()
         J1_end_time_ns = -1
@@ -167,34 +167,33 @@ class Simulator(Robot):
             if  now_ns  >=  J1_prev_ns + J1_dt_ns + J1_offset_ns and not J1_done:
                 J1_done = J1_epsilon >= np.abs(J1 - self.J1)
                 if not J1_done:
-                    self.J1_ravg_vel.update(self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)) # Update the average velocity of J1
+                    J1_vel = self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)*J1_vel_sign
+                    self.J1_ravg_vel.update(J1_vel) # Update the average velocity of J1
                     self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
                     J1_offset_ns += J1_dt_ns - (now_ns - J1_prev_ns)
                     J1_prev_ns = now_ns 
 
-
                 if J1_done: 
                     J1_end_time_ns = now_ns
-                    # Set avg vel to 0
-                    for i in range(self.J1_ravg_vel.n):
-                        self.J1_ravg_vel.update(0)
+                    J1_vel = 0
 
             # J2
             if  now_ns  >=  J2_prev_ns + J2_dt_ns + J2_offset_ns and not J2_done:
                 J2_done = J2_epsilon >= np.abs(J2 - self.J2)
                 if not J2_done:
-                    self.J2_ravg_vel.update(self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False)) # Update the average velocity of J2
+                    J2_vel = self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False) * J2_vel_sign
+                    self.J2_ravg_vel.update(J2_vel) # Update the average velocity of J2
                     self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
                     J2_offset_ns += J2_dt_ns - (now_ns - J2_prev_ns)
                     J2_prev_ns = now_ns 
 
-
                 if J2_done: 
                     J2_end_time_ns = now_ns
-                    # Set avg vel to 0
-                    for i in range(self.J2_ravg_vel.n):
-                        self.J2_ravg_vel.update(0)
+                    J2_vel = 0
 
+            # tcp
+            tcp_vel = (J1_vel**2 + J2_vel**2)**0.5
+            self.tcp_ravg_vel.update(tcp_vel)
 
             self.feed_plot()
 
@@ -211,7 +210,7 @@ class Simulator(Robot):
         J2_vel_deg = np.rad2deg(J2_start - J2) / J2_time
         
         self.LOG_DEBUG(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.sim_config['speed_factor']:.2f}")
-        self.LOG_DEBUG(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.2f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.2f} deg/s")
+        self.LOG_DEBUG(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.5f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.5f} deg/s")
         # Update position. 
         self.x, self.y = self.forward_kinematics(self.J1, self.J2)
         self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}")
