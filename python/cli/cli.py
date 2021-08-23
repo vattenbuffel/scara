@@ -467,6 +467,13 @@ class CLI(cmd.Cmd, Logger):
         
         self.LOG_DEBUG(f"Done with command sim go home")
 
+    def do_sim_moveL_xy(self,arg):
+        "Simulates the robot to the coordinate (x,y) such that the tcp moves linearly and with the set tcp velocity:  x, y"
+        try:
+            robot.moveL_xy(*self.parse(arg))
+        except TypeError as e:
+            print(f"{self.prompt} Invalid command. Type help for help")
+
 
     def do_queue_n(self, arg):
         "Prints the number of movement commands currently in arduino's queue"
