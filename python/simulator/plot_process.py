@@ -25,15 +25,17 @@ class PauseAnimation:
         self.ax_robot.set_ylim(plot_params.y_min, plot_params.y_max)
         self.ax_robot.set_xlim(plot_params.x_min, plot_params.x_max)
         self.ax_robot.set_title('Robot')
-        self.plot_robot, = self.ax_robot.plot(0, 0)
-        self.plot_tcp_past, = self.ax_robot.plot(0,0)
+        self.plot_robot, = self.ax_robot.plot(0, 0, label="Robot")
+        self.plot_tcp_past, = self.ax_robot.plot(0,0, label="Past tcp")
+        self.ax_robot.legend(loc=2)
 
         self.ax_vel.set_ylim(plot_params.vel_min, plot_params.vel_max)
         self.ax_vel.set_xlim(0, self.config['vel_plot_n']-1)
         self.ax_vel.set_title('Velocity')
-        self.plot_J1_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'])
-        self.plot_J2_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'])
-        self.plot_tcp_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'])
+        self.plot_J1_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'], label="J1")
+        self.plot_J2_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'], label="J2")
+        self.plot_tcp_vel, = self.ax_vel.plot([0]*self.config['vel_plot_n'], label="Tcp")
+        self.ax_vel.legend(loc=2)
 
         self.animation = FuncAnimation(fig, self.plot_fn, interval=0)
         self.paused = False
