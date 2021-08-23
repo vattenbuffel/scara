@@ -26,6 +26,7 @@ class PauseAnimation:
         self.ax_robot.set_xlim(plot_params.x_min, plot_params.x_max)
         self.ax_robot.set_title('Robot')
         self.plot_robot, = self.ax_robot.plot(0, 0)
+        self.plot_tcp_past, = self.ax_robot.plot(0,0)
 
         self.ax_vel.set_ylim(plot_params.vel_min, plot_params.vel_max)
         self.ax_vel.set_xlim(0, self.config['vel_plot_n']-1)
@@ -40,6 +41,8 @@ class PauseAnimation:
         self.vel_J1_deque = deque([0]*self.config['vel_plot_n'], maxlen=self.config['vel_plot_n'])
         self.vel_J2_deque = deque([0]*self.config['vel_plot_n'], maxlen=self.config['vel_plot_n'])
         self.vel_tcp_deque = deque([0]*self.config['vel_plot_n'], maxlen=self.config['vel_plot_n'])
+        self.x_tcp_deque = deque(maxlen=self.config['robot_plot_past_pos_n'])
+        self.y_tcp_deque = deque(maxlen=self.config['robot_plot_past_pos_n'])
 
         fig.canvas.mpl_connect('button_press_event', self.toggle_pause)
 
@@ -73,6 +76,11 @@ class PauseAnimation:
             x1, y1, x2, y2 = data[0][0], data[0][1], data[1][0], data[1][1]
             self.plot_robot.set_xdata([0, x1, x2])
             self.plot_robot.set_ydata([0, y1, y2])
+            self.x_tcp_deque.append(x2)
+            self.y_tcp_deque.append(y2)
+            self.plot_tcp_past.set_xdata(self.x_tcp_deque)
+            self.plot_tcp_past.set_ydata(self.y_tcp_deque)
+
 
             # Update vel plot
             J1_vel, J2_vel, tcp_vel = self.plot_params.vel_queue.get() # This should not be able to be empty since pos_queue wasn't empty
