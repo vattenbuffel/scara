@@ -67,7 +67,7 @@ class PauseAnimation:
             self.animation.pause()
         self.paused = not self.paused
         
-        print("Pausing" if self.paused else "Starting")
+        print("Pausing" if self.paused else "Starting") #TODO Change for log
 
     def plot_fn(self, i):
         try:

@@ -20,13 +20,10 @@ class Simulator(Robot):
         path planner works so that that tcp movements are linear. 
     """
     def __init__(self):
-        self.sim_config = None # dict
+        self.config = None # dict
         self.config_base = None # dict
         self.name = None # str
         self.verbose_level = None # misc.verbosity_level
-
-        # Read all the configs
-        self.sim_load_configs()
 
         self.J1_ravg_vel = RollingAverage(10)
         self.J2_ravg_vel = RollingAverage(10)
@@ -34,6 +31,8 @@ class Simulator(Robot):
         
         # Init the robot
         super().__init__()
+        # Read all the configs
+        self.load_configs()
 
         self.start_event = multiprocessing.Event() 
         self.pos_queue = multiprocessing.Queue()
@@ -49,16 +48,19 @@ class Simulator(Robot):
 
         self.LOG_INFO(f"Inited Simulator.\nConfig: {self.config},\nand base config: {self.config_base}")
 
-    def sim_load_configs(self):
+    def load_configs(self):
+        # Load super configs well
+        super().load_configs()
+
         fp = Path(__file__)
         config_fp = os.path.join(str(fp.parent), "config.yaml")
         with open(config_fp) as f:
-            self.sim_config = yaml.load(f, Loader=yaml.FullLoader)
+            self.config.update(yaml.load(f, Loader=yaml.FullLoader))
         config_fp = os.path.join(str(fp.parent.parent), "base_config.yaml")
         with open(config_fp) as f:
-            self.config_base = yaml.load(f, Loader=yaml.FullLoader)
+            self.config_base.update(yaml.load(f, Loader=yaml.FullLoader))
 
-        self.name = self.sim_config['name']
+        self.name = self.config['name']
         self.verbose_level = VerboseLevel.str_to_level(self.config_base['verbose_level'])
 
     def _home(self, *arg):
@@ -88,12 +90,12 @@ class Simulator(Robot):
         self.LOG_INFO(f"At home, J1: {0}, J2: {0}, J3: {0}, x:{x}, y:{y}, z:{0}")
 
     def feed_plot(self, overwrite=True):
-        """Add the correct data to the pos_queue used for plotting
+        """Add the correct data to the pos_queue and vel_queue used for plotting
         """
         x1 = self.config['L1']*np.cos(self.J1)
         y1 = self.config['L1']*np.sin(self.J1)
-        x2 = x1 + self.config['L2']*np.cos(self.J1 + self.J2)
-        y2 = y1 + self.config['L2']*np.sin(self.J1 + self.J2)
+        x2 = self.x
+        y2 = self.y
 
         J1_vel = self.J1_ravg_vel.get_avg()
         J2_vel = self.J2_ravg_vel.get_avg()
@@ -137,27 +139,29 @@ class Simulator(Robot):
             return
 
 
-        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.sim_config['speed_factor'] 
+        J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.config['speed_factor'] 
         J1_prev_ns = time.perf_counter_ns()
         J1_epsilon = self.steps_to_deg_J1(1)
         J1_vel_sign = 1 if J1 > self.J1 else -1
         J1_offset_ns = 0 # Keeps track of how much timing error there are between steps and corrects it so that the resulting velocity is correct
         J1_done = False
-        J1_vel = 0
+        J1_updated = False # Used for updating tcp_vel
+        J1_end_time_ns = -1
+        J1_start = self.J1
 
-        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.sim_config['speed_factor'] 
+        J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.config['speed_factor'] 
         J2_prev_ns = time.perf_counter_ns()
         J2_epsilon = self.steps_to_deg_J2(1)
         J2_vel_sign = 1 if J2 > self.J2 else -1
         J2_offset_ns = 0
         J2_done = False
-        J2_vel = 0
+        J2_updated = False # used for updating tcp_vel
+        J2_end_time_ns = -1
+        J2_start = self.J2
+
+        tcp_prev_ns = time.perf_counter_ns()
 
         sim_start_ns = time.perf_counter_ns()
-        J1_end_time_ns = -1
-        J2_end_time_ns = -1
-        J1_start = self.J1
-        J2_start = self.J2
         while not self.kill_event.is_set():
             if J1_done and J2_done:
                 break
@@ -165,6 +169,7 @@ class Simulator(Robot):
             # J1
             now_ns = time.perf_counter_ns()
             if  now_ns  >=  J1_prev_ns + J1_dt_ns + J1_offset_ns and not J1_done:
+                J1_updated = True
                 J1_done = J1_epsilon >= np.abs(J1 - self.J1)
                 if not J1_done:
                     J1_vel = self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)*J1_vel_sign
@@ -175,10 +180,10 @@ class Simulator(Robot):
 
                 if J1_done: 
                     J1_end_time_ns = now_ns
-                    J1_vel = 0
 
             # J2
             if  now_ns  >=  J2_prev_ns + J2_dt_ns + J2_offset_ns and not J2_done:
+                J2_updated = True
                 J2_done = J2_epsilon >= np.abs(J2 - self.J2)
                 if not J2_done:
                     J2_vel = self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False) * J2_vel_sign
@@ -189,11 +194,20 @@ class Simulator(Robot):
 
                 if J2_done: 
                     J2_end_time_ns = now_ns
-                    J2_vel = 0
+
+            # Update position
+            x_prev, y_prev = self.x, self.y
+            self.x, self.y = self.forward_kinematics(self.J1, self.J2)
 
             # tcp
-            tcp_vel = (J1_vel**2 + J2_vel**2)**0.5
-            self.tcp_ravg_vel.update(tcp_vel)
+            if J1_updated and J2_updated:
+                now_ns = time.perf_counter_ns()
+                d = ((x_prev-self.x)**2 + (y_prev-self.y)**2)**0.5
+                tcp_vel = d / ((now_ns - tcp_prev_ns) / 1e9)
+                print(f"Tcp_vel: {tcp_vel}")
+                self.tcp_ravg_vel.update(tcp_vel)
+                tcp_prev_ns = now_ns
+                J1_updated = J2_updated = False
 
             self.feed_plot()
 
@@ -209,10 +223,8 @@ class Simulator(Robot):
         J2_vel_step = self.deg_to_steps_J1(J2_start - J2) / J2_time
         J2_vel_deg = np.rad2deg(J2_start - J2) / J2_time
         
-        self.LOG_DEBUG(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.sim_config['speed_factor']:.2f}")
+        self.LOG_DEBUG(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.config['speed_factor']:.2f}")
         self.LOG_DEBUG(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.5f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.5f} deg/s")
-        # Update position. 
-        self.x, self.y = self.forward_kinematics(self.J1, self.J2)
         self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}")
 
     def plot_start(self):

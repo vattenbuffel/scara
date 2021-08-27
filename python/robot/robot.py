@@ -82,7 +82,7 @@ class Robot(Logger):
         print(f"{self.name}: x: {self.x}, y: {self.y}, z: {self.z}")
 
     def move_J1J2J3(self, J1, J2, J3, in_rad=True):
-        self.LOG_DEBUG(f"Going to move joints to J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
+        self.LOG_DEBUG(f"move_J1J2J3: J1: {J1}, J2: {J2}, J3: {J3}, in_rad: {'True' if in_rad else 'False'}")
         
         if not in_rad:
             J1 = np.deg2rad(J1)
@@ -92,7 +92,7 @@ class Robot(Logger):
         self.add_move_cmd(J1, J2, J3, self.z_goal, self.gripper_value_goal, self.J1_vel, self.J2_vel, self.J3_vel, self.z_vel, self.J1_acc, self.J2_acc, self.J3_acc, self.z_acc, self.accuracy)
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
-        self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
+        self.LOG_DEBUG(f"_move_robot J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
         # Make sure the pos wanted are possible
         success = self.validate_movement_data(J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
@@ -306,7 +306,7 @@ class Robot(Logger):
         """
         Only changes the pos of the robot, not gripper 
         """ 
-        self.LOG_DEBUG(f"Going to move to pos: x:{x}, y:{y}, z:{z}")
+        self.LOG_DEBUG(f"move_xyz: x:{x}, y:{y}, z:{z}")
 
         J1,J2,J3 = self.inverse_kinematics(x, y)
         if J1 is None:
@@ -335,10 +335,10 @@ class Robot(Logger):
             y ([type]): [description]
             z ([type]): [description]
         """
-        self.LOG_DEBUG(f"Going to move linearly to pos: x:{x}, y:{y} z:{z}")
+        self.LOG_DEBUG(f"moveL_xy: x:{x}, y:{y} z:{z}")
 
         d = np.linalg.norm([x-self.x_goal, y-self.y_goal, z-self.z_goal])
-        n = int(np.ceil(d / self.config["dx"]))
+        n = int(np.ceil(d * self.config["dx"]))
         xx = np.linspace(self.x_goal, x, n) 
         yy = np.linspace(self.y_goal, y, n) 
         zz = np.linspace(self.z_goal, z, n) 
@@ -373,11 +373,11 @@ class Robot(Logger):
         t = d/tcp_vel
         # If we're already at goal return 0 vel and 0 acc
         if t == 0:
-            return 0.1,10,0.1,10,0.1,10 #TODO return 0 instead of 0.1, this is soley due to a bug i arduino code 
+            return 0.1,10,0.1,10,0.1,10 #TODO return 0 instead of 0.1, this is soley due to a bug i arduino code. I don't remember what that bug is anymore
 
-        J1_vel =  np.rad2deg(np.linalg.norm(J1 - self.J1_goal)) / t
-        J2_vel = np.rad2deg(np.linalg.norm(J2 - self.J2_goal)) / t
-        z_vel = np.linalg.norm(z - self.z_goal) / t
+        J1_vel =  np.rad2deg(abs(J1 - self.J1_goal)) / t
+        J2_vel = np.rad2deg(abs(J2 - self.J2_goal)) / t
+        z_vel = abs(z - self.z_goal) / t
 
         J1_acc, J2_acc, z_acc = self.J1_acc, self.J2_acc, self.J3_acc
 
@@ -385,12 +385,18 @@ class Robot(Logger):
         # Clamp the velocities and accelerations
         # TODO: the new velocities should be decreased by a factor which makes them still move linearly
         # TODO: Should not add 0.1! this is due to a bug in arduino code
-        J1_vel = np.maximum(np.minimum(J1_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
-        J2_vel = np.maximum(np.minimum(J2_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
-        z_vel = np.maximum(np.minimum(z_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
-        J1_acc = np.maximum(np.minimum(J1_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
-        J2_acc = np.maximum(np.minimum(J2_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
-        z_acc = np.maximum(np.minimum(z_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
+        J1_vel = max(min(J1_vel, self.config["v_max"]), self.config["v_min"])
+        J2_vel = max(min(J2_vel, self.config["v_max"]), self.config["v_min"])
+        z_vel = max(min(z_vel, self.config["v_max"]), self.config["v_min"])
+        J1_acc = max(min(J1_acc, self.config["a_max"]), self.config["a_min"])
+        J2_acc = max(min(J2_acc, self.config["a_max"]), self.config["a_min"])
+        z_acc = max(min(z_acc, self.config["a_max"]), self.config["a_min"])
+        # J1_vel = max(min(J1_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        # J2_vel = max(min(J2_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        # z_vel = max(min(z_vel, self.config["v_max"]), 0.1 + self.config["v_min"])
+        # J1_acc = max(min(J1_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
+        # J2_acc = max(min(J2_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
+        # z_acc = max(min(z_acc, self.config["a_max"]), 0.1 + self.config["a_min"])
 
         self.LOG_DEBUG(f"Resulting J1_vel: {J1_vel}, J1_acc: {J1_acc}, J2_vel: {J2_vel}, J2_acc: {J2_acc}, z_vel: {z_vel}, z_acc: {z_acc}")
         return J1_vel, J1_acc, J2_vel, J2_acc, z_vel, z_acc

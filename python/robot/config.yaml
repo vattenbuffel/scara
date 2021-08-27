@@ -9,7 +9,7 @@ base_vel_J1: 10 # degrees/s
 base_vel_J2: 10 # degrees/s
 base_vel_J3: 10 # degrees/s
 base_vel_z: 10 # mm/s
-base_tcp_vel: 1 # mm/s
+base_tcp_vel: 4 # mm/s
 base_accuracy: 0.1 # Either degrees or mm depending on the unit for the joint
 
 # Max and min values for the joints, gripper, z-axis, velocity and acceleration
@@ -28,10 +28,10 @@ J3_min: -3
 gripper_max: 40
 gripper_min: 0
 
-v_max: 100
+v_max: 15 # deg/s or mm/s
 v_min: 0
 
-a_max: 200
+a_max: 200 #deg/(s^2) or mm/(s^2)
 a_min: 0
 
 limit_epsilon: 1.0e-12 # For when checking if min or max values are complied with. 
