@@ -1,6 +1,6 @@
 serial_com_name: "Serial_communicator"
 baud_rate: 115200
-port: "COM5" #"dev/ttyUSB0"
+port: "COM6" #"dev/ttyUSB0"
 timeout_s: 1
 read_hz: 100
 serial_buffer_size: 64 # The arduino serial buffer can only store up to 64 bytes

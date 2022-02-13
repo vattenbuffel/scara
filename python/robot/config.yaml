@@ -9,7 +9,8 @@ base_vel_J1: 10 # degrees/s
 base_vel_J2: 10 # degrees/s
 base_vel_J3: 10 # degrees/s
 base_vel_z: 10 # mm/s
-base_tcp_vel: 4 # mm/s
+# base_tcp_vel: 4 # mm/s
+base_tcp_vel: 1 # mm/s
 base_accuracy: 0.1 # Either degrees or mm depending on the unit for the joint
 
 # Max and min values for the joints, gripper, z-axis, velocity and acceleration

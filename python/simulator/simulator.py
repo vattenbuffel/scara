@@ -66,7 +66,7 @@ class Simulator(Robot):
     def _home(self, *arg):
         """Overwrites robot's _home function to make it just set cur_pos J1,J2,J3,z = 0,0,0,0
         """
-        self.LOG_DEBUG(f"Going home.")
+        # self.LOG_DEBUG(f"Going home.")
         
         x, y = self.forward_kinematics(0, 0)
         self.x = x 
@@ -99,7 +99,7 @@ class Simulator(Robot):
 
         J1_vel = self.J1_ravg_vel.get_avg()
         J2_vel = self.J2_ravg_vel.get_avg()
-        tcp_vel = self.tcp_ravg_vel.get_avg()
+        tcp_vel_mms = self.tcp_ravg_vel.get_avg()
 
         if overwrite:
             try:
@@ -109,10 +109,10 @@ class Simulator(Robot):
                 pass
 
         self.pos_queue.put([(x1, y1), (x2, y2)])
-        self.vel_queue.put((J1_vel, J2_vel, tcp_vel))
+        self.vel_queue.put((J1_vel, J2_vel, tcp_vel_mms))
 
     def _move_robot(self, J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc, accuracy):
-        """Simulates the movements of the robot. Ignores acc
+        """Simulates the movements of the robot. Ignores accuracy and acceleration
 
         Args:
             J1 ([type]): [description]
@@ -130,102 +130,115 @@ class Simulator(Robot):
             z_acc ([type]): [description]
             accuracy ([type]): [description]
         """
-        self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
+        # self.LOG_DEBUG(f"Going to move robot to J1: {J1}, J2: {J2}, J3: {J3}, z:{z}, gripper_value:{gripper_value}")
 
-        # Make sure the pos wanted are possible
+        # Make sure the pos wanted is possible
         success = self.validate_movement_data(J1, J2, J3, z, gripper_value, J1_vel, J2_vel, J3_vel, z_vel, J1_acc, J2_acc, J3_acc, z_acc)
         if not success:
             self.LOG_WARNING(f"Failed with move robot")
             return
 
+        now_ns = 0 
 
         J1_dt_ns = 1e9/self.deg_to_steps_J1(J1_vel, in_rad=False) / self.config['speed_factor'] 
-        J1_prev_ns = time.perf_counter_ns()
+        J1_prev_ns = now_ns
         J1_epsilon = self.steps_to_deg_J1(1)
         J1_vel_sign = 1 if J1 > self.J1 else -1
-        J1_offset_ns = 0 # Keeps track of how much timing error there are between steps and corrects it so that the resulting velocity is correct
-        J1_done = False
-        J1_updated = False # Used for updating tcp_vel
-        J1_end_time_ns = -1
+        J1_done = self.J_done(self.J1, J1, J1_epsilon)
+        J1_end_time_ns = 0
         J1_start = self.J1
+        J1_sim_steps = np.floor(abs(J1-J1_start)/J1_epsilon) # How many steps J1 motor will have to take
 
         J2_dt_ns = 1e9/self.deg_to_steps_J2(J2_vel, in_rad=False) / self.config['speed_factor'] 
-        J2_prev_ns = time.perf_counter_ns()
+        J2_prev_ns = now_ns
         J2_epsilon = self.steps_to_deg_J2(1)
         J2_vel_sign = 1 if J2 > self.J2 else -1
-        J2_offset_ns = 0
-        J2_done = False
-        J2_updated = False # used for updating tcp_vel
-        J2_end_time_ns = -1
+        J2_done = self.J_done(self.J2, J2, J2_epsilon)
+        J2_end_time_ns = 0
         J2_start = self.J2
+        J2_sim_steps = np.floor(abs(J2-J2_start)/J2_epsilon) # How many steps J2 motor will have to take
 
-        tcp_prev_ns = time.perf_counter_ns()
+        tcp_start = self.x, self.y
+        x_prev, y_prev = tcp_start
+        tcp_prev_ns = now_ns
 
-        sim_start_ns = time.perf_counter_ns()
+        sim_start_ns = now_ns
+
         while not self.kill_event.is_set():
             if J1_done and J2_done:
                 break
 
             # J1
-            now_ns = time.perf_counter_ns()
-            if  now_ns  >=  J1_prev_ns + J1_dt_ns + J1_offset_ns and not J1_done:
-                J1_updated = True
-                J1_done = J1_epsilon >= np.abs(J1 - self.J1)
-                if not J1_done:
-                    J1_vel = self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)*J1_vel_sign
-                    self.J1_ravg_vel.update(J1_vel) # Update the average velocity of J1
-                    self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
-                    J1_offset_ns += J1_dt_ns - (now_ns - J1_prev_ns)
-                    J1_prev_ns = now_ns 
+            if J1_done:
+                now_ns += min(J2_dt_ns, J2_prev_ns + J2_dt_ns - now_ns) 
+            elif J2_done:
+                now_ns += min(J1_dt_ns, J1_prev_ns + J1_dt_ns - now_ns) 
+            else:
+                now_ns += min(J1_prev_ns + J1_dt_ns - now_ns, J2_prev_ns + J2_dt_ns - now_ns)
 
+            if  now_ns  >=  J1_prev_ns + J1_dt_ns and not J1_done:
+                J1_vel = self.steps_to_deg_J1(1/((now_ns - J1_prev_ns)/1e9), in_rad=False)*J1_vel_sign
+                self.J1_ravg_vel.update(J1_vel) # Update the average velocity of J1
+                self.J1 += self.steps_to_deg_J1(1)*J1_vel_sign
+                J1_prev_ns = now_ns 
+
+                J1_done = self.J_done(self.J1, J1, J1_epsilon)
                 if J1_done: 
                     J1_end_time_ns = now_ns
 
             # J2
-            if  now_ns  >=  J2_prev_ns + J2_dt_ns + J2_offset_ns and not J2_done:
-                J2_updated = True
-                J2_done = J2_epsilon >= np.abs(J2 - self.J2)
-                if not J2_done:
-                    J2_vel = self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False) * J2_vel_sign
-                    self.J2_ravg_vel.update(J2_vel) # Update the average velocity of J2
-                    self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
-                    J2_offset_ns += J2_dt_ns - (now_ns - J2_prev_ns)
-                    J2_prev_ns = now_ns 
+            if  now_ns  >=  J2_prev_ns + J2_dt_ns and not J2_done:
+                J2_vel = self.steps_to_deg_J2(1/((now_ns - J2_prev_ns)/1e9), in_rad=False) * J2_vel_sign
+                self.J2_ravg_vel.update(J2_vel) # Update the average velocity of J2
+                self.J2 += self.steps_to_deg_J2(1)*J2_vel_sign
+                J2_prev_ns = now_ns 
 
+                J2_done = self.J_done(self.J2, J2, J2_epsilon)
                 if J2_done: 
                     J2_end_time_ns = now_ns
 
             # Update position
-            x_prev, y_prev = self.x, self.y
             self.x, self.y = self.forward_kinematics(self.J1, self.J2)
 
             # tcp
-            if J1_updated and J2_updated:
-                now_ns = time.perf_counter_ns()
+            if now_ns >= tcp_prev_ns + max(J1_dt_ns, J2_dt_ns):
                 d = ((x_prev-self.x)**2 + (y_prev-self.y)**2)**0.5
-                tcp_vel = d / ((now_ns - tcp_prev_ns) / 1e9)
-                print(f"Tcp_vel: {tcp_vel}")
-                self.tcp_ravg_vel.update(tcp_vel)
+                tcp_vel_mms = d / ((now_ns - tcp_prev_ns) / 1e9)
+                self.tcp_ravg_vel.update(tcp_vel_mms)
+                x_prev, y_prev = self.x, self.y
                 tcp_prev_ns = now_ns
-                J1_updated = J2_updated = False
 
-            self.feed_plot()
+            # Don't plot if there's too little data
+            if self.J1_ravg_vel.n == len(self.J1_ravg_vel.vals):
+                self.feed_plot()
 
 
-        sim_end_ns = time.perf_counter_ns()
+        sim_end_ns = now_ns
         sim_time = (sim_end_ns - sim_start_ns)/1e9
 
         J1_time = (J1_end_time_ns - sim_start_ns)/1e9
-        J1_vel_step = self.deg_to_steps_J1(J1_start - J1) / J1_time
-        J1_vel_deg = np.rad2deg(J1_start - J1) / J1_time
+        J1_vel_step = self.deg_to_steps_J1(J1_start - J1) / J1_time if J1_time else 0
+        J1_vel_deg = np.rad2deg(J1_start - J1) / J1_time if J1_time else 0
 
         J2_time = (J2_end_time_ns - sim_start_ns)/1e9
-        J2_vel_step = self.deg_to_steps_J1(J2_start - J2) / J2_time
-        J2_vel_deg = np.rad2deg(J2_start - J2) / J2_time
+        J2_vel_step = self.deg_to_steps_J1(J2_start - J2) / J2_time if J2_time else 0
+        J2_vel_deg = np.rad2deg(J2_start - J2) / J2_time if J2_time else 0
+
+        tcp_vel_mms = ((self.x - tcp_start[0])**2 + (self.y - tcp_start[1])**2)**0.5 / sim_time
         
-        self.LOG_DEBUG(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.config['speed_factor']:.2f}")
-        self.LOG_DEBUG(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.5f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.5f} deg/s")
-        self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}")
+        self.LOG_INFO(f"It took: {sim_time:.2f} s to complete simulation with speed_factor: {self.config['speed_factor']:.2f}")
+        self.LOG_INFO(f"That corresponds to J1_vel: {J1_vel_step:.2f} steps/s = {J1_vel_deg:.2f} deg/s and J2_vel: {J2_vel_step:.2f} steps/s = {J2_vel_deg:.2f} deg/s and tcp_vel: {tcp_vel_mms:.2f} mm/s")
+        self.LOG_INFO(f"It took J1 {J1_sim_steps} steps and J2: {J2_sim_steps} steps")
+        # self.LOG_DEBUG(f"At pose J1: {J1}, J2: {J2}")
+
+
+        J1_expected_sim_time_ns = J1_dt_ns *  J1_sim_steps
+        assert abs(J1_end_time_ns - J1_expected_sim_time_ns) < 1e-3 or J1_time == 0
+        J2_expected_sim_time_ns = J2_dt_ns * J2_sim_steps
+        assert abs(J2_end_time_ns - J2_expected_sim_time_ns) < 1e-3 or J2_time == 0
+
+    def J_done(self, J, goal, eps):
+        return eps >= abs(goal - J) 
 
     def plot_start(self):
         self.LOG_DEBUG(f"Starting plotting")

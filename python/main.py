@@ -15,10 +15,6 @@ if __name__ == '__main__':
         from gui.gui import loop
         loop()
 
-    simulator.plot_start()
-    simulator.home()
-    simulator.moveL_xy(200, 0)
-
     print(f"Done in main\n{cli.prompt}", end="")
     while not simulator.is_idle():
         time.sleep(1)
