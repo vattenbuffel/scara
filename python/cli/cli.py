@@ -470,7 +470,7 @@ class CLI(cmd.Cmd, Logger):
     def do_sim_moveL_xy(self,arg):
         "Simulates the robot to the coordinate (x,y) such that the tcp moves linearly and with the set tcp velocity:  x, y"
         try:
-            robot.moveL_xy(*self.parse(arg))
+            simulator.moveL_xy(*self.parse(arg))
         except TypeError as e:
             print(f"{self.prompt} Invalid command. Type help for help")
 
